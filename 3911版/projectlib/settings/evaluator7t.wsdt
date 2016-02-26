@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<Workspace>
+  <ConfigDictionary>
+    
+  <CurrentConfigs><Project>evaluator7t/Debug</Project></CurrentConfigs></ConfigDictionary>
+  <Desktop>
+    <Static>
+      <Workspace>
+        <ColumnWidths>
+          
+          
+          
+          
+        <Column0>218</Column0><Column1>27</Column1><Column2>27</Column2><Column3>27</Column3></ColumnWidths>
+      </Workspace>
+    <Build><PreferedWindows><Position>3</Position><ScreenPosX>0</ScreenPosX><ScreenPosY>0</ScreenPosY><Windows><Window><Factory>Find-in-Files</Factory></Window></Windows></PreferedWindows><ColumnWidth0>20</ColumnWidth0><ColumnWidth1>861</ColumnWidth1><ColumnWidth2>275</ColumnWidth2><ColumnWidth3>68</ColumnWidth3></Build><Find-in-Files><PreferedWindows><Position>3</Position><ScreenPosX>0</ScreenPosX><ScreenPosY>0</ScreenPosY><Windows><Window><Factory>Build</Factory></Window></Windows></PreferedWindows><ColumnWidth0>497</ColumnWidth0><ColumnWidth1>71</ColumnWidth1><ColumnWidth2>853</ColumnWidth2></Find-in-Files></Static>
+    <Windows>
+      
+    <Wnd2>
+        <Tabs>
+          <Tab>
+            <Identity>TabID-30281-11532</Identity>
+            <TabName>Workspace</TabName>
+            <Factory>Workspace</Factory>
+            <Session>
+              
+            <NodeDict><ExpandedNode>evaluator7t</ExpandedNode><ExpandedNode>evaluator7t/entry</ExpandedNode><ExpandedNode>evaluator7t/main.c</ExpandedNode><ExpandedNode>evaluator7t/qpboc</ExpandedNode><ExpandedNode>evaluator7t/transplant</ExpandedNode><ExpandedNode>evaluator7t/transplant/MyFunction.c</ExpandedNode></NodeDict></Session>
+          </Tab>
+        </Tabs>
+        
+      <SelectedTab>0</SelectedTab></Wnd2><Wnd3><Tabs><Tab><Identity>TabID-9225-9717</Identity><TabName>Find in Files</TabName><Factory>Find-in-Files</Factory><Session/></Tab><Tab><Identity>TabID-14745-9818</Identity><TabName>Build</TabName><Factory>Build</Factory><Session/></Tab></Tabs><SelectedTab>0</SelectedTab></Wnd3></Windows>
+    <Editor>
+      
+      
+      
+      
+    <Pane><Tab><Factory>TextEditor</Factory><Filename>C:\Program Files\IAR Systems\Embedded Workbench 5.0 Evaluation\ARM\inc\DLib_Defaults.h</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>C:\Program Files\IAR Systems\Embedded Workbench 5.0 Evaluation\ARM\inc\DLib_Product_string.h</Filename><XPos>0</XPos><YPos>4</YPos><SelStart>871</SelStart><SelEnd>871</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>C:\Program Files\IAR Systems\Embedded Workbench 5.0 Evaluation\ARM\inc\string.h</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>438</SelStart><SelEnd>438</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>E:\2010\kf322\guo\&#x751F;&#x6210;&#x5e93;&#x6587;&#x4eF6;\My_file\MyFunction.c</Filename><XPos>0</XPos><YPos>65</YPos><SelStart>1198</SelStart><SelEnd>1198</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>E:\2010\kf322\guo\&#x751F;&#x6210;&#x5e93;&#x6587;&#x4eF6;\entry\src\entryfile.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>334</SelStart><SelEnd>334</SelEnd></Tab><ActiveTab>4</ActiveTab><Tab><Factory>TextEditor</Factory><Filename>E:\2010\kf322\guo\&#x751F;&#x6210;&#x5e93;&#x6587;&#x4eF6;\entry\src\emvmpilib.c</Filename><XPos>0</XPos><YPos>18</YPos><SelStart>514</SelStart><SelEnd>514</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>E:\2010\kf322\guo\&#x751F;&#x6210;&#x5e93;&#x6587;&#x4eF6;\entry\src\emvmrshs.c</Filename><XPos>0</XPos><YPos>42</YPos><SelStart>696</SelStart><SelEnd>696</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>E:\2010\kf322\guo\&#x751F;&#x6210;&#x5e93;&#x6587;&#x4eF6;\entry\src\entryiccomm.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>307</SelStart><SelEnd>307</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>E:\2010\kf322\guo\&#x751F;&#x6210;&#x5e93;&#x6587;&#x4eF6;\entry\src\emvtools.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>E:\2010\kf322\guo\&#x751F;&#x6210;&#x5e93;&#x6587;&#x4eF6;\entry\include\rsaapp.h</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>287</SelStart><SelEnd>287</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>E:\2010\kf322\guo\&#x751F;&#x6210;&#x5e93;&#x6587;&#x4eF6;\qpboc\src\qpbocselect.c</Filename><XPos>0</XPos><YPos>562</YPos><SelStart>14556</SelStart><SelEnd>14556</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>E:\2010\kf322\guo\&#x751F;&#x6210;&#x5e93;&#x6587;&#x4eF6;\qpboc\src\qpbocmsd.c</Filename><XPos>0</XPos><YPos>6</YPos><SelStart>402</SelStart><SelEnd>402</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>E:\2010\kf322\guo\&#x751F;&#x6210;&#x5e93;&#x6587;&#x4eF6;\qpboc\src\public.c</Filename><XPos>0</XPos><YPos>15</YPos><SelStart>521</SelStart><SelEnd>521</SelEnd></Tab></Pane><ActivePane>0</ActivePane><Sizes><Pane><X>1000000</X><Y>1000000</Y></Pane></Sizes><SplitMode>1</SplitMode></Editor>
+    <Positions>
+      
+      
+      
+      
+      
+    <Top><Row0><Sizes><Toolbar-00af8a60><key>iaridepm.enu1</key></Toolbar-00af8a60></Sizes></Row0></Top><Left><Row0><Sizes><Wnd2><Rect><Top>-2</Top><Left>-2</Left><Bottom>581</Bottom><Right>292</Right><x>-2</x><y>-2</y><xscreen>-3092371</xscreen><yscreen>-1769522</yscreen><sizeHorzCX>-2147479860</sizeHorzCX><sizeHorzCY>-2147478154</sizeHorzCY><sizeVertCX>204167</sizeVertCX><sizeVertCY>707524</sizeVertCY></Rect></Wnd2></Sizes></Row0></Left><Right><Row0><Sizes/></Row0></Right><Bottom><Row0><Sizes><Wnd3><Rect><Top>-2</Top><Left>-2</Left><Bottom>198</Bottom><Right>1442</Right><x>-2</x><y>-2</y><xscreen>1444</xscreen><yscreen>200</yscreen><sizeHorzCX>1002778</sizeHorzCX><sizeHorzCY>242718</sizeHorzCY><sizeVertCX>138889</sizeVertCX><sizeVertCY>242718</sizeVertCY></Rect></Wnd3></Sizes></Row0></Bottom><Float><Sizes/></Float></Positions>
+  </Desktop>
+</Workspace>
+
+

@@ -1,0 +1,863 @@
+/*
+* 13.56MHZ RF driver 
+*create by skx on 2010-07-02
+*copyright all fot KAIFA
+*/
+
+
+#include "mifre_tmdef.h"
+
+const uchar PCD_VER[5]="1.00";
+const uchar PCD_DATE[12]="2010.08.18";
+
+
+PICC_PARA c_para;
+RF_WORKSTRUCT RF_WorkInfo;
+
+//extern int WriteRFParam(int iInLen,uchar* pucParamIn);
+
+
+
+uchar picc_open(void)
+{
+	uchar ucRet;
+	ucRet=(unsigned char)s_RF_Init();
+	if(ucRet)
+	{
+	    goto PICCOPEN_ERR;
+	}
+
+    RF_WorkInfo.ucRFOpen = 0x01;	 
+	return 0;
+	
+PICCOPEN_ERR: 
+	sHal_Module_Disable(); 
+	return ucRet;			
+}
+
+
+void picc_close(void)
+{
+	memset((uchar *)&RF_WorkInfo, 0x00, sizeof(RF_WORKSTRUCT));
+	sHal_Module_Disable();
+	s_RFCloseCarrier();//for the RSTPD PIN CONTORL BY CPU
+    DelayMs(5);
+}
+
+
+
+uchar picc_detect(uchar ucMode,uchar *CardType,uchar *SerialInfo,uchar *CID,uchar *Other)
+{
+     uchar ucRet = RET_RF_OK;
+	 uchar ucATSLen = 0;
+	 uchar ucATSData[256];
+	 uchar ucATQA[2];
+	 uchar ucTemp = 0;
+	 uchar ucUID[5];
+	 uchar ucSAK = 0;
+	 uchar ucCardType = 0;
+	 uchar aucSN[100];
+	 uchar ucCID = 0;
+	 uchar aucOther[300],i=0;
+	 
+	 memset(aucSN,0,sizeof(aucSN));
+	 memset(aucOther, 0, sizeof(aucOther));
+
+    
+	 s_RF_vInitWorkInfo();
+	 
+	 if(RF_WorkInfo.ucRFOpen == 0)
+	 {
+         
+		 return RET_RF_ERR_NO_OPEN;
+	 }
+	 
+	
+	s_RFOpenCarrier();
+
+	 memset(ucATSData, 0x00, sizeof(ucATSData));
+	 
+	 ucMode=(uint)toupper(ucMode);
+	 switch(ucMode)
+	 {
+	     case 0x00:
+            ucRet = s_RF_ucPOLL(&ucCardType);
+			if(ucRet)
+			{
+				goto PICC_DETECT_END;
+			}			
+			RF_WorkInfo.ucStatus = 	PICC_STATUS_WAKEN; // 20080325
+			if (RF_WorkInfo.ucCurType == RF_TYPEA)
+            {
+			 
+                ucRet = s_RF_ucActPro(&ucATSLen,ucATSData);
+				if(ucRet)
+				{
+                    goto PICC_DETECT_END;
+				}		
+				RF_WorkInfo.ucStatus = 	PICC_STATUS_ACTIV; // 20080325
+
+				aucSN[0] = RF_WorkInfo.ucUIDLen;
+				ucCID = 0;
+				
+				s_RF_vGetDetectAInfo(aucSN, aucOther);
+
+				memcpy(aucOther+aucOther[0]+1, ucATSData, ucATSLen);
+				aucOther[0] += ucATSLen;
+				
+            }
+			else  // if(*CardType == 'B')
+			{
+                ucRet = s_RF_ucActTypeB(&ucATSLen, ucATSData);
+				if(ucRet)
+				{
+                    goto PICC_DETECT_END;
+				}				
+				RF_WorkInfo.ucStatus = 	PICC_STATUS_ACTIV; // 20080325
+
+				aucSN[0] = 4;
+				memcpy(aucSN+1, (uchar*)&RF_WorkInfo.ucATQB[1], 4);
+				ucCID = 0;
+				aucOther[0] = 14;
+				memcpy(aucOther+3, (uchar*)RF_WorkInfo.ucATQB, 12);
+				break;
+			}
+		 	break;
+		case 0x01://emv poll
+			 ucRet = s_RF_ucPOLL_EMV(&ucCardType);
+			 if (ucRet) 
+			 {
+				 if(ucRet == RET_RF_ERR_TRANSMIT && (RF_WorkInfo.lBitsReceived % 8) == 0
+				 	&& (RF_WorkInfo.ulBytesReceived > 4) 
+				 	&& ((RF_WorkInfo.ucErrFlags & 0x08) != 0 || (RF_WorkInfo.ucErrFlags & 0x02) != 0))
+				 {
+				 	ucRet = RET_RF_ERR_MULTI_CARD;
+				 }
+				 
+				 goto PICC_DETECT_END;
+			 }		
+			 
+			RF_WorkInfo.ucStatus = 	PICC_STATUS_WAKEN; // 20080325
+			if (RF_WorkInfo.ucCurType == RF_TYPEA) // changed by liuxl 20070928
+	        {
+	        	for(i = 0 ; i<3; i++) // 20081020
+				{
+					ucRet = s_RF_ucRATS(&ucATSLen,ucATSData);
+					if(ucRet != RET_RF_ERR_TIMEOUT)
+						break;
+				}
+				if(ucRet)
+				{
+				    goto PICC_DETECT_END;		
+				}
+				RF_WorkInfo.ucStatus = 	PICC_STATUS_ACTIV; // 20080325
+				            
+				aucSN[0] = RF_WorkInfo.ucUIDLen;
+				s_RF_vGetDetectAInfo(aucSN, aucOther);
+
+				memcpy(aucOther+aucOther[0]+1, ucATSData, ucATSLen);
+				aucOther[0] += ucATSLen;	
+	            
+				ucCID = 0;
+			}
+			else // if(*CardType == 'B')
+			{
+				// 20081017  
+				for(i = 0; i<3; i++)
+				{
+					ucRet = s_RF_ucAttrib(&ucTemp);
+					if(ucRet != RET_RF_ERR_TIMEOUT)
+						break;
+				}
+				if(ucRet)
+				{
+	                goto PICC_DETECT_END;		
+				}
+						
+				RF_WorkInfo.ucStatus = 	PICC_STATUS_ACTIV; // 20080325
+
+				aucSN[0] = 4;
+				memcpy(aucSN+1, (uchar*)&RF_WorkInfo.ucATQB[1], 4);
+				ucCID = 0;
+				aucOther[0] = 14;
+				memcpy(aucOther+3, (uchar*)RF_WorkInfo.ucATQB, 12);				
+			}
+		 break;	
+
+		 case 'A':
+            ucRet = s_RF_ucWUPA(ucATQA);
+			if(ucRet)
+			{
+                goto PICC_DETECT_END;
+			}
+			
+			RF_WorkInfo.ucStatus = 	PICC_STATUS_WAKEN; // 20080325
+			
+            RF_WorkInfo.ucATQA[0] = ucATQA[0];
+            RF_WorkInfo.ucATQA[1] = ucATQA[1];
+			// added end
+
+			ucRet = s_RF_ucGetUID();
+			if(ucRet)
+			{
+                goto PICC_DETECT_END;
+			}
+			
+			
+			if(RF_WorkInfo.ucUIDLen == 4)
+				ucSAK = RF_WorkInfo.ucSAK1;
+			else if(RF_WorkInfo.ucUIDLen == 7)
+				ucSAK = RF_WorkInfo.ucSAK2;
+			else if(RF_WorkInfo.ucUIDLen == 10)
+				ucSAK = RF_WorkInfo.ucSAK3;
+			
+			
+			if(!(RF_WorkInfo.ucSAK1 & 0x20)
+		  && (c_para.card_type_check_w == 0 || (c_para.card_type_check_w == 1 && c_para.card_type_check_val == 0)))
+			{
+				ucRet = RET_RF_ERR_PROTOCOL;
+				goto PICC_DETECT_END;				
+			}
+			
+			ucRet = s_RF_ucRATS(&ucATSLen,ucATSData);
+			if(ucRet)
+			{
+			    goto PICC_DETECT_END;		
+			}
+			RF_WorkInfo.ucStatus = 	PICC_STATUS_ACTIV; // 20080325
+
+			s_RF_ucCardTypeCheck(&ucCardType);
+			RF_WorkInfo.ucMifCardType = ucCardType;
+			RF_WorkInfo.ucCurType = RF_TYPEA;
+			
+            ucCardType = RF_TYPE_PRO;
+            
+			aucSN[0] = RF_WorkInfo.ucUIDLen;
+			s_RF_vGetDetectAInfo(aucSN, aucOther);
+
+			memcpy(aucOther+aucOther[0]+1, ucATSData, ucATSLen);
+			aucOther[0] += ucATSLen;	
+            
+			ucCID = 0; 
+		 	break;
+
+		 case 'B':
+            ucRet = s_RF_ucWUPB(&ucATSLen,ucATSData);
+			if(ucRet)//modifly by skx on 2009-8-31
+			{
+				goto PICC_DETECT_END;		
+			}
+			else
+            {
+				// Halt TypeB
+				for (i = 0; i < 3; i++) 
+				{
+					ucRet = s_RF_ucHALTB(&ucATSLen);
+					if (ucRet != RET_RF_ERR_TIMEOUT) 
+					{
+						break;
+					}
+				}
+				
+				if(ucRet == RET_RF_OK)
+				{
+					ucRet = s_RF_ucREQB(&ucATSLen, ucATSData);
+					if (ucRet != RET_RF_ERR_TIMEOUT)
+					{
+						ucRet=RET_RF_ERR_MULTI_CARD;
+						goto PICC_DETECT_END;
+					}
+					
+				}
+				else
+				{
+					goto PICC_DETECT_END;
+				}
+            }
+			
+			ucRet = s_RF_ucWUPB(&ucATSLen,ucATSData);
+
+			RF_WorkInfo.ucStatus = 	PICC_STATUS_WAKEN;
+			ucRet = s_RF_ucAttrib(&ucTemp);
+			if(ucRet)
+			{
+                goto PICC_DETECT_END;		
+			}
+			RF_WorkInfo.ucStatus = 	PICC_STATUS_ACTIV;
+
+			aucSN[0] = 4;
+            memcpy(aucSN+1, &ucATSData[1], 4);
+			ucCID = 0;
+			aucOther[0] = 14;
+			memcpy(aucOther+3, ucATSData, 12);
+			
+			ucCardType = RF_TYPE_B;
+			RF_WorkInfo.ucMifCardType = RF_TYPE_B;
+			RF_WorkInfo.ucCurType = RF_TYPEB;
+			
+		    break;
+
+		 case 'M':
+            ucRet = s_RF_ucWUPA(ucATQA);
+			if(ucRet)
+			{
+			    goto PICC_DETECT_END;		
+			}
+			
+			RF_WorkInfo.ucStatus = 	PICC_STATUS_WAKEN; // 20080325
+			
+            RF_WorkInfo.ucATQA[0] = ucATQA[0];
+            RF_WorkInfo.ucATQA[1] = ucATQA[1];
+			 
+			ucRet = s_RF_ucGetUID();
+			if(ucRet)
+			{
+                goto PICC_DETECT_END;
+			}
+			
+			if(RF_WorkInfo.ucUIDLen == 4)
+				ucSAK = RF_WorkInfo.ucSAK1;
+			else if(RF_WorkInfo.ucUIDLen == 7)
+				ucSAK = RF_WorkInfo.ucSAK2;
+			else if(RF_WorkInfo.ucUIDLen == 10)
+				ucSAK = RF_WorkInfo.ucSAK3;
+			
+			if(!(RF_WorkInfo.ucSAK1 & 0x18)
+		  && (c_para.card_type_check_w == 0 || (c_para.card_type_check_w == 1 && c_para.card_type_check_val == 0)))
+			{	
+			    ucRet = RET_RF_ERR_PROTOCOL;
+			    goto PICC_DETECT_END;	
+			} 
+			
+			s_RF_ucCardTypeCheck(&ucCardType);
+			RF_WorkInfo.ucMifCardType = ucCardType;
+			RF_WorkInfo.ucCurType = RF_TYPEA;
+            
+			ucCID = 0;
+			
+			aucSN[0] = RF_WorkInfo.ucUIDLen;
+			s_RF_vGetDetectAInfo(aucSN, aucOther);
+            			
+		 	break;
+
+		default:
+			return RET_RF_ERR_PARAM;
+	 }
+	 
+	RF_WorkInfo.ucMifActivateFlag = 1; 
+	RF_WorkInfo.ucCurPCB = 1;
+	ucRet = RET_RF_OK;
+
+PICC_DETECT_END:		
+
+	if(CardType != NULL) // changed 20080108
+		*CardType= 0;
+	if((ucRet == RET_RF_OK) && (CardType != NULL))// changed 20080108
+	{
+		if(RF_WorkInfo.ucCurType == RF_TYPEB)
+			*CardType = 'B';
+		else
+		{
+			if(ucMode == 'M')
+				*CardType = 'M';
+			else
+				*CardType = 'A';
+		}
+	}
+	
+	if(CID != NULL)
+		*CID = ucCID;
+	
+	if(SerialInfo != NULL)
+		memcpy(SerialInfo, aucSN, aucSN[0]+1);
+
+	if(Other != NULL)
+		memcpy(Other,aucOther, aucOther[0]+1);
+
+	if(ucRet != RET_RF_OK)
+	{
+		if(Other!=NULL)
+		 {
+			if (aucOther[0] == 0) 
+			{
+				Other[0] = 2;
+			}
+			 Other[1] = RF_WorkInfo.usErrNo & 0xff;
+			 Other[2] = RF_WorkInfo.usErrNo >> 8;
+		 }
+		
+		if (ucRet != E_NOT_DETECTED)
+	    s_RFResetCarrier();
+
+		RF_WorkInfo.ucStatus = 0; // 20080325
+	}
+		
+
+	//RF_WorkInfo.ucCurPCB = 0;
+
+	switch(ucRet)
+	{
+		case RET_RF_OK:          return 0;
+		case RET_RF_ERR_PARAM:   return 1;//E_INVALID_PARA; // 1;
+		case RET_RF_ERR_NO_OPEN: return 2;//E_NO_POWER;     // 2;
+		case RET_RF_ERR_TIMEOUT: return 3;//E_NOT_DETECTED; // 3;
+		case RET_RF_ERR_MULTI_CARD: return 4;//E_MULTI_CARDS; // 4;
+		case RET_RF_ERR_PROTOCOL:   return 6;//E_PROTOCOL;    // 6;			
+		default: return ucRet;			
+	}
+
+}
+
+
+uchar picc_isoCommand(uchar cid,APDU_SEND *ApduSend,APDU_RESP *ApduRecv)
+{
+    uchar ucRet = RET_RF_OK;
+	uchar ucInData[300];
+	uchar ucOutData[300];
+	uint  uiSendLen = 0;
+	uint  uiRecLen = 0;
+
+	ucRet = s_RF_ucCardStatusCheck(1);
+	if(ucRet)
+	{
+		if(ucRet == RET_RF_ERR_NOT_ACT)
+			return 3;
+		return ucRet;
+	}
+
+	if((ApduSend == NULL) || (ApduRecv == NULL) || cid > 14 || ApduSend->Lc > 255)
+	{
+		 return RET_RF_ERR_PARAM;
+	}
+	memset(ucInData, 0x00, sizeof(ucInData));
+	memset(ucOutData, 0x00, sizeof(ucOutData));
+
+    memcpy(ucInData, ApduSend->Command, 4);
+	uiSendLen = 4;
+
+	if((ApduSend->Lc == 0) && (ApduSend->Le == 0))
+	{
+        ucInData[uiSendLen] = 0x00;
+		uiSendLen++;
+	}
+
+	if(ApduSend->Lc)
+	{
+	    ucInData[uiSendLen] = ApduSend->Lc;
+		uiSendLen++;
+		memcpy(ucInData+uiSendLen, ApduSend->DataIn, ApduSend->Lc);
+		uiSendLen = uiSendLen + ApduSend->Lc;
+	}
+
+	if(ApduSend->Le)
+	{
+	   if(ApduSend->Le == 256)
+	   {
+	       ucInData[uiSendLen] = 0x00;
+	   }
+	   else
+	   {
+	       ucInData[uiSendLen] = ApduSend->Le;
+	   }
+	   uiSendLen++;
+	}
+
+	ucRet = s_RF_ucExchange(uiSendLen,ucInData,&uiRecLen,ucOutData);
+
+	//PortOpen(0, "115200,8,N,1");	
+	test_SendDataByCom();
+
+	if(ucRet != RET_RF_OK)
+	{
+	    s_RF_ucDeselect();
+	    
+		RF_WorkInfo.ucStatus=0; // 20080505
+		
+		ApduRecv->SWA = RF_WorkInfo.usErrNo & 0x0FF;
+	    ApduRecv->SWB = RF_WorkInfo.usErrNo >> 8;
+		switch(ucRet)
+		{
+			case RET_RF_ERR_PARAM:   return EE_INVALID_PARA; // 1;
+			case RET_RF_ERR_NO_OPEN: return EE_NO_POWER;     // 2;
+			case RET_RF_ERR_NOT_ACT: return EE_NOT_DETECTED; // 3;
+			case RET_RF_ERR_TRANSMIT: return EE_TX;          // 4
+			case RET_RF_ERR_PROTOCOL:   return EE_PROTOCOL;  // 5;			
+			default: return ucRet;			
+		}
+	}
+	
+	if (uiRecLen < 2) 
+	{
+		ApduRecv->SWA = 0;
+		ApduRecv->SWB = 0;
+		return EE_TX; // RET_RF_ERR_TRANSMIT
+	}
+	
+
+	ApduRecv->LenOut = uiRecLen - 2;
+	if(ApduSend->Le < ApduRecv->LenOut)
+		ApduRecv->LenOut = ApduSend->Le; 
+	memcpy(ApduRecv->DataOut, ucOutData, ApduRecv->LenOut);
+	ApduRecv->SWA = ucOutData[uiRecLen - 2];
+	ApduRecv->SWB = ucOutData[uiRecLen - 1];
+	
+
+	return RET_RF_OK;
+}
+
+uchar M1ToPro_RATS(uchar* pucOutLen, uchar* pucATSData)
+{
+	uchar ucReSendNo = 0;
+	uchar ucRet = RET_RF_OK;
+	
+	ucRet = s_RF_ucCardStatusCheck(0);
+	if(ucRet)
+		return ucRet;
+	
+	for(ucReSendNo = 0; ucReSendNo < 3; ucReSendNo++)
+	{
+	    ucRet = s_RF_ucRATS(pucOutLen, pucATSData);
+		if(ucRet != RET_RF_ERR_TIMEOUT)
+	    {
+	         break;
+	    }
+	}
+
+	if(ucRet != RET_RF_OK)
+	{
+	   return ucRet;
+	}
+
+	RF_WorkInfo.ucMifActivateFlag = 1;
+	RF_WorkInfo.ucCurPCB = 1;
+	RF_WorkInfo.ucInProtocol = 1;
+
+	return RET_RF_OK;
+}
+
+
+uchar M1Authority(uchar Type,uchar BlkNo,uchar *Pwd,uchar *SerialNo)
+{
+	return  s_M1Authority( Type, BlkNo, Pwd, SerialNo);	 
+}
+
+
+uchar M1ReadBlock(uchar BlkNo,uchar *BlkValue)
+{
+	return s_M1ReadBlock( BlkNo, BlkValue);
+}
+
+
+uchar M1WriteBlock(uchar BlkNo,uchar *BlkValue)
+{
+	return s_M1WriteBlock(BlkNo, BlkValue);
+}
+
+uchar M1Operate(uchar Type, uchar BlkNo, uchar *Value, uchar UpdateBlkNo)
+{
+    
+	return s_M1Operate(Type, BlkNo, Value, UpdateBlkNo);
+} 
+
+
+uchar picc_setup(uchar ucMode, PICC_PARA *picc_para)
+{
+
+	uchar cadr_param[8];
+	if(picc_para == NULL)
+		return RET_RF_ERR_PARAM;
+	
+	ucMode=toupper(ucMode);
+
+	/*
+	if(ucMode =='s' || ucMode=='S')
+	{
+		cadr_param[0]=picc_para->a_conduct_val;
+		cadr_param[2]=picc_para->b_modulate_val;
+		cadr_param[3]=picc_para->card_RxThreshold_val;
+		WriteRFParam(4,cadr_param);
+		c_para.a_conduct_val=picc_para->a_conduct_val;
+		c_para.b_modulate_val=picc_para->b_modulate_val;
+		c_para.card_RxThreshold_val=picc_para->card_RxThreshold_val;
+		return 0;
+	}
+	*/
+	
+	if(ucMode!='R' && ucMode!='W')
+		return RET_RF_ERR_PARAM;
+	
+	if(ucMode=='R')
+	{
+		memset(picc_para,0x00,sizeof(PICC_PARA));
+		memcpy(picc_para->drv_ver,PCD_VER,5);
+		memcpy(picc_para->drv_date,PCD_DATE,12);
+	} 
+	
+	if(RF_WorkInfo.ucRFOpen == 0)
+		return RET_RF_ERR_NO_OPEN;// PN512 not powered on
+
+	if(ucMode=='R')
+	{
+		memcpy(picc_para,&c_para,sizeof(c_para));
+		memcpy(picc_para->drv_ver,PCD_VER,5);
+		memcpy(picc_para->drv_date,PCD_DATE,12); 
+	}
+	else
+	{
+		if(picc_para->a_conduct_w==1)
+		{
+			c_para.a_conduct_val=picc_para->a_conduct_val;
+			if(c_para.a_conduct_val>0x3f)c_para.a_conduct_val=0x3f;
+		}
+		
+		if(picc_para->b_modulate_w==1)
+		{
+			c_para.b_modulate_val=picc_para->b_modulate_val;
+			if(c_para.b_modulate_val>0x3f)c_para.b_modulate_val=0x3f;
+		}
+		if(picc_para->card_buffer_w==1) 
+		{
+			c_para.card_buffer_w=1;
+			c_para.card_buffer_val=picc_para->card_buffer_val;
+			if(c_para.card_buffer_val>256)c_para.card_buffer_val=256;
+ 		}		
+ 		// 20080617 
+		if(picc_para->card_type_check_w==1) 
+		{
+			c_para.card_type_check_w=1;
+			c_para.card_type_check_val=picc_para->card_type_check_val;
+ 		}
+
+		// 20091030
+		if(picc_para->card_RxThreshold_w==1)
+		{
+			c_para.card_RxThreshold_w=1;
+			c_para.card_RxThreshold_val=picc_para->card_RxThreshold_val;
+ 		}
+	}
+	return 0;
+
+}
+
+
+uchar picc_cmdexchange(uint uiSendLen, uchar* paucInData, uint* puiRecLen, uchar* paucOutData)
+{
+    uchar ucRet = RET_RF_OK;
+
+	ucRet = s_RF_ucCardStatusCheck(1);
+	if(ucRet)
+	{
+		if(ucRet == RET_RF_ERR_NOT_ACT)
+			return 3;
+		return ucRet;
+	}
+	if(uiSendLen == 0 || paucInData == NULL || puiRecLen == NULL || paucOutData == NULL)
+		return RET_RF_ERR_PARAM;
+	
+	ucRet = s_RF_ucExchange(uiSendLen, paucInData,  puiRecLen,  paucOutData);
+
+	// 20081209 need to do picc reset
+	if(ucRet != RET_RF_OK)
+	{		
+		// s_RFResetCarrier();  // emv 2.0 L1
+
+		// PAYPASS 1.1 20081222
+	//	if (ucRet == RET_RF_ERR_PROTOCOL || ucRet == RET_RF_ERR_TRANSMIT) 
+		{
+			s_RFResetCarrier();
+		}
+		//s_RF_ucDeselect(); // PAYPASS 1.1 L1
+	}
+	switch(ucRet)
+	{
+		case RET_RF_ERR_PARAM:   return EE_INVALID_PARA; // 1;
+		case RET_RF_ERR_NO_OPEN: return EE_NO_POWER;     // 2;
+		case RET_RF_ERR_NOT_ACT: return EE_NOT_DETECTED; // 3;
+		case RET_RF_ERR_TRANSMIT: return EE_TX;          // 4
+		case RET_RF_ERR_PROTOCOL:   return EE_PROTOCOL;  // 5;			
+		default: return ucRet;			
+	}
+}
+
+
+
+uchar picc_remove(uchar mode, uchar cid)
+{
+    uchar ucRet = RET_RF_OK;
+    uchar ucTemp = 0x00;
+
+    if(RF_WorkInfo.ucRFOpen == 0)
+	{
+		 return RET_RF_ERR_NO_OPEN;
+	}
+
+	mode = toupper(mode);
+	
+	// 20080221
+	if((mode != 'H' && mode != 'R') || cid > 14)
+		return 1;
+
+	if( (!RF_WorkInfo.ucRemove_Step || mode=='H') && RF_WorkInfo.ucStatus == 0 )
+		return 3;//card not waken up
+		
+	if(RF_WorkInfo.ucStatus == PICC_STATUS_WAKEN)
+	{
+		RF_WorkInfo.ucMifActivateFlag = 0;
+		RF_WorkInfo.ucStatus=0;
+		if (RF_WorkInfo.ucCurType == RF_TYPEA) 
+		{
+			s_RF_vHALTA();
+			ucRet = RET_RF_OK;
+		}
+		else
+		{
+			ucRet = s_RF_ucHALTB(&ucTemp); 
+		}
+		if(mode=='H')
+		{ 
+			if(ucRet)
+			{
+				s_RFResetCarrier();//disable output carrier 
+			}
+			return 0;
+		}
+	}
+	else if(!RF_WorkInfo.ucRemove_Step || mode=='H')
+	{
+		ucRet = s_RF_ucDeselect();
+		if(mode=='H')
+		{ 
+			RF_WorkInfo.ucMifActivateFlag = 0;
+			RF_WorkInfo.ucStatus=0;
+			return ucRet;
+		}
+	}
+	
+	if (RF_WorkInfo.ucRemove_Step == 1) 
+	{
+		if (RF_WorkInfo.ucRemoved == PICC_STATUS_REMOVE) 
+		{
+			return 0x00;
+		}
+	}
+	RF_WorkInfo.ucRemove_Step = 1;
+	ucRet = s_RF_ucIfCardExit();
+	
+	RF_WorkInfo.ucStatus=0;
+
+	if(ucRet == RET_RF_OK)
+	{
+		s_RFResetCarrier();//keeps for 1000etu
+		RF_WorkInfo.ucRemoved=PICC_STATUS_REMOVE;		
+		return 0;
+	}
+
+	else
+	{
+		return 6;// RET_RF_ERR_CARD_EXIST;//not removed yet
+	}	
+}
+
+
+uchar PiccRemove_EMV(uchar cid, ushort ul100Ms)
+{
+    uchar ucRet = RET_RF_OK;
+    uchar ucTemp = 0x00;
+	uchar ucTempData[12];
+	uint uiBeginTime = 0;
+
+    if(RF_WorkInfo.ucRFOpen == 0)
+	{
+         
+		 return RET_RF_ERR_NO_OPEN;
+	}
+
+	if( !RF_WorkInfo.ucRemove_Step && RF_WorkInfo.ucStatus == 0 )
+		return 3;//card not waken up
+
+	s_RFResetCarrier(); 
+			
+	if(ul100Ms)
+	{
+		uiBeginTime = GetTimerCount();
+	}
+	while(1)
+	{
+		ucRet = s_RF_ucRemoval();	
+		if(ucRet == 0)
+			break;
+		if(ul100Ms)
+		{
+			if ((GetTimerCount() - uiBeginTime) >= ul100Ms * 100)
+			{
+				break;
+			}
+		}
+	}
+	if(ucRet == RET_RF_OK)
+	{
+		RF_WorkInfo.ucRemove_Step = PICC_STATUS_REMOVE;
+		RF_WorkInfo.ucMifActivateFlag = 0;
+		RF_WorkInfo.ucStatus=0;
+		return RET_RF_OK;		
+	}
+	RF_WorkInfo.ucRemove_Step = PICC_STATUS_REMOVE;
+	RF_WorkInfo.ucMifActivateFlag = 0;
+	RF_WorkInfo.ucStatus = 0;
+	return 6;// RET_RF_ERR_CARD_EXIST;//not removed yet			
+}
+
+uchar PiccRemove_PayPass(uchar cid, ushort ul100Ms)
+{
+    uchar ucRet = RET_RF_OK;
+    uchar ucTemp = 0x00;
+	uchar ucTempData[12];
+	uint uiBeginTime = 0;
+
+    if(RF_WorkInfo.ucRFOpen == 0)
+	{
+		 return RET_RF_ERR_NO_OPEN;
+	}
+
+	if( !RF_WorkInfo.ucRemove_Step && RF_WorkInfo.ucStatus == 0 )
+		return 3;//card not waken up
+
+	ucRet = s_RF_ucDeselect();
+	if (ucRet) 
+	{		
+		return ucRet;
+	}
+	
+			
+	if(ul100Ms)
+	{
+		uiBeginTime = GetTimerCount();
+	}
+	while(1)
+	{
+		ucRet = s_RF_ucRemoval();	
+		if(ucRet == 0)
+			break;
+		if(ul100Ms)
+		{
+			if ((GetTimerCount() - uiBeginTime) >= ul100Ms * 100)
+			{
+				break;
+			}
+		}
+	}
+	if(ucRet == RET_RF_OK)
+	{
+		RF_WorkInfo.ucRemove_Step = PICC_STATUS_REMOVE;
+		RF_WorkInfo.ucMifActivateFlag = 0;
+		RF_WorkInfo.ucStatus=0;
+		return RET_RF_OK;		
+	}
+	RF_WorkInfo.ucRemove_Step = PICC_STATUS_REMOVE;
+	RF_WorkInfo.ucMifActivateFlag = 0;
+	RF_WorkInfo.ucStatus = 0;
+	return 6;// RET_RF_ERR_CARD_EXIST;//not removed yet			
+}
+
+
+
