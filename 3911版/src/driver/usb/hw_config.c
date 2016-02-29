@@ -180,11 +180,11 @@ void USB_Interrupts_Config(void)
     GPIO_Configuration();
 
     /* 2 bit for pre-emption priority, 2 bits for subpriority */
-    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);  
+    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);  
     
     NVIC_InitStructure.NVIC_IRQChannel = USB_LP_CAN1_RX0_IRQn;        //USB米赤車??豕???D?????車
     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;         //?角??車??豕?? 1
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;                //℅車車??豕???a1
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;                //℅車車??豕???a1
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
     
@@ -192,11 +192,21 @@ void USB_Interrupts_Config(void)
     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;         //?角??車??豕?? 1
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;                //℅車車??豕???a0
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-	NVIC_Init(&NVIC_InitStructure);	 
-  NVIC_InitStructure.NVIC_IRQChannel = USB_LP_CAN1_RX0_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
-  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
-  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStructure);
+    
+      /* Enable the EXTI9_5 Interrupt */
+  NVIC_InitStructure.NVIC_IRQChannel = EXTI9_5_IRQn;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+  NVIC_Init(&NVIC_InitStructure);
+    
+  /* Enable the EXTI15_10 Interrupt */
+  NVIC_InitStructure.NVIC_IRQChannel = EXTI15_10_IRQn;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+  NVIC_Init(&NVIC_InitStructure);
+  
+  /* Enable the DMA1 Channel1 Interrupt */
+  NVIC_InitStructure.NVIC_IRQChannel = DMA1_Channel1_IRQn;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
   NVIC_Init(&NVIC_InitStructure);
 }
 
@@ -243,7 +253,7 @@ void GPIO_Configuration(void)
     /* USB_DISCONNECT used as USB pull-up*/
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_OD;
     GPIO_Init(GPIOB, &GPIO_InitStructure);
     //GPIO_ResetBits(GPIOB, GPIO_Pin_11);
     //while(1);

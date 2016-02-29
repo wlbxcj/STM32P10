@@ -311,6 +311,7 @@ void testreset()
                 Lib_KbGetCh();
 }
 
+__IO uint8_t PrevXferComplete = 1;
 
 void main()
 {

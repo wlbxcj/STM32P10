@@ -540,6 +540,8 @@ void ADC1_2_IRQHandler(void)
 *******************************************************************************/
 void USB_HP_CAN_TX_IRQHandler(void)
 {
+    CTR_HP();
+    //trace_debug_printf("1\r\n");
 }
 
 /*******************************************************************************
@@ -552,8 +554,8 @@ void USB_HP_CAN_TX_IRQHandler(void)
 *******************************************************************************/
 void USB_LP_CAN_RX0_IRQHandler(void)
 {
-    //void USB_Istr(void);
-    //USB_Istr(); //skx on 20100707
+    USB_Istr(); //skx on 20100707
+    //trace_debug_printf("2\r\n");
 }
 
 /*******************************************************************************
@@ -1467,33 +1469,4 @@ void DMA2_Channel3_IRQHandler(void)
 void DMA2_Channel4_5_IRQHandler(void)
 {
 }
-
-#ifndef STM32F10X_CL
-/*******************************************************************************
-* Function Name  : USB_HP_CAN1_TX_IRQHandler
-* Description    : This function handles USB High Priority or CAN TX interrupts requests
-*                  requests.
-* Input          : None
-* Output         : None
-* Return         : None
-*******************************************************************************/
-void USB_HP_CAN1_TX_IRQHandler(void)
-{
-    CTR_HP();
-}
-
-/*******************************************************************************
-* Function Name  : USB_LP_CAN1_RX0_IRQHandler
-* Description    : This function handles USB Low Priority or CAN RX0 interrupts
-*                  requests.
-* Input          : None
-* Output         : None
-* Return         : None
-*******************************************************************************/
-void USB_LP_CAN1_RX0_IRQHandler(void)
-{
-    USB_Istr();
-}
-#endif /* STM32F10X_CL */
-
 /******************* (C) COPYRIGHT 2007 STMicroelectronics *****END OF FILE****/
