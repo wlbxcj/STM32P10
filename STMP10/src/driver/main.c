@@ -337,6 +337,7 @@ void Usb_SendTest(unsigned char *pucData, unsigned char ucSendLen)
       //PrevXferComplete = 0;
     }
 }
+
 void main()
 {
     // uchar CmdBuf[256];
@@ -347,7 +348,7 @@ void main()
     uint  BuzzerFre;
     uint  BuzzerTime;
     uchar LineX,ByteY,AsciiLength,ByteLength;
-    uchar i,Status;
+    uchar i,j,Status;
     uchar buzzerTab[5]={3200,5200,7200,9200,11200};
 
     int nRet,nLen;
@@ -366,13 +367,17 @@ void main()
     Set_USBClock();
     USB_Init();
     trace_debug_printf("usb int over\r\n");
+    j = 0;
     while (1)
     {
         if (0 == Lib_KbCheck())
         {
+            for (i = 0; i < 64; i++)
+                sBuf[i] = i + j;
             CmdDataType = Lib_KbGetCh();
-            Usb_SendTest(&CmdDataType, 1);
+            Usb_SendTest(sBuf, 63);
             trace_debug_printf("KB = 0x%02X\r\n", nRet);
+            j++;
         }
     }
    //Lib_AppInit();

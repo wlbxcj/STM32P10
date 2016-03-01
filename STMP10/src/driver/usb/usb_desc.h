@@ -17,7 +17,6 @@
 #ifndef __USB_DESC_H
 #define __USB_DESC_H
 
-#define MY_DES  0
 /* Includes ------------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
@@ -36,7 +35,7 @@
 #define CUSTOMHID_SIZ_DEVICE_DESC               18
 #define CUSTOMHID_SIZ_CONFIG_DESC               41
 #if MY_DES
-#define CUSTOMHID_SIZ_REPORT_DESC               21
+#define CUSTOMHID_SIZ_REPORT_DESC               39
 #else
 #define CUSTOMHID_SIZ_REPORT_DESC               163
 #endif

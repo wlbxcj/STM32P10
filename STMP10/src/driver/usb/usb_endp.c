@@ -29,28 +29,11 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-uint8_t Receive_Buffer[2];
+uint8_t Receive_Buffer[65];
 extern __IO uint8_t PrevXferComplete;
 
 
-void STM_EVAL_LEDOn(int n)
-{
-    if (n > GPIO_Pin_7)
-        GPIO_SetBits(GPIOB, n);
-    else
-        GPIO_SetBits(GPIOA, n);
-}
-void STM_EVAL_LEDOff(int n)
-{
-    if (n > GPIO_Pin_7)
-        GPIO_ResetBits(GPIOA, n);
-    else
-        GPIO_ResetBits(GPIOB, n);
-}
-#define LED1                    GPIO_Pin_13
-#define LED2                    GPIO_Pin_14
-#define LED3                    GPIO_Pin_6
-#define LED4                    GPIO_Pin_7
+
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -63,78 +46,19 @@ void STM_EVAL_LEDOff(int n)
 *******************************************************************************/
 void EP1_OUT_Callback(void)
 {
-  BitAction Led_State;
+    BitAction Led_State;
     unsigned char ucRecLen = 0;
 
-  /* Read received data (2 bytes) */  
+    /* Read received data (2 bytes) */  
     ucRecLen = USB_SIL_Read(EP1_OUT, Receive_Buffer);
     SetEPRxStatus(ENDP1, EP_RX_VALID);
-  if (Receive_Buffer[1] == 0)
-  {
-    Led_State = Bit_RESET;
-  }
-  else 
-  {
-    Led_State = Bit_SET;
-  }
- 
- 
-  switch (Receive_Buffer[0])
-  {
-    case 1: /* Led 1 */
-     if (Led_State != Bit_RESET)
-     {
-       STM_EVAL_LEDOn(LED1);
-     }
-     else
-     {
-       STM_EVAL_LEDOff(LED1);
-     }
-     break;
-    case 2: /* Led 2 */
-     if (Led_State != Bit_RESET)
-     {
-       STM_EVAL_LEDOn(LED2);
-     }
-     else
-     {
-       STM_EVAL_LEDOff(LED2);
-     }
-      break;
-    case 3: /* Led 3 */
-     if (Led_State != Bit_RESET)
-     {
-       STM_EVAL_LEDOn(LED3);
-     }
-     else
-     {
-       STM_EVAL_LEDOff(LED3);
-     }
-      break;
-    case 4: /* Led 4 */
-     if (Led_State != Bit_RESET)
-     {
-       STM_EVAL_LEDOn(LED4);
-     }
-     else
-     {
-       STM_EVAL_LEDOff(LED4);
-     }
-      break;
-  default:
-    STM_EVAL_LEDOff(LED1);
-    STM_EVAL_LEDOff(LED2);
-    STM_EVAL_LEDOff(LED3);
-    STM_EVAL_LEDOff(LED4); 
-    break;
-  }
- 
-#if !MY_DES
+
+#if MY_DES
+    /* º» ’“≤∑¢ */
     trace_debug_printf("USB rec(%02x):%02x--%02x", ucRecLen, Receive_Buffer[0], Receive_Buffer[1]);
     USB_SIL_Write(EP1_IN, (uint8_t*) Receive_Buffer, ucRecLen);  
     SetEPTxValid(ENDP1);
-#endif /* STM32F10X_CL */
- 
+#endif
 }
 
 /*******************************************************************************
@@ -147,9 +71,7 @@ void EP1_OUT_Callback(void)
 void EP1_IN_Callback(void)
 {
   PrevXferComplete = 1;
-#if !MY_DES
-      trace_debug_printf("USB Callback");
-#endif
+
 }
 /******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/
 

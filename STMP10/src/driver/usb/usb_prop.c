@@ -141,47 +141,53 @@ void CustomHID_init(void)
 *******************************************************************************/
 void CustomHID_Reset(void)
 {
-  /* Set Joystick_DEVICE as not configured */
-  pInformation->Current_Configuration = 0;
-  pInformation->Current_Interface = 0;/*the default Interface*/
-  
-  /* Current Feature initialization */
-  pInformation->Current_Feature = CustomHID_ConfigDescriptor[7];
-  
+    /* Set Joystick_DEVICE as not configured */
+    pInformation->Current_Configuration = 0;
+    pInformation->Current_Interface = 0;/*the default Interface*/
+
+    /* Current Feature initialization */
+    pInformation->Current_Feature = CustomHID_ConfigDescriptor[7];
+
 #ifdef STM32F10X_CL   
-  /* EP0 is already configured in DFU_Init() by USB_SIL_Init() function */
-  
-  /* Init EP1 IN as Interrupt endpoint */
-  OTG_DEV_EP_Init(EP1_IN, OTG_DEV_EP_TYPE_INT, 2);
-  
-  /* Init EP1 OUT as Interrupt endpoint */
-  OTG_DEV_EP_Init(EP1_OUT, OTG_DEV_EP_TYPE_INT, 2);
+    /* EP0 is already configured in DFU_Init() by USB_SIL_Init() function */
+
+    /* Init EP1 IN as Interrupt endpoint */
+    OTG_DEV_EP_Init(EP1_IN, OTG_DEV_EP_TYPE_INT, 2);
+
+    /* Init EP1 OUT as Interrupt endpoint */
+    OTG_DEV_EP_Init(EP1_OUT, OTG_DEV_EP_TYPE_INT, 2);
 #else 
-  SetBTABLE(BTABLE_ADDRESS);
+    SetBTABLE(BTABLE_ADDRESS);
 
-  /* Initialize Endpoint 0 */
-  SetEPType(ENDP0, EP_CONTROL);
-  SetEPTxStatus(ENDP0, EP_TX_STALL);
-  SetEPRxAddr(ENDP0, ENDP0_RXADDR);
-  SetEPTxAddr(ENDP0, ENDP0_TXADDR);
-  Clear_Status_Out(ENDP0);
-  SetEPRxCount(ENDP0, Device_Property.MaxPacketSize);
-  SetEPRxValid(ENDP0);
+    /* Initialize Endpoint 0 */
+    SetEPType(ENDP0, EP_CONTROL);
+    SetEPTxStatus(ENDP0, EP_TX_STALL);
+    SetEPRxAddr(ENDP0, ENDP0_RXADDR);
+    SetEPTxAddr(ENDP0, ENDP0_TXADDR);
+    Clear_Status_Out(ENDP0);
+    SetEPRxCount(ENDP0, Device_Property.MaxPacketSize);
+    SetEPRxValid(ENDP0);
 
-  /* Initialize Endpoint 1 */
-  SetEPType(ENDP1, EP_INTERRUPT);
-  SetEPTxAddr(ENDP1, ENDP1_TXADDR);
-  SetEPRxAddr(ENDP1, ENDP1_RXADDR);
-  SetEPTxCount(ENDP1, 2);
-  SetEPRxCount(ENDP1, 2);
-  SetEPRxStatus(ENDP1, EP_RX_VALID);
-  SetEPTxStatus(ENDP1, EP_TX_NAK);
+    /* Initialize Endpoint 1 */
+    SetEPType(ENDP1, EP_INTERRUPT);
+    SetEPTxAddr(ENDP1, ENDP1_TXADDR);
+    SetEPRxAddr(ENDP1, ENDP1_RXADDR);
+#if MY_DES
+    SetEPTxCount(ENDP1, MAX_PACK_SIZE);
+    SetEPRxCount(ENDP1, MAX_PACK_SIZE);
+#else
+    SetEPTxCount(ENDP1, 2);
+    SetEPRxCount(ENDP1, 2);
+#endif
 
-  /* Set this device to response on default address */
-  SetDeviceAddress(0);
+    SetEPRxStatus(ENDP1, EP_RX_VALID);
+    SetEPTxStatus(ENDP1, EP_TX_NAK);
+
+    /* Set this device to response on default address */
+    SetDeviceAddress(0);
 #endif /* STM32F10X_CL */
 
-  bDeviceState = ATTACHED;
+    bDeviceState = ATTACHED;
 }
 /*******************************************************************************
 * Function Name  : CustomHID_SetConfiguration.

@@ -17,6 +17,15 @@
 #ifndef __USB_CONF_H
 #define __USB_CONF_H
 
+
+#define MY_DES      (1)
+
+#if MY_DES
+#define MAX_PACK_SIZE   0x40
+#else
+#define MAX_PACK_SIZE   2
+#endif
+
 /* Includes ------------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
