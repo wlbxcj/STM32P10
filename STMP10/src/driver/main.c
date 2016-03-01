@@ -313,6 +313,30 @@ void testreset()
 
 __IO uint8_t PrevXferComplete = 1;
 
+
+void Usb_SendTest(unsigned char *pucData, unsigned char ucSendLen)
+{
+    unsigned char Send_Buffer[100] = {0, 0};
+
+    //if (PrevXferComplete)
+    {
+      Send_Buffer[0] = 'A';
+      
+      //if (STM_EVAL_PBGetState(Button_TAMPER) == Bit_RESET)
+      {
+        memcpy(&Send_Buffer[1], pucData, ucSendLen);
+        //Send_Buffer[1] = ucData;
+      }
+
+      
+      /* Write the descriptor through the endpoint */    
+      USB_SIL_Write(EP1_IN, (uint8_t*) Send_Buffer, ucSendLen + 1);  
+      
+      SetEPTxValid(ENDP1);
+      
+      //PrevXferComplete = 0;
+    }
+}
 void main()
 {
     // uchar CmdBuf[256];
@@ -342,7 +366,15 @@ void main()
     Set_USBClock();
     USB_Init();
     trace_debug_printf("usb int over\r\n");
-   
+    while (1)
+    {
+        if (0 == Lib_KbCheck())
+        {
+            CmdDataType = Lib_KbGetCh();
+            Usb_SendTest(&CmdDataType, 1);
+            trace_debug_printf("KB = 0x%02X\r\n", nRet);
+        }
+    }
    //Lib_AppInit();
 #if 0   
  //´¥·¢

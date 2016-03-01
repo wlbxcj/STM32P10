@@ -554,8 +554,12 @@ void USB_HP_CAN_TX_IRQHandler(void)
 *******************************************************************************/
 void USB_LP_CAN_RX0_IRQHandler(void)
 {
+    static int i = 0;
     USB_Istr(); //skx on 20100707
-    //trace_debug_printf("2\r\n");
+    if (i++%2)
+        GPIO_SetBits(GPIOB, GPIO_Pin_6);
+    else
+        GPIO_ResetBits(GPIOB, GPIO_Pin_6);
 }
 
 /*******************************************************************************

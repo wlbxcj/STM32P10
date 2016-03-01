@@ -49,8 +49,7 @@ const uint8_t CustomHID_DeviceDescriptor[CUSTOMHID_SIZ_DEVICE_DESC] =
     3,                          /*Index of string descriptor describing the
                                              device serial number */
     0x01                        /*bNumConfigurations*/
-  }
-  ; /* CustomHID_DeviceDescriptor */
+}; /* CustomHID_DeviceDescriptor */
 
 
 /* USB Configuration Descriptor */
@@ -115,41 +114,37 @@ const uint8_t CustomHID_ConfigDescriptor[CUSTOMHID_SIZ_CONFIG_DESC] =
     /* 41 */
   }
   ; /* CustomHID_ConfigDescriptor */
-#if 0
-const uint8_t CustomHID_ReportDescriptor[CUSTOMHID_SIZ_REPORT_DESC] = 
-{ 
- 0x05, 0x01, // USAGE_PAGE (Generic Desktop)
- 0x09, 0x06, // USAGE (Keyboard)
- 0xa1, 0x01, // COLLECTION (Application)
- 0x05, 0x07, //     USAGE_PAGE (Keyboard/Keypad)
- 0x19, 0xe0, //     USAGE_MINIMUM (Keyboard LeftControl)
- 0x29, 0xe7, //     USAGE_MAXIMUM (Keyboard Right GUI)
- 0x15, 0x00, //     LOGICAL_MINIMUM (0)
- 0x25, 0x01, //     LOGICAL_MAXIMUM (1)
- 0x95, 0x08, //     REPORT_COUNT (8)
- 0x75, 0x01, //     REPORT_SIZE (1)
- 0x81, 0x02, //     INPUT (Data,Var,Abs)
- 0x95, 0x01, //     REPORT_COUNT (1)
- 0x75, 0x08, //     REPORT_SIZE (8)
- 0x81, 0x03, //     INPUT (Cnst,Var,Abs)
- 0x95, 0x06, //   REPORT_COUNT (6)
- 0x75, 0x08, //   REPORT_SIZE (8)
- 0x25, 0xFF, //   LOGICAL_MAXIMUM (255)
- 0x19, 0x00, //   USAGE_MINIMUM (Reserved (no event indicated))
- 0x29, 0x65, //   USAGE_MAXIMUM (Keyboard Application)
- 0x81, 0x00, //     INPUT (Data,Ary,Abs)
- 0x25, 0x01, //     LOGICAL_MAXIMUM (1)
- 0x95, 0x02, //   REPORT_COUNT (2)
- 0x75, 0x01, //   REPORT_SIZE (1)
- 0x05, 0x08, //   USAGE_PAGE (LEDs)
- 0x19, 0x01, //   USAGE_MINIMUM (Num Lock)
- 0x29, 0x02, //   USAGE_MAXIMUM (Caps Lock)
- 0x91, 0x02, //   OUTPUT (Data,Var,Abs)
- 0x95, 0x01, //   REPORT_COUNT (1)
- 0x75, 0x06, //   REPORT_SIZE (6)
- 0x91, 0x03, //   OUTPUT (Cnst,Var,Abs)
- 0xc0        // END_COLLECTION
+#if MY_DES
+const u8 CustomHID_ReportDescriptor[CUSTOMHID_SIZ_REPORT_DESC] =
+{   
+    //这是一个全局（bType为1）条目，将用途页选择为普通桌面Generic Desktop Page。
+    //后面跟1字节数据（bSize为1），后面的字节数就不注释了，自己根据bSize来判断。
+    0x05, 0x01, // USAGE_PAGE (Generic Desktop)
+    //这是一个局部（bType为2）条目，用途选择为0x00。在普通桌面页中，
+    //该用途是未定义的，如果使用该用途来开集合，那么系统将不会把它
+    //当作标准系统设备，从而就成了一个用户自定义的HID设备。
+    0x09, 0x00, // USAGE (0)
+    //这是一个主条目（bType为0）条目，开集合，后面跟的数据0x01表示
+    //该集合是一个应用集合。它的性质在前面由用途页和用途定义为
+    //用户自定义。
+    0xa1, 0x01, // COLLECTION (Application)
+    //这是一个全局条目，说明逻辑值最小值为0。
+    0x15, 0x00, //     LOGICAL_MINIMUM (0)
+    //这是一个全局条目，说明逻辑值最大为255。
+    0x25, 0xff, //     LOGICAL_MAXIMUM (255)
+    //这是一个局部条目，说明用途的最小值为1。
+    0x19, 0x01, //     USAGE_MINIMUM (1)
+    //这是一个局部条目，说明用途的最大值8。
+    0x29, 0x08, //     USAGE_MAXIMUM (8) 
+    //这是一个全局条目，说明数据域的数量为16个。
+    0x95, 0x10, //     REPORT_COUNT (16)
+    //这是一个全局条目，说明每个数据域的长度为8bit，即1字节。
+    0x75, 0x40, //     REPORT_SIZE (8)
+    //这是一个主条目，说明有16个长度为8bit的数据域做为输入。
+    0x81, 0x02, //     INPUT (Data,Var,Abs)
+    //下面这个主条目用来关闭前面的集合。bSize为0，所以后面没数据。
 
+    0xc0        // END_COLLECTION
 }; /* CustomHID_ReportDescriptor */
 
 #else

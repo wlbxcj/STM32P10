@@ -43,9 +43,9 @@ void STM_EVAL_LEDOn(int n)
 void STM_EVAL_LEDOff(int n)
 {
     if (n > GPIO_Pin_7)
-        GPIO_ResetBits(GPIOB, n);
-    else
         GPIO_ResetBits(GPIOA, n);
+    else
+        GPIO_ResetBits(GPIOB, n);
 }
 #define LED1                    GPIO_Pin_13
 #define LED2                    GPIO_Pin_14
@@ -64,10 +64,11 @@ void STM_EVAL_LEDOff(int n)
 void EP1_OUT_Callback(void)
 {
   BitAction Led_State;
+    unsigned char ucRecLen = 0;
 
   /* Read received data (2 bytes) */  
-  USB_SIL_Read(EP1_OUT, Receive_Buffer);
-  
+    ucRecLen = USB_SIL_Read(EP1_OUT, Receive_Buffer);
+    SetEPRxStatus(ENDP1, EP_RX_VALID);
   if (Receive_Buffer[1] == 0)
   {
     Led_State = Bit_RESET;
@@ -128,8 +129,10 @@ void EP1_OUT_Callback(void)
     break;
   }
  
-#ifndef STM32F10X_CL   
-  SetEPRxStatus(ENDP1, EP_RX_VALID);
+#if !MY_DES
+    trace_debug_printf("USB rec(%02x):%02x--%02x", ucRecLen, Receive_Buffer[0], Receive_Buffer[1]);
+    USB_SIL_Write(EP1_IN, (uint8_t*) Receive_Buffer, ucRecLen);  
+    SetEPTxValid(ENDP1);
 #endif /* STM32F10X_CL */
  
 }
@@ -144,6 +147,9 @@ void EP1_OUT_Callback(void)
 void EP1_IN_Callback(void)
 {
   PrevXferComplete = 1;
+#if !MY_DES
+      trace_debug_printf("USB Callback");
+#endif
 }
 /******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/
 
