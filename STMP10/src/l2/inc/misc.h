@@ -359,6 +359,6 @@ unsigned char Options(unsigned char *sOptions,unsigned char bOffset)
 
 #define WAITTIMEFORDETECT     500  //500 of 10ms
 
-#define printf trace_debug_printf
+#define s_printf trace_debug_printf
 
 #endif

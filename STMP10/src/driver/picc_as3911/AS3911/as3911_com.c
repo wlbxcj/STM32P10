@@ -36,7 +36,7 @@
 #include "as3911_com.h"
 
 #include "aS3911.h"
-
+#include "comm.h"
 
 /*
 ******************************************************************************
@@ -253,7 +253,7 @@ void as3911Transmit(const u8 *message, u32 messageLength, AS3911RequestFlags_t r
     u8 numBytesForFifo = 0;
     u32 numBytesTransmitted = 0;
     u32 irqStatus = 0;
-    AS3911RequestFlags_t transmissionModeFlags = requestFlags & AS3911_TX_MODE_MASK;
+    AS3911RequestFlags_t transmissionModeFlags = (AS3911RequestFlags_t)(requestFlags & AS3911_TX_MODE_MASK);
 
     /* Clear FIFO. */
     as3911ExecuteCommand(AS3911_CMD_CLEAR_FIFO);
@@ -345,7 +345,7 @@ s16 as3911Receive(u8 *response, u32 maxResponseLength, u32 *responseLength)
 	if((responseLength == NULL) || (response == NULL))
 		{
 		return AS3911_INTERNAL_ERROR;
-		s_UartPrint("AS3911_INTERNAL_ERROR");
+		//s_UartPrint("AS3911_INTERNAL_ERROR");
 		}
 	*responseLength = 0;
 	//LOG("Start Receive.");

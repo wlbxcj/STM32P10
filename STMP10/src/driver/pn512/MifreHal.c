@@ -6,6 +6,7 @@
 **************************************************************/
 #define FOR_PN512_DEVICE
 #include "Mifre_TmDef.h"
+#include "kf701dh.h"
 
 extern PN512_RF_WORKSTRUCT PN512_RF_WorkInfo;
 extern PICC_PARA c_para;  
@@ -36,7 +37,7 @@ extern PICC_PARA c_para;
 *       PN512_s_RF_SPIIrq                只读        从RF_pucSendBuf开始的缓冲区中取数据
 *                                                            进行发送
 ******************************************************************************/
-static uchar RF_pucSendBuf[10];
+//static uchar RF_pucSendBuf[10];
 
 /******************************************************************************
 * 变量作用：SPI模式下, 读寄存器操作时的寄存器地址
@@ -58,7 +59,7 @@ static volatile uchar  RF_ucRegAddr = 0;
 *       PN512_s_RF_SPIIrq                  只读        将收到数据存入RF_pucRecvBuf开始
 *                                                              的缓冲区中
 ******************************************************************************/
-static uchar RF_pucRecvBuf[10];
+//static uchar RF_pucRecvBuf[10];
 
 /******************************************************************************
 * 变量作用：使用SPI接口时，指向当前要接收和发送位置
@@ -421,7 +422,7 @@ void PN512_s_vRFSwitchNCS(char chHigh)
 
 int PN512_s_vRFReadReg (ulong ulLen, uchar ucRegAddr, uchar* pucData)
 { 
-	#if (TERM_TYPE != TERM_KF322)
+#if (TERM_TYPE != TERM_KF322)
 	if (ulLen == 0)
 		return 0xFF;
 		
@@ -447,17 +448,19 @@ int PN512_s_vRFReadReg (ulong ulLen, uchar ucRegAddr, uchar* pucData)
 	//Spi_Ctl_Protect(1);
 	local_irq_enable();
     return 0;
-    #else
+#else
     extern uchar PN512GetReg(uchar  RegAddr);
+
     if (ulLen != 1)
 		return 0xFF;
     *pucData = PN512GetReg(ucRegAddr);
-    #endif
+    return 0;
+#endif
 }
 
 int PN512_s_vRFWriteReg (ulong ulLen, uchar ucRegAddr, uchar* pucData)
 {
-	#if (TERM_TYPE != TERM_KF322)
+#if (TERM_TYPE != TERM_KF322)
 	if (ulLen == 0)
 		return 0xFF; 
 	
@@ -481,19 +484,21 @@ int PN512_s_vRFWriteReg (ulong ulLen, uchar ucRegAddr, uchar* pucData)
 	//Spi_Ctl_Protect(1);
 	local_irq_enable();
     return 0;
-    #else
+#else
     extern void PN512SetReg(uchar RegAddr,uchar RegValue);
     if (ulLen != 1)
 		return 0xFF;
     PN512SetReg(ucRegAddr,*pucData);
-    #endif
+    
+    return 0;
+#endif
 }
 
 
 int PN512_sPcdInit(void)
 {
 	int ret=0;
-	char pucData;
+	//char pucData;
 	
 	 ret=PN512_s_RF_Init();//初始化处理
 
@@ -518,12 +523,12 @@ int InitNotUseGpio(void)
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_OD;
   GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-  /*GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11 | GPIO_Pin_12| GPIO_Pin_13| GPIO_Pin_14| GPIO_Pin_15 ;
+  //GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11 | GPIO_Pin_12| GPIO_Pin_13| GPIO_Pin_14| GPIO_Pin_15 ;
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11 | GPIO_Pin_12| GPIO_Pin_15 ;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_OD;
   GPIO_Init(GPIOA, &GPIO_InitStructure);
-*/
+
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 ;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_OD;
@@ -545,6 +550,7 @@ int InitNotUseGpio(void)
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_OD;
   GPIO_Init(GPIOC, &GPIO_InitStructure);
   
+  return 0;
 }
 
 int PN512_s_RF_Init(void)

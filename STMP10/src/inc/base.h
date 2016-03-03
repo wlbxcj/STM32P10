@@ -17,8 +17,8 @@
 //#define V10X
 //#undef V10X           // 以后版本不再区分10X 10P
 
-#define  VPOS335S_VOS_DEBUG
-//#undef   VPOS335S_VOS_DEBUG
+//#define  VPOS335S_VOS_DEBUG
+#undef   VPOS335S_VOS_DEBUG
 
 #ifdef  VPOS335S_VOS_DEBUG
 #define UARTPRINF_DEBUG     //定义此宏，打开串口调试信息

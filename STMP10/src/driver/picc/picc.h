@@ -511,7 +511,7 @@ int  s_PiccInit(void);
 #else
 //#define s_UartPrint printf
 
-#define printf(...)  
+#define s_printf(...)  
 //#undef s_UartPrint
 //#define s_UartPrint(...)
 

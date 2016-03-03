@@ -1,6 +1,6 @@
 #ifndef _PCI_H
 #define _PCI_H
-
+#include "base.h"
 //========================================================
 //                   PED AND PCI API
 //==========================================================
@@ -176,5 +176,21 @@ int  DES_TDES(uchar *key,uchar keylen,uchar *data,uchar datalen,uchar mode);
 int  s_InitSysKeyFile(unsigned char bFlag);
 int  s_ReadSysKeyFile(long offset,unsigned char fromwhere,unsigned char *outdata,int max_len);
 int  s_WriteSysKeyFile(long offset,unsigned char fromwhere,unsigned char *indata,int max_len);
+
+
+
+int CrcPageCmp(unsigned char bpage,unsigned char *sBuf);
+int CrcPageCalc(unsigned char bpage,unsigned char *sBuf);
+int s_ReadDesKey(uchar app_no,uchar key_type,uchar key_no,uchar *key_len,uchar *key_data);
+int _s_CheckPinKey(unsigned char *sKey);
+int s_PciWritePinCount(int i, DWORD value);
+int s_DelAllSecrecyData(void);
+int s_DelAllSecrecyData(void);
+int s_PciWritePinCount(int i, DWORD value);
+int ss_BpkWriteReg(DWORD dwRegNum, DWORD dwRegVal);
+int s_SetLockState(int mode);
+int s_GetLockStateBuf(unsigned char *sOutBuf);
+void Des3_24Mac(uchar *key,uchar *mdat,ushort length);
+int s_WriteSK_MACK(uchar *sk_mack,uchar sk_mack_len);
 
 #endif

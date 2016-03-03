@@ -311,32 +311,8 @@ void testreset()
                 Lib_KbGetCh();
 }
 
-__IO uint8_t PrevXferComplete = 1;
+//__IO uint8_t PrevXferComplete = 1;
 
-
-void Usb_SendTest(unsigned char *pucData, unsigned char ucSendLen)
-{
-    unsigned char Send_Buffer[100] = {0, 0};
-
-    //if (PrevXferComplete)
-    {
-      Send_Buffer[0] = 'A';
-      
-      //if (STM_EVAL_PBGetState(Button_TAMPER) == Bit_RESET)
-      {
-        memcpy(&Send_Buffer[1], pucData, ucSendLen);
-        //Send_Buffer[1] = ucData;
-      }
-
-      
-      /* Write the descriptor through the endpoint */    
-      USB_SIL_Write(EP1_IN, (uint8_t*) Send_Buffer, ucSendLen + 1);  
-      
-      SetEPTxValid(ENDP1);
-      
-      //PrevXferComplete = 0;
-    }
-}
 
 void main()
 {
@@ -362,24 +338,7 @@ void main()
     //DisplayType = initial_system();//115200
     initial_system();//115200
 
-    trace_debug_printf("\r\nready to int usb\r\n");
-    USB_Interrupts_Config();
-    Set_USBClock();
-    USB_Init();
-    trace_debug_printf("usb int over\r\n");
-    j = 0;
-    while (1)
-    {
-        if (0 == Lib_KbCheck())
-        {
-            for (i = 0; i < 64; i++)
-                sBuf[i] = i + j;
-            CmdDataType = Lib_KbGetCh();
-            Usb_SendTest(sBuf, 63);
-            trace_debug_printf("KB = 0x%02X\r\n", nRet);
-            j++;
-        }
-    }
+    
    //Lib_AppInit();
 #if 0   
  //´¥·¢
@@ -566,7 +525,7 @@ void main()
   
   extern void RfTestAll(void);
 
-  //s_VoiceInit();
+  s_VoiceInit();
  
   
   //for(;;)

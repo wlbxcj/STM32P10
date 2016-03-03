@@ -769,7 +769,7 @@ void RSARecover(unsigned char* Modul,unsigned int ModulLen,unsigned char* Exp,
 
 void Lib_Rsa(unsigned char* Modul,unsigned int ModulLen,unsigned char* Exp,unsigned int ExpLen,unsigned char* DataIn,unsigned char* DataOut)
 {
-     int i,len;
+     //int i,len;
      UINT4 Modul4[MAX_NN_LEN],Exp4[MAX_NN_LEN],DataIn4[MAX_NN_LEN],DataOut4[MAX_NN_LEN];
      unsigned int Modul4Len,Exp4Len;
 

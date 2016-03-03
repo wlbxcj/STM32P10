@@ -159,7 +159,7 @@ static s16 emvAnticollisionLevelx(u8 sel, bool_t cascaded, u8 *uid);
 ******************************************************************************
 */
 
-s16 emvTypeACardPresent()
+s16 emvTypeACardPresent(void)
 {
     u8 atqa[2];
     u32 responseLength = 0;
@@ -318,9 +318,10 @@ s16 emvTypeAActivation(EmvPicc_t *picc)
     /* Parse and check FSCI. */
     picc->fsci = t0 & 0x0F;
 
-    if (picc->fsci < EMV_FSCI_MIN_PCD)
-        return EMV_ERR_PROTOCOL;
-    else if (picc->fsci > 8)
+    //if (picc->fsci < EMV_FSCI_MIN_PCD)    //wlb
+    //    return EMV_ERR_PROTOCOL;
+    //else 
+    if (picc->fsci > 8)
         picc->fsci = 8;
 
     /* Parse TA(1) (datarate flags). */

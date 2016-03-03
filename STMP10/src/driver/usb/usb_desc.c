@@ -167,10 +167,13 @@ const u8 CustomHID_ReportDescriptor[CUSTOMHID_SIZ_REPORT_DESC] =
     0x95, 0x40, //     REPORT_COUNT (64)
     //这是一个全局条目，说明每个数据域的长度为8bit，即1字节。
     0x75, 0x08, //     REPORT_SIZE (8)
-    //这是一个主条目，说明有16个长度为8bit的数据域做为输入。
-    0x81, 0x02, //     INPUT (Data,Var,Abs)
+    //这是一个主条目，说明有64个长度为8bit的数据域做为输入。
+    0x81, 0x40, //     INPUT (Data,Var,Abs)
     //下面这个主条目用来关闭前面的集合。bSize为0，所以后面没数据。
 
+    0x19, 0x01,
+    0x29, 0x08,
+    0x91, 0x40,
     0xc0        // END_COLLECTION
 #else
         0x05, 0xFF, // USAGE_PAGE(User define)

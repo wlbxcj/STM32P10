@@ -6,7 +6,7 @@
 #include  "lcd.h"
 #include "calibration.h"
 
-//#include "ASCII8X8.h"  //move to app
+#include "dll.h"
 
 #include  "base.h"
 #include  "comm.h"
@@ -53,9 +53,9 @@ BYTE g_byFontAttr;      // 液晶显示属性，0表示正常显示，非0表示黑白颠倒显示
 
 static BYTE gs_byLcdBusyFlag = 0;           // 液晶屏忙标志，0表示空闲，非0表示忙，忙的时候不能进行设置
 BYTE gs_byBaseGrayVal = DEFAULT_GRAY_BASE; // 灰度基值
-static BYTE gs_byRestoreX = 0;              // 备份起始位置坐标x，取值0~127
-static BYTE gs_byRestoreY = 0;              // 备份起始位置坐标y，取值0~63
-static BYTE gs_byRestoreEnable = 0;         // 备份使能，1可备份，0不可备份，在没有做过备份的时候，该变量取值为0
+//static BYTE gs_byRestoreX = 0;              // 备份起始位置坐标x，取值0~127
+//static BYTE gs_byRestoreY = 0;              // 备份起始位置坐标y，取值0~63
+//static BYTE gs_byRestoreEnable = 0;         // 备份使能，1可备份，0不可备份，在没有做过备份的时候，该变量取值为0
 static BYTE gs_abyDisplayData[6][132];      // 屏幕显示数据缓冲
 static BYTE gs_abyCurrentData[6][132];      // 当前屏幕上显示的数据
 
@@ -172,6 +172,7 @@ int s_ADCInit(void)
 	/* Enable ADC1 */
 	ADC_Cmd( ADC1,ENABLE );
 
+    return 0;
 }
 
 unsigned long Lib_LCDVerValue(void)
@@ -1348,11 +1349,10 @@ int s_GetBackupGB2312DotMatrix(const BYTE *str, BYTE byFontHeight, BYTE *pbyChar
           }
         }
         return 2;
-        break;
+
       default:
         return 1;
     }
-  return 1;
 }
 
 
@@ -2212,7 +2212,7 @@ int Lib_Lcdprintf(char *fmt,...)
         return 0;
     }
     if(strlen(fmt)>sizeof(sbuffer))
-      return;
+      return 0;
     
     gs_byLcdBusyFlag = 1;
     memset(sbuffer, 0, sizeof(sbuffer));
@@ -2222,7 +2222,7 @@ int Lib_Lcdprintf(char *fmt,...)
     i = vsprintf(sbuffer, fmt, varg);
     va_end(varg);
     if( strlen((char*)sbuffer)>sizeof(sbuffer))
-      s_LcdWrStr((BYTE*)sbuffer, sizeof(sbuffer));
+      s_LcdWrStr((BYTE*)sbuffer, (BYTE)sizeof(sbuffer));
     else
       s_LcdWrStr((BYTE*)sbuffer, strlen((char*)sbuffer));
     
@@ -2463,16 +2463,16 @@ int TestLcd(void)
 				 					 "LAN Test      "
 								 };
 
-    BYTE ch;
-    int i = 0, j;
-	static char count = 0;
-    BYTE strTemp[200] = {0xc4,0xbc,0x07,0xc4,0x3c,0x21,0x21,0xf9,0x25,0x23,0x20,0x00,0x04,0x02,0x01,0x01,
-0x02,0x00,0x04,0x07,0x00,0x00,0x00,0x00};/*"好",0*/
-    unsigned char hao0[]={ 
+    //BYTE ch;
+    //int i = 0, j;
+	//static char count = 0;
+   // BYTE strTemp[200] = {0xc4,0xbc,0x07,0xc4,0x3c,0x21,0x21,0xf9,0x25,0x23,0x20,0x00,0x04,0x02,0x01,0x01,
+//0x02,0x00,0x04,0x07,0x00,0x00,0x00,0x00};/*"好",0*/
+    /*unsigned char hao0[]={ 
     0x04,0x0, 0xFF,0xE, 0x1F,0x8, 0x10,0x8, 
     0xFF,0xE, 0x80,0x2, 0x3F,0xC, 0x54,0x8, 
     0x2B,0x0, 0x12,0x8, 0x6E,0x6, 0x00,0x0 
-    }; 
+    }; */
 
     //Lib_LcdCls();
 
@@ -2481,19 +2481,19 @@ int TestLcd(void)
 //    Lcdarray_On(0,0,24-12,strTemp);
 //    Lcdarray_On(1,0,12,&strTemp[12]);
     
-    Lib_LcdPrintxy(0,0,2,EnMenu[0]);
-    Lib_LcdPrintxy(0,12*1,2,EnMenu[1]);
+    Lib_LcdPrintxy(0,0,2, (char *)EnMenu[0]);
+    Lib_LcdPrintxy(0,12*1,2, (char *)EnMenu[1]);
 
-    Lib_LcdPrintxy(0,0,0,EnMenu[0]);
-    Lib_LcdPrintxy(0,8*1,0,EnMenu[1]);
+    Lib_LcdPrintxy(0,0,0, (char *)EnMenu[0]);
+    Lib_LcdPrintxy(0,8*1,0, (char *)EnMenu[1]);
     
-    Lib_LcdPrintxy(0,8*2,0,EnMenu[2]);
-    Lib_LcdPrintxy(0,8*3,0,EnMenu[3]);
-    
+    Lib_LcdPrintxy(0,8*2,0, (char *)EnMenu[2]);
+    Lib_LcdPrintxy(0,8*3,0, (char *)EnMenu[3]);
+#if 0    
     strTemp[0] = 20;
     strTemp[1] = 17;
     
-#if 0    
+    
     for (i=0; i<20; i++)
     {
         if (0 == (i%2))

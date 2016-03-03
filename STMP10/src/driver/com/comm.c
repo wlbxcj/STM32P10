@@ -1,8 +1,4 @@
-#if 0
-#include  "base.h"
-#include  "comm.h"
-#include  "vosapi.h"
-#endif
+#include  "systimer.h"
 
 #include "KF701DH.h"
 #include "..\..\inc\FunctionList.h"
@@ -251,8 +247,6 @@ int Lib_ComClose(uchar port)
 
 void isr_com1(void)
 {
-    int i;
-    
     if (USART_GetITStatus(USART1, USART_IT_RXNE)!= RESET)
     {
       /* Clear the USART3 Receive interrupt */
@@ -329,8 +323,6 @@ void isr_com1(void)
 
 void isr_com2(void)
 {
-    int i;
-    
     if (USART_GetITStatus(USART2, USART_IT_RXNE)!= RESET)
     {
       /* Clear the USART3 Receive interrupt */
@@ -401,15 +393,15 @@ void debug_printf(u8 col,u8 row,u8 mode,char *str,...)
       va_list       varg;
       int           retv;
       char          sbuffer[512];
-      char * where;
+      //char * where;
       memset(sbuffer, 0, sizeof(sbuffer));
-      where =&sbuffer[0];
+      //where =&sbuffer[0];
       va_start( varg, str );
       retv=vsprintf(sbuffer,  str,  varg);
       va_end( varg );
       
       if(retv==0)return;
-      UART_DataSend(USART1, sbuffer,retv);
+      UART_DataSend(USART1, (u8 *)sbuffer,retv);
       UART_DataSend(USART1,"\r\n",2);
 #endif      
 }
@@ -420,15 +412,15 @@ void trace_debug_printf(char *str,...)
       va_list       varg;
       int           retv;
       char          sbuffer[512];
-      char * where;
+      //char * where;
       memset(sbuffer, 0, sizeof(sbuffer));
-      where =&sbuffer[0];
+      //where =&sbuffer[0];
       va_start( varg, str );
       retv=vsprintf(sbuffer,  str,  varg);
       va_end( varg );
       
       if(retv==0)return;
-      UART_DataSend(USART1, sbuffer,retv);
+      UART_DataSend(USART1, (u8 *)sbuffer,retv);
 
 
       //UART_DataSend(USART1,"\r\n",2);
@@ -467,7 +459,6 @@ int Lib_ComSendByte(uchar port,uchar send_byte)
       break;
     default:
       return COM_INVALID_PORTNO;
-      break;
   }
 	
   return 0;  
@@ -483,13 +474,13 @@ int Lib_ComCheckSend(uchar port)
         return 0;//finished
       else
         return 1;
-      break;
+
     case UART2:
       if(USART_GetFlagStatus(USART2, USART_FLAG_TC))
         return 0;//finished
       else
         return 1;
-      break;
+
     default:
       break;
   }
@@ -511,8 +502,6 @@ int Lib_ComCheckSend(uchar port)
 ****************************************************************************/
 int Lib_ComRecvByte(uchar port,uchar *recv_byte,int waitms)
 {
-  unsigned long cnt;
-
   if(port>MAX_PORT_NUM) return COM_INVALID_PORTNO;//skx 090223
 	
   if(!uartOpenFlag[port]) return COM_NOT_OPEN;
@@ -561,7 +550,6 @@ int Lib_ComRecvByte(uchar port,uchar *recv_byte,int waitms)
 
 int Lib_ComRecv(uchar port,uchar *recv_data,int max_len,int *recv_len,int waitms)
 {
-  unsigned long cnt;
   int recvlen; 
 
   if(port>MAX_PORT_NUM) 
@@ -617,15 +605,8 @@ int Lib_ComRecv(uchar port,uchar *recv_data,int max_len,int *recv_len,int waitms
         *recv_len = recvlen;
         return 0;
       }
-      
     }
-    
-    
-                  
-    return 0;
   }  
-  
-  
 }
 
 
@@ -809,3 +790,4 @@ int Sign_panel_handshake(unsigned char *frame)
   
 	return send_frame_to_sign_panel(CMD_SIGN_PANEL_HANDSHAKE, NULL, 0);
 }
+

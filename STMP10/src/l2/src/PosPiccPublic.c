@@ -364,12 +364,12 @@ int Picc_command_APDU_sim(struct scc_cmd *command, unsigned char *rbuf, unsigned
 #endif
   if(bRet = Lib_PiccCommand( &tApduSend,&tApduResp))   
   {
-    printf("Picc_isocommand[%02x]\n",bRet);
+    s_printf("Picc_isocommand[%02x]\n",bRet);
     return bRet;
   }
   memcpy(rbuf,tApduResp.DataOut,tApduResp.LenOut);
 	
-  printf("tApduResp len[%i]\n",tApduResp.LenOut);
+  s_printf("tApduResp len[%i]\n",tApduResp.LenOut);
 	
   *rlen = tApduResp.LenOut+2;
   rbuf[*rlen-2] = tApduResp.SWA;

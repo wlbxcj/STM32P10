@@ -151,35 +151,33 @@ void CTR_LP(void)
 *******************************************************************************/
 void CTR_HP(void)
 {
-  uint32_t wEPVal = 0;
+    uint32_t wEPVal = 0;
 
-  while (((wIstr = _GetISTR()) & ISTR_CTR) != 0)
-  {
-    _SetISTR((uint16_t)CLR_CTR); /* clear CTR flag */
-    /* extract highest priority endpoint number */
-    EPindex = (uint8_t)(wIstr & ISTR_EP_ID);
-    /* process related endpoint register */
-    wEPVal = _GetENDPOINT(EPindex);
-    if ((wEPVal & EP_CTR_RX) != 0)
+    while (((wIstr = _GetISTR()) & ISTR_CTR) != 0)
     {
-      /* clear int flag */
-      _ClearEP_CTR_RX(EPindex);
+        _SetISTR((uint16_t)CLR_CTR); /* clear CTR flag */
+        /* extract highest priority endpoint number */
+        EPindex = (uint8_t)(wIstr & ISTR_EP_ID);
+        /* process related endpoint register */
+        wEPVal = _GetENDPOINT(EPindex);
+        if ((wEPVal & EP_CTR_RX) != 0)
+        {
+            /* clear int flag */
+            _ClearEP_CTR_RX(EPindex);
 
-      /* call OUT service function */
-      (*pEpInt_OUT[EPindex-1])();
+            /* call OUT service function */
+            (*pEpInt_OUT[EPindex-1])();
 
-    } /* if((wEPVal & EP_CTR_RX) */
-    else if ((wEPVal & EP_CTR_TX) != 0)
-    {
-      /* clear int flag */
-      _ClearEP_CTR_TX(EPindex);
+        } /* if((wEPVal & EP_CTR_RX) */
+        else if ((wEPVal & EP_CTR_TX) != 0)
+        {
+            /* clear int flag */
+            _ClearEP_CTR_TX(EPindex);
 
-      /* call IN service function */
-      (*pEpInt_IN[EPindex-1])();
+            /* call IN service function */
+            (*pEpInt_IN[EPindex-1])();
 
-
-    } /* if((wEPVal & EP_CTR_TX) != 0) */
-
+        } /* if((wEPVal & EP_CTR_TX) != 0) */
   }/* while(...) */
 }
 

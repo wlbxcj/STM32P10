@@ -1005,12 +1005,12 @@ int s_PiccDetectTypeB(uchar mode,uchar *CardType,uchar *SerialNo)
 	//DelayMs(10);
 	iret=s_PiccCmdExchange(0,0,tmps,&tn);
 	g_WakeUpFlag = 0;
-	printf("\r\n----WUPB--iret=%d--Txlen=%d--\r\n", iret, tn);
+	s_printf("\r\n----WUPB--iret=%d--Txlen=%d--\r\n", iret, tn);
 	for (i=0; i<tn; i++)
 	{
-		printf("tmps[%d]=0x%02x ", i, tmps[i]);
+		s_printf("tmps[%d]=0x%02x ", i, tmps[i]);
 	}
-	printf("\r\n");
+	s_printf("\r\n");
 
 	if(iret)   
 		return PICC_RequestErr;    
@@ -1127,13 +1127,13 @@ int s_PiccDetectTypeA(uchar mode,uchar *CardType,uchar *SerialNo)
 	//这步暂时不做错误退出处理
 	if (iret==PICC_TypeAColl && g_PiccCheckCardMode==CHECK_ONE_CARD)
 	{
-		printf("PICC_Collision1\r\n"); 
+		s_printf("PICC_Collision1\r\n"); 
 		return PICC_Collision;  //寻到多张A卡
 	}
 	else if(iret!=0 && iret!=PICC_TypeAColl)   
 	{
-		printf("WUPA Err!\r\n");     
-		printf("iret=%d:%d,%02X %02X %02X \r\n",iret,Txlen,tmps[0],tmps[1],cc);     
+		s_printf("WUPA Err!\r\n");     
+		s_printf("iret=%d:%d,%02X %02X %02X \r\n",iret,Txlen,tmps[0],tmps[1],cc);     
 		return PICC_RequestErr;
 	}
 	else
@@ -1178,7 +1178,7 @@ int s_PiccDetectTypeA(uchar mode,uchar *CardType,uchar *SerialNo)
 
 		if (iret==PICC_TypeAColl && g_PiccCheckCardMode==CHECK_ONE_CARD)
 		{
-			printf("PICC_Collision2\r\n"); 
+			s_printf("PICC_Collision2\r\n"); 
 			return PICC_Collision;  //寻到多张A卡
 		}
 		else if (iret==PICC_TypeAColl && g_PiccCheckCardMode==CHECK_A_CARD)
@@ -1236,7 +1236,7 @@ int s_PiccDetectTypeA(uchar mode,uchar *CardType,uchar *SerialNo)
 		}
 		else if(iret != 0)   
 		{
-			printf("iret1=%d:%d,%02X %02X %02X \r\n",iret,Txlen,tmps[0],tmps[1],cc);     
+			s_printf("iret1=%d:%d,%02X %02X %02X \r\n",iret,Txlen,tmps[0],tmps[1],cc);     
 			return PICC_AntiCollErr;
 		}
 
@@ -1245,7 +1245,7 @@ int s_PiccDetectTypeA(uchar mode,uchar *CardType,uchar *SerialNo)
 		for(cc=0,i=0;i<5;i++) cc^=tmps[i];		//卡校验	
 		if(cc)
 		{
-			printf("UidCRCErr=%02x\r\n",cc);
+			s_printf("UidCRCErr=%02x\r\n",cc);
 			return PICC_UidCRCErr;							//error crc check of UID
 		}       
 		memcpy(uid[cascade],tmps,5);
@@ -1268,12 +1268,12 @@ int s_PiccDetectTypeA(uchar mode,uchar *CardType,uchar *SerialNo)
 		//cc=s_ReadRegRc523(rCommandReg);
 		if (iret==PICC_TypeAColl && g_PiccCheckCardMode==CHECK_ONE_CARD)
 		{
-			printf("PICC_Collision3\r\n"); 
+			s_printf("PICC_Collision3\r\n"); 
 			return PICC_Collision;  //寻到多张A卡
 		}
 		else if(iret != 0)   
 		{
-			printf("iret2=%d:%d,%02X %02X %02X \r\n",iret,Txlen,tmps[0],tmps[1],cc);     
+			s_printf("iret2=%d:%d,%02X %02X %02X \r\n",iret,Txlen,tmps[0],tmps[1],cc);     
 			return PICC_AntiCollErr;
 		}
 
@@ -1421,7 +1421,7 @@ int PICC_WUPA(uchar *atqa)
 	
 	if (iret==PICC_TypeAColl)
 	{
-		printf("PICC_Collision1\r\n");
+		s_printf("PICC_Collision1\r\n");
 		printfx("error :%s %d\r\n",__FUNCTION__,__LINE__);
 		return PICC_Collision;  //寻到多张A卡
 	}
@@ -1440,7 +1440,7 @@ if(iret!=PICC_SOFErr){															//TA204
 //		g_HaveACardFlag = HAVE_CARD;
 	}
 	if(Txlen!=2){
-		printf("error :%s %d\r\n",__FUNCTION__,__LINE__);
+		s_printf("error :%s %d\r\n",__FUNCTION__,__LINE__);
 		return PICC_RequestErr;  //WUPA 应答(ATQA),2个字节长度
 	}
 {
@@ -1640,7 +1640,7 @@ RETRY:
 	Txlen=2;
 	//g_WakeUpFlag = 1;
 	//Lib_DelayMs(10);
-		printf(":%d %d\r\n",tmps[1],__LINE__);
+		s_printf(":%d %d\r\n",tmps[1],__LINE__);
 g_ActiveFlag=1;
 	iret=s_PiccCmdExchange(0,0,tmps,&Txlen);
 g_ActiveFlag=0;
@@ -1657,19 +1657,19 @@ g_ActiveFlag=0;
 	}
 	else if (iret==PICC_TypeAColl)
 	{
-		printf("PICC_Collision1\r\n");
+		s_printf("PICC_Collision1\r\n");
 		printfx("error :%s %d\r\n",__FUNCTION__,__LINE__);
 		return PICC_Collision;	//寻到多张A卡
 	}
 	else if(iret!=0 && iret!=PICC_TypeAColl)
 	{
-		printf("WUPA Err!\r\n");
+		s_printf("WUPA Err!\r\n");
 		printfx("iret=%d:%d,%02X %02X %02X \r\n",iret,Txlen,tmps[0],tmps[1],cc);
 		printfx("error :%s %d\r\n",__FUNCTION__,__LINE__);
 		return PICC_RequestErr;
 	}
 	else{
-		printf("ok :%s %d\r\n",__FUNCTION__,__LINE__);
+		s_printf("ok :%s %d\r\n",__FUNCTION__,__LINE__);
 //		g_HaveACardFlag = HAVE_CARD;
 		#if 0
 		{
@@ -1797,7 +1797,7 @@ RETRY:
 #endif //FAKE_FOR_TEST
 	if(iret){
 		
-		printf("%s %d %d\r\n",__FUNCTION__,__LINE__,iret);
+		s_printf("%s %d %d\r\n",__FUNCTION__,__LINE__,iret);
 		
 	//	if(iret==PICC_CRCErr)
 	//		return iret;
@@ -1815,7 +1815,7 @@ RETRY:
 		return PICC_RequestErr;
 	}
 	else{
-		printf("ok :%s %d\r\n",__FUNCTION__,__LINE__);
+		s_printf("ok :%s %d\r\n",__FUNCTION__,__LINE__);
 //		g_HaveBCardFlag = HAVE_CARD;
 	}
 /*
@@ -2162,7 +2162,7 @@ int set_rc523reg()
 
  			
 			case 0x1b:
-				printf("[%s]%d polling return\r\n",__FUNCTION__,__LINE__);
+				s_printf("[%s]%d polling return\r\n",__FUNCTION__,__LINE__);
 				return  0x1b;
 
 			default :
@@ -2272,7 +2272,7 @@ int PICC_POLLING_A(void)
 				uchar key = s_getkey(COM_DEBUG);
 				if (key == KEYCANCEL)
 				{
-					printf("[%s]Line(%d): polling return\r\n",__FUNCTION__,__LINE__);
+					s_printf("[%s]Line(%d): polling return\r\n",__FUNCTION__,__LINE__);
 					HARDWARE_TEST_BREAK=1; 
 					return 0;
 				}
@@ -2426,7 +2426,7 @@ RETRY0:
 	
 	if(ret==PICC_RxTimerOut){
 		if(retry_count>2){
-			printf("error :%s %d\r\n",__FUNCTION__,__LINE__);
+			s_printf("error :%s %d\r\n",__FUNCTION__,__LINE__);
 			return PICC_Collision;
 		}
 		retry_count++;
@@ -2483,7 +2483,7 @@ RETRY1:
 		
 		if(iret==PICC_RxTimerOut){
 			if(retry_count>2){
-				printf("error :%s %d\r\n",__FUNCTION__,__LINE__);
+				s_printf("error :%s %d\r\n",__FUNCTION__,__LINE__);
 				return PICC_Collision;
 			}
 			retry_count++;
@@ -2498,19 +2498,19 @@ RETRY1:
 
 		if (iret==PICC_TypeAColl)
 		{
-			printf("PICC_Collision2\r\n"); 
+			s_printf("PICC_Collision2\r\n"); 
 			return PICC_Collision;  //寻到多张A卡
 		}
 		else if(iret != 0)   
 		{
-			printf("iret1=%d:%d,%02X %02X %02X \r\n",iret,Txlen,tmps[0],tmps[1],cc);     
+			s_printf("iret1=%d:%d,%02X %02X %02X \r\n",iret,Txlen,tmps[0],tmps[1],cc);     
 			return PICC_AntiCollErr;
 		}
 
 		for(cc=0,i=0;i<5;i++) cc^=tmps[i];		//卡校验	
 		if(cc)
 		{
-			printf("UidCRCErr=%02x\r\n",cc);
+			s_printf("UidCRCErr=%02x\r\n",cc);
 			return PICC_UidCRCErr;							//error crc check of UID
 		}    
 
@@ -2569,7 +2569,7 @@ RETRY2:
 
 		if(iret==PICC_RxTimerOut){
 			if(retry_count>2){
-				printf("error :%s %d\r\n",__FUNCTION__,__LINE__);
+				s_printf("error :%s %d\r\n",__FUNCTION__,__LINE__);
 				return PICC_Collision;
 			}
 			retry_count++;
@@ -2579,12 +2579,12 @@ RETRY2:
 	
 		if (iret==PICC_TypeAColl )
 		{
-			printf("PICC_Collision3\r\n"); 
+			s_printf("PICC_Collision3\r\n"); 
 			return PICC_Collision;  //寻到多张A卡
 		}
 		else if(iret != 0)   
 		{
-			printf("iret2=%d:%d,%02X %02X %02X \r\n",iret,Txlen,tmps[0],tmps[1],cc);     
+			s_printf("iret2=%d:%d,%02X %02X %02X \r\n",iret,Txlen,tmps[0],tmps[1],cc);     
 			return PICC_AntiCollErr;
 		}
 
@@ -2638,7 +2638,7 @@ int PICC_AntiColl_B()
 	PICC_AntiColl_B_Flag=0;
 	
 	if(iret)   {
-		printf("PICC_AntiColl_B %d \r\n",iret);
+		s_printf("PICC_AntiColl_B %d \r\n",iret);
 		return PICC_RequestErr;    
 
 	}
@@ -2785,7 +2785,7 @@ int PICC_main_loop(void)
 		iret=PICC_AntiColl();
 		if(iret != PICC_OK){
 			PICC_RESET2();
-			printf("%d\r\n",iret);
+			s_printf("%d\r\n",iret);
 			continue;
 		}
 		
@@ -2798,7 +2798,7 @@ int PICC_main_loop(void)
 		}
 		if(iret != PICC_OK){
 			PICC_RESET2();
-			printf("%d\r\n",iret);
+			s_printf("%d\r\n",iret);
 			continue;
 		}
 		//process picc
@@ -2907,7 +2907,7 @@ int Lib_PiccCheck1(uchar mode,uchar *CardType,uchar *SerialNo, uint count)
 			iret=PICC_AntiColl();
 			if(iret != PICC_OK){
 				PICC_RESET2();
-				printf("%d\r\n",iret);
+				s_printf("%d\r\n",iret);
 	//			continue;
 				return PICC_AntiCollErr;
 			}
@@ -2921,7 +2921,7 @@ int Lib_PiccCheck1(uchar mode,uchar *CardType,uchar *SerialNo, uint count)
 			}
 			if(iret != PICC_OK){
 				PICC_RESET2();
-				printf("%d\r\n",iret);
+				s_printf("%d\r\n",iret);
 				return PICC_AttribErr;
 			}
 			//process picc
@@ -2965,7 +2965,7 @@ int Picc_Check2(uchar mode,uchar *CardType,uchar *SerialNo,uint count)
 		iret=PICC_AntiColl();
 		if(iret != PICC_OK){
 			PICC_RESET2();
-			printf("%d\r\n",iret);
+			s_printf("%d\r\n",iret);
 //			continue;
 			return PICC_AntiCollErr;
 		}
@@ -2979,7 +2979,7 @@ int Picc_Check2(uchar mode,uchar *CardType,uchar *SerialNo,uint count)
 		}
 		if(iret != PICC_OK){
 			PICC_RESET2();
-			printf("%d\r\n",iret);
+			s_printf("%d\r\n",iret);
 			return PICC_AttribErr;
 		}
 		//process picc
@@ -3062,19 +3062,19 @@ int Picc_Check_old(uchar mode,uchar *CardType,uchar *SerialNo)
 		if(iret==PICC_Collision)  break;   //多张A卡
 		if(iret==0)  //有A卡,寻B卡
 		{
-			printf("Have A card.\r\n");
+			s_printf("Have A card.\r\n");
 			Lib_PiccHalt();
 			iret=s_PiccDetectTypeB('B',type,snnum);
 
 			if (g_HaveACardFlag==HAVE_CARD && g_HaveBCardFlag==HAVE_CARD)	
 			{//当发送A和B类卡唤醒命令的时候，如果A和B类卡都有正确的返回就认为感应区中有A和B两张卡存在
-				printf("Have A and B cards!\r\n");
+				s_printf("Have A and B cards!\r\n");
 				return PICC_Collision;
 			}
 
 			if(iret==0)  
 			{
-				printf("Have B card.\r\n");
+				s_printf("Have B card.\r\n");
 				return PICC_Collision;  //寻到B卡
 			}
 			else   //无B卡
@@ -3085,7 +3085,7 @@ int Picc_Check_old(uchar mode,uchar *CardType,uchar *SerialNo)
 		}
 		else   //无A卡,寻B卡
 		{
-			printf("No A card, find B card\r\n");
+			s_printf("No A card, find B card\r\n");
 			iret=s_PiccDetectTypeB('B',CardType,SerialNo);
 			return iret;  //寻到B卡			
 		}
@@ -3209,7 +3209,7 @@ int Lib_PiccCommand(APDU_SEND *ApduSend, APDU_RESP *ApduResp)
 
 TX_RETRY:
 		I_tx_retries++;
-		printf("%d:%d\r\n",__LINE__,I_tx_retries);
+		s_printf("%d:%d\r\n",__LINE__,I_tx_retries);
 		
 		if(I_tx_retries>3){		//ta401.15
 			return PICC_ProtocolErr;
@@ -3240,7 +3240,7 @@ TX_RETRY:
 TX_BEGIN: 
 
 		//DelayMs(8);//1->5->10ms   about 20etu    
-		printf("s1:pcb=%02x %d\r\n", tx_pool[0],dn);
+		s_printf("s1:pcb=%02x %d\r\n", tx_pool[0],dn);
 		//printfXX("XX%d\r\n",dn);
 		g_CommandFlag = TRUE;
 		iret=s_PiccCmdExchange(0,wait_mode,tx_pool,&dn);
@@ -3298,7 +3298,7 @@ TX_BEGIN:
 		pcb=tx_pool[0];
 		blk_type=pcb>>6;
 		blk_no=pcb&0x01;
-		printf("r1:pcb=%02x dn=%d  %02x %d\r\n", tx_pool[0],dn,blk_type,blk_no);
+		s_printf("r1:pcb=%02x dn=%d  %02x %d\r\n", tx_pool[0],dn,blk_type,blk_no);
 
 
 		if(!iret)
@@ -3391,7 +3391,7 @@ if(){
 			tx_pool[1]=cid;
 			dn=1;
 
-			printf("%d:%d\r\n",__LINE__,iret);
+			s_printf("%d:%d\r\n",__LINE__,iret);
 
 			goto TX_BEGIN;
 		}
@@ -3400,7 +3400,7 @@ if(){
 		else if(blk_type==2)//R_block
 		{
 
-			printf("blkno=%d %d %d\r\n", blk_no,picc_info[cid].blk_no,nak_retries);
+			s_printf("blkno=%d %d %d\r\n", blk_no,picc_info[cid].blk_no,nak_retries);
 
 
 			if(pcb&(1<<4)){	//R(NAK)
@@ -3473,7 +3473,7 @@ if(){
 			if(WTXM>59){
 				WTXM=59;
 			}
-			printf("%d:%d\r\n",__LINE__,WTXM);
+			s_printf("%d:%d\r\n",__LINE__,WTXM);
 			goto TX_BEGIN;
 		}
 		else      return PICC_ApduErr8;
@@ -3543,7 +3543,7 @@ TX_ACK:
 
 		wtx_retries=0;
 RX_BEGIN:
-		printf("s2:pcb=%02x %d\r\n", tx_pool[0],dn);
+		s_printf("s2:pcb=%02x %d\r\n", tx_pool[0],dn);
 
 //		DelayMs(8);//1->5->10ms   about 20-50etu
 		
@@ -3591,7 +3591,7 @@ RX_BEGIN:
 		blk_no=pcb&0x01;
 		picc_info[cid].delay_multiple=0;//reset WTX
 
-		printf("r2:pcb=%02x dn=%d  %02x %d\r\n", tx_pool[0],dn,blk_type,blk_no);
+		s_printf("r2:pcb=%02x dn=%d  %02x %d\r\n", tx_pool[0],dn,blk_type,blk_no);
 
 
 		/*	//R
@@ -3719,7 +3719,7 @@ int Lib_PiccM1Authority(uchar Type,uchar BlkNo,uchar *Pwd,uchar *SerialNo)
 	memcpy(tmps+8,SerialNo,4); 
 	dn=6+6;
 	iret=s_PiccCmdExchange(PCD_AUTHENT,0,tmps,&dn);
-	printf("A2:%d,%d %02X ",dn,iret,tmps[0]);
+	s_printf("A2:%d,%d %02X ",dn,iret,tmps[0]);
 	if(iret)return PICC_AuthErr;
 	//return 0;
  
@@ -3728,7 +3728,7 @@ int Lib_PiccM1Authority(uchar Type,uchar BlkNo,uchar *Pwd,uchar *SerialNo)
 	//if (s_ReadRegRc523(rSecondaryStatus)&0x07) 
 	if (s_ReadRegRc523(rControlReg)&0x07) 
 	{   
-		printf("picc_autherr..\r\n");
+		s_printf("picc_autherr..\r\n");
 		return PICC_AuthErr;
 	}
 
@@ -3741,10 +3741,10 @@ int Lib_PiccM1Authority(uchar Type,uchar BlkNo,uchar *Pwd,uchar *SerialNo)
 	//s_WriteRegRc523(rPage,pControl);
 	//cc=s_ReadRegRc523(rControl);
 	cc=s_ReadRegRc523(rStatus2Reg);
-	printf("A4:0x%02x\r\n", cc);
+	s_printf("A4:0x%02x\r\n", cc);
 	if(!(cc&0x08)) 
 	{
-		printf("PICC_AuthErr\r\n");
+		s_printf("PICC_AuthErr\r\n");
 		return PICC_AuthErr;
 	}
 
@@ -3752,7 +3752,7 @@ int Lib_PiccM1Authority(uchar Type,uchar BlkNo,uchar *Pwd,uchar *SerialNo)
 	//cc=s_ReadRegRc523(rErrorFlag);  //Error标志指示上一个执行命令的错误状态
 	cc=s_ReadRegRc523(rErrorReg);
 
-	printf("A5:0x%02x\r\n", cc);
+	s_printf("A5:0x%02x\r\n", cc);
 
 	return 0;
 }
@@ -3780,13 +3780,13 @@ int Lib_PiccM1ReadBlock(uchar BlkNo,uchar *BlkValue)
 	//s_WriteRegRc523(rPage,pSecondaryStatus);
 	//cc=s_ReadRegRc523(rSecondaryStatus)&0x07;
 	cc=s_ReadRegRc523(rControlReg)&0x07;
-	printf("rn:%d,%d %02X,bn:%02X ",dn,iret,tmps[0],cc);
+	s_printf("rn:%d,%d %02X,bn:%02X ",dn,iret,tmps[0],cc);
 
 	if(iret==0)
 	{
-		printf("\r\nRecv: ");
+		s_printf("\r\nRecv: ");
 		for(i=0;i<dn;i++)
-			printf("%02x ",tmps[i]);
+			s_printf("%02x ",tmps[i]);
 	}
 
 	if(iret==PICC_CRCErr && dn==1 && cc==4 && tmps[0]==0x04)return PICC_ReadBlockErr;//not auth
@@ -3817,7 +3817,7 @@ int Lib_PiccM1WriteBlock(uchar BlkNo,uchar *BlkValue)
 	//s_WriteRegRc523(rPage,pSecondaryStatus);
 	//cc=s_ReadRegRc523(rSecondaryStatus)&0x07;
 	cc=s_ReadRegRc523(rControlReg)&0x07;
-	printf("w1:%d,%d %02X %02X",dn,iret,tmps[0],cc);
+	s_printf("w1:%d,%d %02X %02X",dn,iret,tmps[0],cc);
 	//if(iret!=PICC_CRCErr)return iret;		//del 2008.05.16
 
 	if(cc!=4)return PICC_WriteBlockErr;		//最后接收字节的有效位个数为4
@@ -3833,7 +3833,7 @@ int Lib_PiccM1WriteBlock(uchar BlkNo,uchar *BlkValue)
 	//s_WriteRegRc523(rPage,pSecondaryStatus);
 	//cc=s_ReadRegRc523(rSecondaryStatus)&0x07;
 	cc=s_ReadRegRc523(rControlReg)&0x07;
-	printf("w2:%d,%d %02X %02X",dn,iret,tmps[0],cc);
+	s_printf("w2:%d,%d %02X %02X",dn,iret,tmps[0],cc);
 	//if(iret!=PICC_CRCErr)return PICC_WriteBlockErr;		//del 2008.05.16
 	if (iret == PICC_RxTimerOut)			
 	{
@@ -3872,7 +3872,7 @@ int Lib_PiccM1Operate(uchar Type,uchar BlkNo,uchar *Value,uchar UpdateBlkNo)
 	//s_WriteRegRc523(rPage,pSecondaryStatus);
 	//cc=s_ReadRegRc523(rSecondaryStatus)&0x07;
 	cc=s_ReadRegRc523(rControlReg)&0x07;
-	printf("O1:%d,%d %02X %02X\r\n",dn,iret,tmps[0],cc);
+	s_printf("O1:%d,%d %02X %02X\r\n",dn,iret,tmps[0],cc);
 	//if(iret!=PICC_CRCErr)return PICC_OperateErr ;		
 
 	if(cc!=4)return PICC_OperateErr ;
@@ -3888,7 +3888,7 @@ int Lib_PiccM1Operate(uchar Type,uchar BlkNo,uchar *Value,uchar UpdateBlkNo)
 	//s_WriteRegRc523(rPage,pSecondaryStatus);
 	//cc=s_ReadRegRc523(rSecondaryStatus)&0x07;
 	cc=s_ReadRegRc523(rControlReg)&0x07;
-	printf("O2:%d,%d %02X %02X\r\n",dn,iret,tmps[0],cc);
+	s_printf("O2:%d,%d %02X %02X\r\n",dn,iret,tmps[0],cc);
 	//if(iret!=PICC_RxTimerOut)return PICC_OperateErr ;			// 超时? 2008.05.16
 
 	//3--send confirm command to card
@@ -3899,7 +3899,7 @@ int Lib_PiccM1Operate(uchar Type,uchar BlkNo,uchar *Value,uchar UpdateBlkNo)
 	//s_WriteRegRc523(rPage,pSecondaryStatus);
 	//cc=s_ReadRegRc523(rSecondaryStatus)&0x07;
 	cc=s_ReadRegRc523(rControlReg)&0x07;
-	printf("O3:%d,%d %02X %02X\r\n",dn,iret,tmps[0],cc);
+	s_printf("O3:%d,%d %02X %02X\r\n",dn,iret,tmps[0],cc);
 	//if(iret!=PICC_CRCErr)return PICC_OperateErr ;
 
 	if(cc!=4)return PICC_OperateErr ;
@@ -4141,7 +4141,7 @@ void s_PiccHalt(void)
 		wait_mode=0;//4
 	}        
 	iret=s_PiccCmdExchange(0,wait_mode,tmps,&dn);
-	printf("H1:%d,%d %02X \r\n",dn,iret,tmps[0]);
+	s_printf("H1:%d,%d %02X \r\n",dn,iret,tmps[0]);
 	picc_info[cid].status=S_IDLE;
 	return;
 }
@@ -4165,7 +4165,7 @@ void s_PiccDeselect(void)
 			dn++;
 		}
 		iret=s_PiccCmdExchange(0,0,tmps,&dn);
-		printf("H2:%d,%d %02X ",dn,iret,tmps[0]);
+		s_printf("H2:%d,%d %02X ",dn,iret,tmps[0]);
 		if(iret){DelayMs(10);continue;}
 		if(!dn){DelayMs(10);continue;}
 		if(dn==1 && tmps[0]==PICC_DESELECT) break;
@@ -4432,9 +4432,9 @@ int s_PiccCmdExchange(uchar action,uchar wait_mode,uchar *blk,ushort *tx_rx_len)
 
 		
 	//	printfx("xxx:%x %x %d %x %x %d\r\n",FWI,((WTXM *(256*16+Xfwt)*exp2_(FWI))/(0x3ff*2+1))%0x100,((WTXM *(256*16+Xfwt)*exp2_(FWI))/(0x3ff*2+1)),(WTXM *(256*16+Xfwt)*exp2_(FWI)),(256*16+Xfwt),(WTXM *(256*16+Xfwt)*exp2_(FWI))*74);
-		printf("xxx:%d %x %d\r\n",FWI,((WTXM *(256*16+Xfwt)*exp2_(FWI))/(0x3ff*2+1)),(WTXM *(256*16+Xfwt)*exp2_(FWI))*74);
+		s_printf("xxx:%d %x %d\r\n",FWI,((WTXM *(256*16+Xfwt)*exp2_(FWI))/(0x3ff*2+1)),(WTXM *(256*16+Xfwt)*exp2_(FWI))*74);
 		
-		printf("xxx:%d %x %x %d\r\n",FWI,s_ReadRegRc523(rTReloadRegH ),s_ReadRegRc523(rTReloadRegL ),WTXM);
+		s_printf("xxx:%d %x %x %d\r\n",FWI,s_ReadRegRc523(rTReloadRegH ),s_ReadRegRc523(rTReloadRegL ),WTXM);
 
 
 		#endif
@@ -4539,13 +4539,13 @@ int s_PiccCmdExchange(uchar action,uchar wait_mode,uchar *blk,ushort *tx_rx_len)
 	//s_WriteRegRc523(rPage,pFIFOData);
 //	if(tx_len<=64) cur_pn=tx_len; 
 //	else cur_pn=64;
-	printf("Send:");
+	s_printf("Send:");
 	cur_pn=(tx_len<=DEF_FIFO_LEVEL)?tx_len:DEF_FIFO_LEVEL;
 	for(i=0;i<cur_pn;i++) {
 		s_WriteRegRc523(rFIFODataReg,blk[i]); 
-		printf("%02x ", blk[i]);
+		s_printf("%02x ", blk[i]);
 	}
-	printf("\r\n");
+	s_printf("\r\n");
 	dn=s_ReadRegRc523(rFIFOLevelReg);//FIFO empty length
  
 	//printf("send dn=%d %d %02x \r\n",dn,cur_pn,blk[1]); 
@@ -4554,7 +4554,7 @@ int s_PiccCmdExchange(uchar action,uchar wait_mode,uchar *blk,ushort *tx_rx_len)
 	
 	if(dn!=cur_pn)
 	{
-		printf("WRITE ERROR:%d-%d \r\n",dn,cur_pn);
+		s_printf("WRITE ERROR:%d-%d \r\n",dn,cur_pn);
 	} 
 
 
@@ -4751,7 +4751,7 @@ Rx_again:
 					}
 				}
 				}*/
-				printf("%d:%02x\r\n",__LINE__,bb);
+				s_printf("%d:%02x\r\n",__LINE__,bb);
 
 				
 				iresp=PICC_RxTimerOut;
@@ -4861,7 +4861,7 @@ Rx_again:
 	if(tmpc&0x10)
 	{
 		iresp=PICC_FifoOver;
-		printf("Fifo over...\r\n");
+		s_printf("Fifo over...\r\n");
 
 		goto X_TAIL;
 	}//FIFO overflow  5
@@ -4911,7 +4911,7 @@ Rx_again:
 	if(tmpc&0x02)
 	{
 		iresp=PICC_ParityErr;
-		printf("Parity err...\r\n");
+		s_printf("Parity err...\r\n");
 		goto X_TAIL;
 	}//parity error   8
 	//if(action==PCD_LOADKEY && tmpc&0x40)
@@ -4925,16 +4925,16 @@ X_TAIL:
 	*tx_rx_len=i;
 	if(i)
 		memcpy(blk,rx_pool,i);
-	printf("Recv:");
-	for (k=0; k<*tx_rx_len; k++) printf("%02x ", rx_pool[k]);
-	printf("\r\n");
+	s_printf("Recv:");
+	for (k=0; k<*tx_rx_len; k++) s_printf("%02x ", rx_pool[k]);
+	s_printf("\r\n");
 	if((iresp!=PICC_OK)&&(iresp!=PICC_RxTimerOut)&&((TYPE_A==1)
 		||((iresp!=PICC_CRCErr)&&(iresp!=PICC_CRCErr2)))) {
 		if(g_ActiveFlag==1){
 			int ret_p;
 			
 			s_SetBitRegRc523(rControlReg ,0x80);
-			printf("%d:%d %d %02x %02x %02x\r\n",__LINE__,iresp,i,s_ReadRegRc523(rControlReg),s_ReadRegRc523(rErrorReg),s_ReadRegRc523(rFIFOLevelReg));
+			s_printf("%d:%d %d %02x %02x %02x\r\n",__LINE__,iresp,i,s_ReadRegRc523(rControlReg),s_ReadRegRc523(rErrorReg),s_ReadRegRc523(rFIFOLevelReg));
 
 			if((i>=4)||(s_ReadRegRc523(rFIFOLevelReg)>=4)){	//rx_len>=4
 				ret_p=s_ReadRegRc523(rControlReg);

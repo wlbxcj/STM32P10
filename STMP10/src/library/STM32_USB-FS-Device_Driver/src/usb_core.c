@@ -15,6 +15,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "usb_lib.h"
+#include "string.h"
+
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 #define ValBit(VAR,Place)    (VAR & (1 << Place))
@@ -1080,6 +1082,49 @@ void SetDeviceAddress(uint8_t Val)
 *******************************************************************************/
 void NOP_Process(void)
 {
+
 }
 
+/******************************************************************************* 
+ * 函数名称: Usb_Send(*)
+ * 功能描述: HID数据发送
+ * 作    者: WLB
+ * 输入参数: unsigned char *pucData, unsigned char ucSendLen
+ * 输出参数: 无
+ * 返 回 值: <0 参数错误 0 发送成功
+ * 其它说明: 
+ * 修改历史: 
+ *           1. 2016-3-3  WLB  Created
+ *******************************************************************************/
+int Hid_Send(unsigned char *pucData, unsigned char ucSendLen)
+{
+    unsigned char ucLen = (ucSendLen > MAX_PACK_SIZE) ? MAX_PACK_SIZE : ucSendLen;
+
+    if (NULL == pucData || 0 == ucSendLen)
+        return -1;
+
+    /* Write the descriptor through the endpoint */    
+    USB_SIL_Write(EP1_IN, (unsigned char*)pucData, ucLen);  
+
+    SetEPTxValid(ENDP1);
+
+    return 0;
+}
+extern int HID_FifoGet(unsigned char *pucData);
+
+/******************************************************************************* 
+ * 函数名称: Hid_Rec(*)
+ * 功能描述: 数据接收
+ * 作    者: WLB
+ * 输入参数: 无
+ * 输出参数: unsigned char *pucData
+ * 返 回 值: < 0 参数错误，=0 无数据 >0 接收成功
+ * 其它说明: 无
+ * 修改历史: 
+ *           1. 2016-3-3  WLB  Created
+ *******************************************************************************/
+int Hid_Rec(unsigned char *pucData)
+{
+    return HID_FifoGet(pucData);
+}
 /******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/

@@ -207,7 +207,7 @@
         <option>
           <name>CCAllowList</name>
           <version>1</version>
-          <state>0000000</state>
+          <state>1111111</state>
         </option>
         <option>
           <name>CCDebugInfo</name>
@@ -284,9 +284,14 @@
           <state>$PROJ_DIR$\..\src\inc\pn512</state>
           <state>$PROJ_DIR$\..\src\source\inc</state>
           <state>$PROJ_DIR$\..\src\l2\inc</state>
-          <state>$PROJ_DIR$\..\src\library\</state>
-          <state>$PROJ_DIR$\..\src\driver\ts</state>
           <state>$PROJ_DIR$\..\src\driver\com</state>
+          <state>$PROJ_DIR$\..\src\driver\picc_as3911\picc</state>
+          <state>$PROJ_DIR$\..\src\driver\picc_as3911\EMV</state>
+          <state>$PROJ_DIR$\..\src\driver\ts\</state>
+          <state>$PROJ_DIR$\..\src\driver\lcd\</state>
+          <state>$PROJ_DIR$\..\src\driver\dll</state>
+          <state>$PROJ_DIR$\..\src\driver\pci</state>
+          <state>$PROJ_DIR$\..\src\driver\encrypt</state>
           <state>$PROJ_DIR$\..\src\driver\usb</state>
           <state>$PROJ_DIR$\..\src\library\STM32_USB-FS-Device_Driver\inc</state>
           <state>C:\Program Files\tools\NOV30\include</state>
@@ -313,7 +318,7 @@
         </option>
         <option>
           <name>CCOptLevel</name>
-          <state>0</state>
+          <state>3</state>
         </option>
         <option>
           <name>CCOptStrategy</name>
@@ -322,7 +327,7 @@
         </option>
         <option>
           <name>CCOptLevelSlave</name>
-          <state>0</state>
+          <state>3</state>
         </option>
         <option>
           <name>CompilerMisraRules98</name>
@@ -1814,27 +1819,6 @@
         </file>
       </group>
       <group>
-        <name>usb</name>
-        <file>
-          <name>$PROJ_DIR$\..\src\driver\usb\hw_config.c</name>
-        </file>
-        <file>
-          <name>$PROJ_DIR$\..\src\driver\usb\usb_desc.c</name>
-        </file>
-        <file>
-          <name>$PROJ_DIR$\..\src\driver\usb\usb_endp.c</name>
-        </file>
-        <file>
-          <name>$PROJ_DIR$\..\src\driver\usb\usb_istr.c</name>
-        </file>
-        <file>
-          <name>$PROJ_DIR$\..\src\driver\usb\usb_prop.c</name>
-        </file>
-        <file>
-          <name>$PROJ_DIR$\..\src\driver\usb\usb_pwr.c</name>
-        </file>
-      </group>
-      <group>
         <name>voice</name>
         <file>
           <name>$PROJ_DIR$\..\src\driver\voice\voice.c</name>
@@ -2009,7 +1993,7 @@
         <name>$PROJ_DIR$\..\src\inc\ISO14443.h</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\src\inc\KF701DH.h</name>
+        <name>$PROJ_DIR$\..\src\inc\kf701dh.h</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\src\inc\KF701DV.h</name>
@@ -2205,27 +2189,6 @@
       </file>
       <file>
         <name>$PROJ_DIR$\..\src\library\src\stm32f10x_wwdg.c</name>
-      </file>
-    </group>
-    <group>
-      <name>STM32_USB-FS-Device_Driver</name>
-      <file>
-        <name>$PROJ_DIR$\..\src\library\STM32_USB-FS-Device_Driver\src\usb_core.c</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\src\library\STM32_USB-FS-Device_Driver\src\usb_init.c</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\src\library\STM32_USB-FS-Device_Driver\src\usb_int.c</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\src\library\STM32_USB-FS-Device_Driver\src\usb_mem.c</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\src\library\STM32_USB-FS-Device_Driver\src\usb_regs.c</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\src\library\STM32_USB-FS-Device_Driver\src\usb_sil.c</name>
       </file>
     </group>
   </group>

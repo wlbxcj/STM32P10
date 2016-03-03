@@ -8,5 +8,6 @@ extern unsigned long TimerCheck(unsigned char TimerID);
 extern int SetTimerEvent(unsigned short uElapse, void (*TimerFunc)(void));
 
 extern void KillTimerEvent(int handle);
+extern unsigned int GetTimerCount(void);
 
 #endif

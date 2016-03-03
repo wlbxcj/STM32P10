@@ -5,13 +5,18 @@
 **************************************************************/
 #define FOR_PN512_DEVICE
 #include "Mifre_TmDef.h"
+#include <string.h>
+#include "comm.h"
+#include "kf701dh.h"
+#include "systimer.h"
 
 
 extern PICC_PARA c_para;
 extern PN512_RF_WORKSTRUCT PN512_RF_WorkInfo;
 ulong PN512_gl_RF_ulFSList[16] = {16,24,32,40,48,64,96,128,256,256,256,256,256,256,256,256};
 
-
+extern void WaitNuS(u32 x);
+extern void EXTI_DisableITBit(u32 EXTI_Line);
 
 //uchar PN512_B_gl_RxThreshold = 0x84;//接收灵敏度可调节 add by skx
 
@@ -1149,7 +1154,7 @@ RATSEND:
 
 void PN512_s_RF_vHALTA(void)
 {
-    uchar ucRet = RET_RF_OK;
+    //uchar ucRet = RET_RF_OK;
     uchar ucTempData;
 
 	// set TxLastBits to 0
@@ -1170,7 +1175,8 @@ void PN512_s_RF_vHALTA(void)
 	// dummy address
 	
     // 执行命令   
-    ucRet = PN512_s_RFExchangeCmd(PN512_TRANSCEIVE_CMD);
+    //ucRet = PN512_s_RFExchangeCmd(PN512_TRANSCEIVE_CMD);
+    PN512_s_RFExchangeCmd(PN512_TRANSCEIVE_CMD);
     // 当PCD发送完HLTA后，始终认为PICC已成功接收并正确执行了HLTA命令，而不会去理会
 	// PICC会回送任何响应。
 
@@ -1681,11 +1687,10 @@ uchar  PN512_s_RF_ucIfCardExit(void)
                         // 无卡响应，则说明卡已离开感应区
                         return RET_RF_OK;
                  }
-
            }
        }
 
-	   return RET_RF_ERR_CARD_EXIST;
+	   //return RET_RF_ERR_CARD_EXIST;
 }
 
 
@@ -2926,9 +2931,7 @@ void PN512_s_RFIsr(void)
 	ulong ulTemp;
 	ulong i = 0;//for debug 
 	//AT skx
-	uint for_spi_test=0;
-	
-	
+	//uint for_spi_test=0;
 
 	PN512_sHal_MaskCpuInt();//禁止并清CPU中断
 	
@@ -3208,15 +3211,12 @@ uchar PN512_s_RFExchangeCmd(uchar ucCmd)
 	uchar ucTimerCtl;		 // 命令中用到的定时器控制方式
 	uchar ucIntWait;		 // 命令结束时期待发生的中断
 	uchar ucIntEnable;		 // 该命令允许发生的中断
-	uchar ucrxMultiple; 	 // 是否要接收多个帧
+	//uchar ucrxMultiple; 	 // 是否要接收多个帧
 	
-	
-	 
-	
-	ulong timeout=0;//for linux
+	//ulong timeout=0;//for linux
 
 	//AT skx
-	uint intreg[10];
+	//uint intreg[10];
 
 	// 给工作变量赋初始值
 	PN512_RF_WorkInfo.ucCurResult		=	RET_RF_OK;
@@ -3229,7 +3229,7 @@ uchar PN512_s_RFExchangeCmd(uchar ucCmd)
 	PN512_RF_WorkInfo.ucCollPos     =   0;
 	PN512_RF_WorkInfo.ucCmd = PN512_IDLE_CMD;
 
-	ucrxMultiple		   = 0x00;
+	//ucrxMultiple		   = 0x00;
 	ucIntEnable 		   = 0x00;
 	ucIntWait			   = 0x00;
 	ucTimerCtl			   = 0x00;
@@ -3436,7 +3436,7 @@ uchar PN512_s_RFExchangeCmd(uchar ucCmd)
 				PN512_s_vRFWriteReg(1,0x0b,&isr_test_arr[10]);
 
 				PN512_s_vRFReadReg(1,PN512_COMMIEN_REG,&isr_test_arr[1]);
-				debug_printf(0,0,0,"/*****COMMIEN:%02x***",isr_test_arr[1]);
+				debug_printf(0,0,0,"*****COMMIEN:%02x***",isr_test_arr[1]);
 				
 				PN512_s_vRFReadReg(1,0x03,&isr_test_arr[0]);
 				debug_printf(0,0,0,"isr out_0,Div:%02x",isr_test_arr[0]);
@@ -3458,7 +3458,7 @@ uchar PN512_s_RFExchangeCmd(uchar ucCmd)
 		        	debug_printf(0,0,0,"FIFO W:%02x",isr_test_arr[8]);
 				#endif
 				//delay_ms(10);
-				/* 
+				//
 				if((GetTimerCount() - uiBeginTime) >= 1*1000*10)	// 10s
 				{
 				  	PN512_RF_WorkInfo.usErrNo = 0xA0; // timeout err

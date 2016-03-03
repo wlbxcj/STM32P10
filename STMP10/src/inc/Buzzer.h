@@ -9,5 +9,6 @@
 void Buzzer_Init(u16 nFre);
 void Buzzer_Control(bool Control);
 void Buzzer_Ring(u16 Fre);
+extern void Buzzer_Off(void);
 
 #endif

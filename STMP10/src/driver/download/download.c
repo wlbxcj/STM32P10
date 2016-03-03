@@ -1,10 +1,10 @@
 
 #include "vosapi.h"
-//#include "dll.h"
+#include "dll.h"
 #include "FlashOperate.h"
 #include "download.h"
-//#include "base.h"
-//#include "GetFont.h"
+#include "pci.h"
+#include "des.h"
 #include "..\..\inc\FunctionList.h"
 
 #include <time.h>
@@ -26,8 +26,6 @@ int      g_LocalDownMode=UART_DOWN_MODE;
 ****************************************************************************/
 int Down_RecvByte(uchar *recv_byte, int waitms)
 {
-    int iTemp;
-    
     switch (g_LocalDownMode)
     {
     case USBD_DOWN_MODE:
@@ -56,7 +54,7 @@ int CheckKeyHandShack()
 
 int Down_SendByte(uchar send_byte)
 {
-    int iRet;
+    int iRet = -1;
     switch (g_LocalDownMode)
     {
     case USBD_DOWN_MODE:
@@ -174,7 +172,7 @@ static int Crc16RecvPacket(BYTE *pbyOutPacket, WORD *pwOutLen, WORD *pwCmd, DWOR
 
 int Down_Send(uchar *send_data, int send_len)
 {
-    int iRet;
+    int iRet = -1;
     switch (g_LocalDownMode)
     {
     case USBD_DOWN_MODE:
@@ -452,11 +450,10 @@ BYTE s_KM_GetLrc(BYTE *pbyDataIn, int iDataLen)
 DWORD s_KM_SaveAppKey(BYTE *pbyKeyDataIn)
 {
     int iRet;
-    BYTE byKeyIndex, byKeyLen, byMainKeyIndex, byLrc;
-    DWORD dwRet;
+    BYTE byKeyLen, byLrc;
 
-    byMainKeyIndex = pbyKeyDataIn[0];
-    byKeyIndex     = pbyKeyDataIn[1];
+    //byMainKeyIndex = pbyKeyDataIn[0];
+    //byKeyIndex     = pbyKeyDataIn[1];
     byKeyLen       = pbyKeyDataIn[2];
     //if (KM_DEFAULT_KEY_LEN != byKeyLen)
     if(8!=byKeyLen && 16!=byKeyLen && 24!=byKeyLen)
@@ -470,7 +467,7 @@ DWORD s_KM_SaveAppKey(BYTE *pbyKeyDataIn)
         return KM_APP_KEY_LEN_ERROR;
     }
     pbyKeyDataIn[59] = 0;
-    iRet = SPF_GetAppNO(&pbyKeyDataIn[27]);
+    iRet = SPF_GetAppNO((char *)&pbyKeyDataIn[27]);
     if (iRet < 0)
     {
        /* Lib_LcdClrLine(16/2, LCD_HIGH_MINI-1);
@@ -570,10 +567,10 @@ DWORD s_KM_SaveAppKey(BYTE *pbyKeyDataIn)
 DWORD s_KM_SaveDukptKey(BYTE *pbyKeyDataIn)
 {
     int iRet;
-    BYTE byKeyIndex, byKeyLen,byKsnLen,byKeyType;
+    BYTE byKeyIndex, byKeyLen,byKsnLen;
 	BYTE bdkksnbuf[100]; 
 
-    byKeyType      = pbyKeyDataIn[0];
+    //byKeyType      = pbyKeyDataIn[0];
 	byKsnLen       = pbyKeyDataIn[1];
     byKeyIndex     = pbyKeyDataIn[2];
     byKeyLen       = pbyKeyDataIn[3];
@@ -601,7 +598,7 @@ DWORD s_KM_SaveDukptKey(BYTE *pbyKeyDataIn)
     }
 
     pbyKeyDataIn[59+16+1] = 0;
-    iRet = SPF_GetAppNO(&pbyKeyDataIn[27+16+1]);
+    iRet = SPF_GetAppNO((char *)&pbyKeyDataIn[27+16+1]);
     if (iRet < 0)
     {
         /*Lib_LcdClrLine(16/2, LCD_HIGH_MINI-1);
@@ -640,12 +637,11 @@ DWORD KM_LoadKey(void)
     WORD wCmd, wPacketLen;
     int iCount = 0, iRet;
     BYTE abyTemp[300], abyAuthKey[25],byKeyLen, byKeyType, byKeyIndex,byKsnLen,abyTMacKey[25];
-    BYTE macdata[300], mac[8];
+    BYTE macdata[300];
     BYTE abyHandShackKey[25];
-    int i,j;
     int iStep = 0;
     int iKeyNumCnt=0;
-    DWORD dwRet, adwTemp[5];
+    DWORD dwRet;
     
     BYTE g_DownRecvBuff[300];
     
@@ -791,7 +787,7 @@ reloadkey:
             memset(abyTemp, 0, sizeof(abyTemp));
             Lib_Des24(&g_DownRecvBuff[5], abyTemp, abyHandShackKey, ENCRYPT);
             Lib_GetRand(&abyTemp[8], 8);  // 认证随机数
-            strcpy(&abyTemp[16], "VPOS306");  // 机型
+            strcpy((char *)&abyTemp[16], "VPOS306");  // 机型
             Crc16SendPacket(AUTHENTICATE_STEP2, abyTemp, 32);
             break;
         case AUTHENTICATE_STEP3:
@@ -940,8 +936,8 @@ reloadkey:
             }
             //Crc16SendPacket(LOAD_VOS_SIGN_KEY_RESPOND, abyTemp, 1);
 
-            iStep = 0;
-            break;
+            //iStep = 0;
+            //break;
         case LOAD_MAG_KEY_REQUEST:
            /* Lib_LcdClrLine(16/2, LCD_HIGH_MINI-1);
             Lib_LcdGotoxy(0, 16/2);
@@ -1001,9 +997,9 @@ reloadkey:
             
             if (0 == memcmp(macdata, &g_DownRecvBuff[30],4))
             { 
-		Lib_Des24(&g_DownRecvBuff[6], &abyTemp[1], abyAuthKey, DECRYPT);
-		Lib_Des24(&g_DownRecvBuff[14], &abyTemp[9], abyAuthKey, DECRYPT);
-		Lib_Des24(&g_DownRecvBuff[22], &abyTemp[17], abyAuthKey, DECRYPT); 
+		        Lib_Des24(&g_DownRecvBuff[6], &abyTemp[1], abyAuthKey, DECRYPT);
+		        Lib_Des24(&g_DownRecvBuff[14], &abyTemp[9], abyAuthKey, DECRYPT);
+		        Lib_Des24(&g_DownRecvBuff[22], &abyTemp[17], abyAuthKey, DECRYPT); 
                 iRet = s_WriteSK_MACK(&abyTemp[1],abyTemp[0]);
             }
 			else

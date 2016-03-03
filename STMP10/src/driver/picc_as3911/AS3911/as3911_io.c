@@ -41,7 +41,7 @@
 #include "as3911_def.h"
 #include "as3911_irq.h"
 
-//#include "spi_driver.h"
+#include "comm.h"
 //13/08/07
 #define s_UartPrint trace_debug_printf
 
@@ -161,7 +161,6 @@ bool as3911Runing = FALSE;
  //for old FWLib
 #if 1
 	 int i;
-	 u8 unused;
 
 	 do {
 	 	
@@ -169,7 +168,7 @@ bool as3911Runing = FALSE;
 		 	 while(SPI_GetFlagStatus(spiid, SPI_FLAG_TXE) == RESET);
 			 SPI_SendData(spiid, buf[i]);
 			 while(SPI_GetFlagStatus(spiid, SPI_FLAG_RXNE) == RESET);
-			 unused = (u8) SPI_ReceiveData(spiid);
+			 SPI_ReceiveData(spiid);
 		 }
 	 } while (0);
 
@@ -325,7 +324,6 @@ static bool as3911IsRunning(void)
 s8 as3911WriteRegister(u8 address, u8 data)
 {
     s8 error = ERR_NONE;
-    int current_cpu_ipl = 0;
     u8 as3911WriteCommand[2] = { address & AS3911_SPI_ADDRESS_MASK, data };
 
     SET_AND_SAVE_CPU_IPL(current_cpu_ipl, 7);
@@ -345,7 +343,6 @@ s8 as3911WriteRegister(u8 address, u8 data)
 s8 as3911ReadRegister(u8 address, u8 *data)
 {
     s8 error = ERR_NONE;
-    int current_cpu_ipl = 0;
     u8 as3911ReadCommand = AS3911_SPI_CMD_READ_REGISTER | (address & AS3911_SPI_ADDRESS_MASK);
 
     SET_AND_SAVE_CPU_IPL(current_cpu_ipl, 7);
@@ -365,7 +362,6 @@ s8 as3911ReadRegister(u8 address, u8 *data)
 s8 as3911WriteTestRegister(u8 address, u8 data)
 {
     s8 error = ERR_NONE;
-    int current_cpu_ipl = 0;
     u8 as3911WriteCommand[3] = { AS3911_SPI_CMD_DIREC_CMD | AS3911_CMD_TEST_ACCESS, address & AS3911_SPI_ADDRESS_MASK, data };
 
     SET_AND_SAVE_CPU_IPL(current_cpu_ipl, 7);
@@ -385,7 +381,6 @@ s8 as3911WriteTestRegister(u8 address, u8 data)
 s8 as3911ReadTestRegister(u8 address, u8 *data)
 {
     s8 error = ERR_NONE;
-    int current_cpu_ipl = 0;
     u8 as3911ReadCommand[2] = { AS3911_SPI_CMD_DIREC_CMD | AS3911_CMD_TEST_ACCESS, AS3911_SPI_CMD_READ_REGISTER | (address & AS3911_SPI_ADDRESS_MASK) };
 
     SET_AND_SAVE_CPU_IPL(current_cpu_ipl, 7);
@@ -421,7 +416,6 @@ s8 as3911ContinuousWrite(u8 address, const u8 *data, u8 length)
 {
     AS3911_IRQ_OFF();//sxl 14/07/14
     s8 error = ERR_NONE;
-    int current_cpu_ipl = 0;
 
     SET_AND_SAVE_CPU_IPL(current_cpu_ipl, 7);
 
@@ -446,7 +440,6 @@ s8 as3911ContinuousRead(u8 address, u8 *data, u8 length)
 {
   AS3911_IRQ_OFF();//sxl 14/07/14
     s8 error = ERR_NONE;
-    int current_cpu_ipl = 0;
     u8 as3911ReadCommand = AS3911_SPI_CMD_READ_REGISTER | (address & AS3911_SPI_ADDRESS_MASK);
     
     SET_AND_SAVE_CPU_IPL(current_cpu_ipl, 7);
@@ -468,7 +461,6 @@ s8 as3911WriteFifo(const u8 *data, u8 length)
 {
   AS3911_IRQ_OFF();  //sxl 14/07/14
     s8 error = ERR_NONE;
-    int current_cpu_ipl = 0;
     u8 as3911WriteFifoCommand = AS3911_SPI_CMD_WRITE_FIFO;
 
     if (0 == length)
@@ -493,7 +485,6 @@ s8 as3911ReadFifo(u8 *data, u8 length)
 {
     AS3911_IRQ_OFF();  //sxl 14/07/14
     s8 error = ERR_NONE;
-    int current_cpu_ipl = 0;
     u8 as3911ReadFifoCommand = AS3911_SPI_CMD_READ_FIFO;
 
     if (length == 0)
@@ -516,7 +507,6 @@ s8 as3911ReadFifo(u8 *data, u8 length)
 s8 as3911ExecuteCommand(u8 directCommand)
 {
     s8 error = ERR_NONE;
-    int current_cpu_ipl = 0;
     u8 as3911DirectCommand = AS3911_SPI_CMD_DIREC_CMD | (directCommand & AS3911_SPI_ADDRESS_MASK);
 
     SET_AND_SAVE_CPU_IPL(current_cpu_ipl, 7);

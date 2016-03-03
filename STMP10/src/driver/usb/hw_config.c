@@ -41,79 +41,6 @@ uint32_t ADC_ConvertedValueX_1 = 0;
 static void IntToUnicode (uint32_t value , uint8_t *pbuf , uint8_t len);
 /* Private functions ---------------------------------------------------------*/
 
-#if 0
-/*******************************************************************************
-* Function Name  : Set_System
-* Description    : Configures Main system clocks & power.
-* Input          : None.
-* Return         : None.
-*******************************************************************************/
-void Set_System(void)
-{
-  /*!< At this stage the microcontroller clock setting is already configured, 
-       this is done through SystemInit() function which is called from startup
-       file (startup_stm32f10x_xx.s) before to branch to application main.
-       To reconfigure the default setting of SystemInit() function, refer to
-       system_stm32f10x.c file
-     */ 
-
-#if defined(USB_USE_EXTERNAL_PULLUP)
-  GPIO_InitTypeDef  GPIO_InitStructure;
-#endif /* USB_USE_EXTERNAL_PULLUP */ 
-  
-#ifdef STM32L1XX_MD 
-  /* Enable the SYSCFG module clock */
-  RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
-#endif /* STM32L1XX_MD */ 
-    
-#if !defined(STM32L1XX_MD)
-  /* ADCCLK = PCLK2/8 */
-  RCC_ADCCLKConfig(RCC_PCLK2_Div8);    
-#endif /* STM32L1XX_MD */
-  
-  /* Configure the used GPIOs*/
-  GPIO_Configuration();
-  
-#if defined(USB_USE_EXTERNAL_PULLUP)
-  /* Enable the USB disconnect GPIO clock */
-  RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIO_DISCONNECT, ENABLE);
-
-  /* USB_DISCONNECT used as USB pull-up */
-  GPIO_InitStructure.GPIO_Pin = USB_DISCONNECT_PIN;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-  GPIO_Init(USB_DISCONNECT, &GPIO_InitStructure);  
-#endif /* USB_USE_EXTERNAL_PULLUP */
-  
-#ifdef STM32L1XX_MD
-  /* Configure the LEFT button in EXTI mode */
-  STM_EVAL_PBInit(Button_LEFT, Mode_EXTI);
-
-  /* Configure the RIGHT button in EXTI mode */
-  STM_EVAL_PBInit(Button_RIGHT, Mode_EXTI);
-#else  
-  /* Configure the KEY button in EXTI mode */
-  STM_EVAL_PBInit(Button_KEY, Mode_EXTI);
-
-  /* Configure the Tamper button in EXTI mode */
-  STM_EVAL_PBInit(Button_TAMPER, Mode_EXTI);
-#endif /* STM32L1XX_MD */
-  
-  /* Additional EXTI configuration (configure both edges) */
-  EXTI_Configuration();
-  
-  /* Configure the LEDs */
-  STM_EVAL_LEDInit(LED1);
-  STM_EVAL_LEDInit(LED2);
-  STM_EVAL_LEDInit(LED3);
-  STM_EVAL_LEDInit(LED4);
- 
-  /* Configure the ADC*/
-  ADC_Configuration();
-}
-#endif
 /*******************************************************************************
 * Function Name  : Set_USBClock
 * Description    : Configures USB Clock input (48MHz).
@@ -167,17 +94,18 @@ void Leave_LowPowerMode(void)
 }
 
 /*******************************************************************************
-* Function Name  : USB_Interrupts_Config.
+* Function Name  : USB_Config.
 * Description    : Configures the USB interrupts.
 * Input          : None.
 * Output         : None.
 * Return         : None.
 *******************************************************************************/
-void USB_Interrupts_Config(void)
+void USB_Config(void)
 {
     NVIC_InitTypeDef NVIC_InitStructure; 
 
     GPIO_Configuration();
+    Set_USBClock();
 
     /* 2 bit for pre-emption priority, 2 bits for subpriority */
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);  
@@ -193,21 +121,6 @@ void USB_Interrupts_Config(void)
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;                //б┴иоио??ии???a0
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
-    
-      /* Enable the EXTI9_5 Interrupt */
-  NVIC_InitStructure.NVIC_IRQChannel = EXTI9_5_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
-  NVIC_Init(&NVIC_InitStructure);
-    
-  /* Enable the EXTI15_10 Interrupt */
-  NVIC_InitStructure.NVIC_IRQChannel = EXTI15_10_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
-  NVIC_Init(&NVIC_InitStructure);
-  
-  /* Enable the DMA1 Channel1 Interrupt */
-  NVIC_InitStructure.NVIC_IRQChannel = DMA1_Channel1_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
-  NVIC_Init(&NVIC_InitStructure);
 }
 
 /*******************************************************************************
@@ -243,20 +156,11 @@ void GPIO_Configuration(void)
 
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);  
 
-    /* USB_DISCONNECT used as USB pull-up
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_Init(GPIOA, &GPIO_InitStructure);
-    */
-
     /* USB_DISCONNECT used as USB pull-up*/
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_OD;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
     GPIO_Init(GPIOB, &GPIO_InitStructure);
-    //GPIO_ResetBits(GPIOB, GPIO_Pin_11);
-    //while(1);
 }
 
 /*******************************************************************************

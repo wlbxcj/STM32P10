@@ -36,7 +36,7 @@
 #include "as3911_interrupt.h"
 #include "as3911_irq.h"
 #include "as3911.h"
-//#include "timer_driver.h"
+#include "systimer.h"
 
 /*
 ******************************************************************************
@@ -190,7 +190,7 @@ s8 as3911WaitForInterruptTimed(u32 mask, u16 timeout, u32 *irqs)
 	//ulong after_tick;
     unsigned int uiBeginTime = GetTimerCount();
     if (timeout > 0){
-      GetTimerCount(timeout/10);   //13/10/17 sxl
+      GetTimerCount();   //13/10/17 sxl
 		//TimerSet(4, timeout); 
 		//SetTimer(1, timeout);
         //timerStart(timeout);

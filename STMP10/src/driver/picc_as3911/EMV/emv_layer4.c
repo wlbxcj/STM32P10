@@ -39,8 +39,9 @@
 #include "emv_display.h"
 #include "emv_response_buffer.h"
 #include "emv_poll.h"
-
-
+#include "emv_typea.h"
+#include <string.h>
+#include "comm.h"
 #include "..\AS3911\as3911_def.h"
 #include "..\AS3911\as3911_gain_adjustment.h"
 #include "..\AS3911\as3911_io.h"
@@ -139,7 +140,7 @@ bool OPENED_FLAG = FALSE;
 * LOCAL TABLES
 ******************************************************************************
 */
-static AS3911ModulationLevelAutomaticAdjustmentData_t mainModulationAutomaticAdjustmentData;
+//static AS3911ModulationLevelAutomaticAdjustmentData_t mainModulationAutomaticAdjustmentData;
 
 /*
 ******************************************************************************
@@ -984,7 +985,7 @@ s16 emvPiccCommand (APDU_SEND *ApduSend, APDU_RESP *ApduResp)
 	u32 responselen = 0;	
 	u32 datalen = 0;
 	s16 error = EMV_ERR_OK;
-        s16 i,j;
+
 	if (!emvPiccIsOpening())
 	{
 		LOG("AS3911 is not open\r\n");
@@ -1092,7 +1093,7 @@ s16 emvPiccActivate()
 }
 
 
-s16 emvPiccRemove()
+s16 emvPiccRemove(void)
 {
 	if (!emvPiccIsOpening())
 	{

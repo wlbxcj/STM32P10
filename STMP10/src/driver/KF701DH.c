@@ -13,9 +13,13 @@
 #include "KF701DH.h"
 #include "Display.h"
 #include "string.h"
-
+#include "kb.h"
 #include "misc.h"
-
+#include "hw_config.h"
+#include "tsc2046.h"
+#include "lcd.h"
+#include "dll.h"
+//#include "usb_init.h"
 //AT skx
 #include "SysTimer.h"
 AppFlags_t AppFlag;
@@ -26,6 +30,11 @@ AppFlags_t AppFlag;
 extern USART_TypeDef * SC_UART;
 
 extern void Protect_Switch_Init(void);
+extern int InitNotUseGpio(void);
+extern void SPI3_Init(void);
+extern void USB_Init(void);
+extern int s_KbInit(void);
+extern void HID_FifoInt(void);
 
 #define BKP_DR_NUMBER              42
 
@@ -55,7 +64,7 @@ u16 BKPDataReg[BKP_DR_NUMBER] =
   }  
 }
 void Tamper_Init()
-{
+{/*
 u16 BKPDataReg[BKP_DR_NUMBER] =
   {
     BKP_DR1, BKP_DR2, BKP_DR3, BKP_DR4, BKP_DR5, BKP_DR6, BKP_DR7, BKP_DR8,
@@ -64,7 +73,7 @@ u16 BKPDataReg[BKP_DR_NUMBER] =
     BKP_DR25, BKP_DR26, BKP_DR27, BKP_DR28, BKP_DR29, BKP_DR30, BKP_DR31, BKP_DR32,
     BKP_DR33, BKP_DR34, BKP_DR35, BKP_DR36, BKP_DR37, BKP_DR38, BKP_DR39, BKP_DR40,
     BKP_DR41, BKP_DR42
-  };    
+  };*/    
   /* Disable Tamper pin */
   BKP_TamperPinCmd(DISABLE);
   
@@ -99,7 +108,7 @@ u16 BKPDataReg[BKP_DR_NUMBER] =
 u32 CheckBackupReg(u16 index,u16 FirstBackupData)
 {
   //u32 index = 0;
-  u16 nVal;
+  //u16 nVal;
 u16 BKPDataReg[BKP_DR_NUMBER] =
   {
     BKP_DR1, BKP_DR2, BKP_DR3, BKP_DR4, BKP_DR5, BKP_DR6, BKP_DR7, BKP_DR8,
@@ -113,7 +122,9 @@ u16 BKPDataReg[BKP_DR_NUMBER] =
   //for (index = 0; index < BKP_DR_NUMBER; index++)
 //test
 
-  nVal = BKP_ReadBackupRegister(BKPDataReg[index]);
+    //nVal = BKP_ReadBackupRegister(BKPDataReg[index]);
+    BKP_ReadBackupRegister(BKPDataReg[index]);
+
   /*
   //test
 	Lib_LcdCls();
@@ -243,8 +254,13 @@ uchar initial_system(void)
     SPI3_Init();
     
         //13/07/08
-     Lib_PiccGetPara(&_glbPiccSetPara);
-    
+    Lib_PiccGetPara(&_glbPiccSetPara);
+
+    /*  USB ³õÊ¼»¯ */
+    USB_Config();
+    HID_FifoInt();
+    USB_Init();
+
     return(DisplayType);
 
 }
@@ -544,8 +560,9 @@ uchar check_rtc(uchar *rtc_buf)      //yyw 20090106
 ****************************/		
 uchar rece(uint length,uchar *buffer)
 {
-    u16 len=length;
-    return Comm_RecvPacket(buffer, &len);
+    //u16 len=length;
+    //return Comm_RecvPacket(buffer, &len);
+  return 0;
 }
 
 /********************************
@@ -556,7 +573,7 @@ uchar rece(uint length,uchar *buffer)
 *********************************/		
 void send_str(uint length,uchar *buffer)
 {
-    Comm_SendPacket(buffer, (u16)length);
+    //Comm_SendPacket(buffer, (u16)length);
 }
 
 /********************************

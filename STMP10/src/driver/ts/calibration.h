@@ -42,8 +42,8 @@ typedef struct {
 #define PAD_STAT_TS_CALIBRATING               (5)
 
 //unsigned char Get_Timer;
-unsigned int s_Padcalibration(void);
-unsigned char s_PadSign(unsigned char * pcode,unsigned char TimeOut);
+int s_Padcalibration(void);
+int s_PadSign(unsigned char * pcode,unsigned char TimeOut);
 bool getxy(unsigned int *x, unsigned int *y);
 #endif
 /********************************************************************************************************

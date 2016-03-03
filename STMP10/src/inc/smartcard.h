@@ -1,11 +1,18 @@
 
 #ifndef __SMARTCARD_H
 #define __SMARTCARD_H
-
+#include "base.h"
+/*
+#ifndef u32
 #define  uint32_t  u32
+#endif
+#ifndef u16
 #define  uint16_t u16
+#endif
+#ifndef u8
 #define  uint8_t  u8
-
+#endif
+*/
 #define CARD_V2
 
   //hardware

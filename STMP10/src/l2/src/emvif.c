@@ -21,7 +21,7 @@
 //#include "bsp_cipher.h"
 #include "rsaapp.h"
 
-#define printf trace_debug_printf
+#define s_printf trace_debug_printf
 
 //¹ØÓÚHTTPµÄ
 extern int socketfd;

@@ -9,7 +9,7 @@
 
 #include "var.h"
 
-#define printf trace_debug_printf //12/11/08
+#define s_printf trace_debug_printf //12/11/08
 
 #define TEST_INIT 1  /*yuhongyue for test*/
 #define MAJ_VER		0
@@ -2874,7 +2874,56 @@ void Test_BeepFunc(void)
 	}
 }
 
-void Test_AllSingleFunc()
+
+void Test_Usb(void)
+{
+    unsigned char i = 0, j = 0, key= 0;
+    unsigned char sBuf0[65] = {0};
+    unsigned char sBuf1[65] = {0};
+    unsigned char ucOld     = 0;
+    
+    Lib_LcdCls();
+    Lib_LcdPrintxy(0, 0, 0x80,   "     USB HID TEST      ");
+
+    Lib_LcdPrintxy(0, 1*8, 0x00, "press any key to send...");
+
+    while (1)
+    {
+        if (0 == Lib_KbCheck())
+        {
+            for (i = 0; i < 64; i++)
+                sBuf0[i] = i + j;
+
+            key = Lib_KbGetCh();
+            if (key == KEYCANCEL)
+                return;
+
+            Hid_Send(sBuf0, 64);
+            trace_debug_printf("KB = 0x%02X\r\n", key);
+            j++;
+        }
+
+        if (Hid_Rec(sBuf1) > 0)
+        {
+            if ((ucOld + 1) != sBuf1[0] && ucOld != 0 && 0 != sBuf1[0])
+            {
+                key = Lib_KbGetCh();
+                if (key == KEYCANCEL)
+                    return;
+            }
+            trace_debug_printf("REC:\r\n");
+            for (i = 0; i < 4; i++)
+            {
+                for (j = 0; j < 16; j++)
+                    trace_debug_printf("%02x ", sBuf1[i * 16 + j]);
+
+                trace_debug_printf("\r\n");
+            }
+            ucOld = sBuf1[0];
+        }
+    }
+}
+void Test_AllSingleFunc(void)
 {
 	BYTE key;
 
@@ -2889,7 +2938,7 @@ void Test_AllSingleFunc()
 		Lib_LcdPrintxy(0, 1*8, 0x00, "1-Lcd  2-Kb   3-Clk");
 		Lib_LcdPrintxy(0, 2*8, 0x00, "4-Led  5-Beep 6-Psam");
 		#if 1
-		Lib_LcdPrintxy(0, 3*8, 0x00, "7-Picc 8-Voice");
+		Lib_LcdPrintxy(0, 3*8, 0x00, "7-Picc 8-usb 9-Voice");
 		#else
              Lib_LcdPrintxy(0, 3*8, 0x00, "7-Voice");
 		#endif
@@ -2897,8 +2946,8 @@ void Test_AllSingleFunc()
 		while(1)
 		{
 			key = Lib_KbGetCh();
-//test
-trace_debug_printf("1KbGetCh[%02x]",key);
+            //test
+            trace_debug_printf("1KbGetCh[%02x]",key);
 
 			if (KEYCANCEL == key)
 			{
@@ -2931,13 +2980,17 @@ trace_debug_printf("1KbGetCh[%02x]",key);
 					Test_PsamFunc(1);
 					break;
 				case KEY7:
-			#if 1
 					Test_PiccFunc(1, 0);
 					break;
-				case KEY8:
-			#endif
-					Test_VoiceFunc();
+
+                case KEY8:
+					Test_Usb();
 					break;
+
+                case KEY9:
+                    Test_VoiceFunc();
+                    break;
+
 				default:
 					break;
 			}
@@ -3243,9 +3296,7 @@ int maintest(void)
 
 #if !TEST_INIT
 	iRet = Lib_AppInit();
-//#endif
- 
-
+#endif
 
         //test
         //Lib_KbSound(0,0);
@@ -3268,7 +3319,7 @@ int maintest(void)
         
         Lib_LcdPrintxy(0, 3*8, 0x00,"Lib_PciGetMac[%d]",iRet);
         Lib_KbGetCh();
-//#if 0
+#if 0
         //test
 PEDWriteMkey_Wkey();
 //for(;;);
@@ -3315,8 +3366,8 @@ PEDWriteMkey_Wkey();
 		{
                   
 			key = Lib_KbGetCh();
-//test
-trace_debug_printf("KbGetCh[%02x]",key);
+            //test
+            trace_debug_printf("KbGetCh[%02x]",key);
 
 #if 0
 			if (KEYCANCEL == key)
@@ -3818,10 +3869,10 @@ unsigned short Rs_Inquiry(unsigned char *psRet,uchar *pnAmountBcd)
         else
         {
 		//test
-		printf("Bal:");
+		s_printf("Bal:");
 		for(i=0;i<len;i++)
-		    printf("%02x ",tmp[i]);
-		printf("\n");
+		    s_printf("%02x ",tmp[i]);
+		s_printf("\n");
 		memcpy(pnAmountBcd,tmp,6);
 		  Lib_LcdPrintxy(0,0,2,"Remaining Sum:");
           memset(buf, 0x00, sizeof(buf));

@@ -3,6 +3,9 @@
 #include <time.h>
 #include "misc.h"
 
+
+extern void settime (struct tm *tDate);
+
 unsigned int time(unsigned int *tm)
 {
   *tm =  RTC_GetCounter();
@@ -86,7 +89,6 @@ void  gettime(struct tm *tDate)
 void settime (struct tm *tDate)
 {
     struct tm t;
-    time_t t1;
 
 	/*
     t.tm_sec=(buf[5]>>4)*10+(buf[5]&0x0f);
@@ -107,7 +109,7 @@ void settime (struct tm *tDate)
     t.tm_mon=tDate->tm_mon-1;
     t.tm_year=tDate->tm_year+2000-1900;
 #endif    
-    t1=mktime(&t);  
+    mktime(&t);  
 #ifndef KF311_M
     stime(&t1);
     system("hwclock -w");

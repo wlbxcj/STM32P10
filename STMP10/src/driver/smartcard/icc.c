@@ -16,7 +16,7 @@
 #include  "base.h"
 #include  "icc.h"
 #include  "vosapi.h"
-
+#include  "comm.h"
 //#if 0
 
 #define  SW1      asyncard_info[current_slot].sw1
@@ -31,22 +31,22 @@
 static uchar   current_slot;
 
 volatile ASYNCARD_INFO  asyncard_info[IC_MAXSLOT];
+//static volatile  uchar  k_Icc_PR[3];
+//static volatile  uchar  k_Icc_CR[3];  //reset
+//static volatile  uchar  k_Icc_EISSR[3]; //clk
+//static volatile  uchar  k_Icc_SR[3];  //io
 
-static volatile  uchar  k_Icc_PR[3];
-static volatile  uchar  k_Icc_CR[3];  //reset
-static volatile  uchar  k_Icc_EISSR[3]; //clk
-static volatile  uchar  k_Icc_SR[3];  //io
 
 /*标记SAM卡共用电源和时钟信号*/
 static unsigned int                sam_vcc_used_flag = 0;
 static unsigned int                sam_clk_used_flag = 0;
-static unsigned int                sam_slot_last_flag = 0;
+//static unsigned int                sam_slot_last_flag = 0;
 
 
 //volatile emv_queue      	  scs_queue[ 1 ]; 
 
-static volatile uchar gbScsQbuf[10];
-static volatile uchar gbScsIp=0;
+//static volatile uchar gbScsQbuf[10];
+//static volatile uchar gbScsIp=0;
 
 static   uchar    card_Outputdata[ICMAXBUF];
 
@@ -63,13 +63,14 @@ volatile ulong    k_Ic_TotalTimeCount;         //总超时计数中间变量
 volatile ulong    k_IcMax_TotalTimeCount;      //总超时上限值 
 
 //hard
-static volatile int               scs_stat;       /**/
+//static volatile int               scs_stat;       /**/
 volatile int                       twt_state;       /*超时标记*/
-static volatile int                wait_counter;/* 等待计数器 */ 
+//static volatile int                wait_counter;/* 等待计数器 */ 
 volatile unsigned int              scs_bwt;     /* 块等待时间和'TS'等待时间 */ 
 volatile unsigned int              scs_cwt;     /* T=1 CWT and T=0 WWT */ 
 volatile unsigned int              scs_cgt;     //guard
-static volatile int               work_step;    /*卡片复位阶段标记*/ 
+//static volatile int               work_step;    /*卡片复位阶段标记*/
+
 #define SC_UART_WAIT_EVENT       ( 1 << 2 )
 #define SC_UART_CLKS_EVENT       ( 1 << 3 )
 #define SC_UART_RSTL_EVENT       ( 1 << 4 )
@@ -82,6 +83,7 @@ volatile unsigned int              scs_crg = 0; /* 虚拟控制寄存器 */
 #define TTSC_EN                  ( 1 << 2 )     /* TS字符是否已经收到 */         
 #define PARC_B                   ( 1 << 3 )     /* 偶校验位 */
 #define PARE_SB                  ( 1 << 4 )     /* 校验错误标记 */
+
 static volatile int               repeat_chc = 0; /*错误重发次数*/
 
 volatile static uchar   WTX;
@@ -89,7 +91,7 @@ volatile static ulong   WWT,CWT,BWT;
 
 
 
-static   uchar          vcc_mode;
+//static   uchar          vcc_mode;
 
 static volatile uint8_t SCData = 0;
 
@@ -97,6 +99,10 @@ void s_IccDelayEtus_Send(int n_etus,int r_etu,int mend11,int mend12,int mend13);
 void s_IccSaveIntr(void);
 void Icc_SetWaitTime(void);
 void Icc_StopWaitTime(void);
+int GetAtr(uchar *Buff);
+int  T1_Send_Block(uchar *Inbuf);
+int  T1_Rece_Block(uchar *Outbuf);
+int  T1_Send_Block(uchar *Inbuf);
 
 void   Icc_Vcc(uchar channel,uchar mode);
 
@@ -156,6 +162,7 @@ void SC_Reset(BitAction ResetState)
 
 void s_IccClkOut(void)
 {
+#if 0
     k_Icc_PR[0]=0;
     k_Icc_PR[1]=0;
     k_Icc_PR[2]=0;
@@ -168,9 +175,8 @@ void s_IccClkOut(void)
     k_Icc_EISSR[0]=0;
     k_Icc_EISSR[1]=0;
     k_Icc_EISSR[2]=0; 
-  
+#endif
     //复位智能卡驱动模块 
-  
 }
 
 /**
@@ -578,7 +584,7 @@ void s_IccRestoreIntr(void)
 
 int IccColdRest(uchar Channel)
 {
-    int ret,i;
+    int ret;//,i;
     current_slot=Channel;
     //Clear all datas in SIMIF Device Reception FIFO
     s_IccSaveIntr(); 
@@ -776,9 +782,9 @@ uchar Rece_Byte(void)
  *******************************************************/
 int GetAtr(uchar *Buff)
 {
-     uchar   *ptr_atr;
-     uchar   T,edc,TCK,CWI,BWI;
-     uchar   i,len,Flag,x;
+     //uchar   *ptr_atr;
+     uchar   T,edc,TCK;
+     uchar   i,Flag,x;
      uchar  Lenth=2;
      uchar   *Lenth_Point;
   
@@ -813,7 +819,7 @@ int GetAtr(uchar *Buff)
           else return ICC_ATR_TSERR;
      }
      edc=0;
-     ptr_atr=Buff;
+     //ptr_atr=Buff;
      k_IcMax_TimeCount=1010;
      k_IcMax_TotalTimeCount=2020;
 
@@ -1084,10 +1090,10 @@ void delayetu(int nCout)
  **********************************************************/
 int Lib_IccOpen(uchar slot,uchar VCC_Mode,uchar *ATR)
 {
-    uchar *ptr;
+    //uchar *ptr;
     int ret;
     //test
-    uchar i;
+    //uchar i;
 #if 0    
     //test
     ret=SelectSlot(slot);
@@ -1147,7 +1153,7 @@ int Lib_IccOpen(uchar slot,uchar VCC_Mode,uchar *ATR)
 #endif
     
     memset(rstbuf,0x00,sizeof(rstbuf));
-    vcc_mode=VCC_Mode;
+    //vcc_mode=VCC_Mode;    // WLB
     asyncard_info[slot].T=0;
     asyncard_info[slot].resetstatus=0x00;
       //test
@@ -1178,7 +1184,7 @@ int Lib_IccOpen(uchar slot,uchar VCC_Mode,uchar *ATR)
     // RSTBUF格式:长度+TS+TO+TA......
     memcpy(ATR,rstbuf,rstbuf[0]+1);
     asyncard_info[slot].T=0;
-    ptr=&rstbuf[3];
+    //ptr=&rstbuf[3];
     asyncard_info[slot].term_pcb=0x00;
     if((asyncard_info[slot].TD1&0x0f)==0x01)
     {
@@ -1408,8 +1414,8 @@ int T1_send_command(uchar nad,uchar *inbuf,uchar *outbuf)
 {
     uchar   sour[300],oldsour[300],respbuf[300],oldrblock[5];
     uchar   OLDIFSC;
-    uchar   NAD,PCB,slotpcb,tmpch,tmpch1;
-    ushort  len,len1,totallen,currentlen,remainlen;
+    uchar   PCB,tmpch,tmpch1;//NAD,,slotpcb
+    ushort  len,len1;//,totallen,currentlen,remainlen
     ushort  total_send_len,sent_len,remain_len;
     uchar   re_send_i_times,re_send_r_times;
     int     result;
@@ -1664,7 +1670,7 @@ end_t1_exchange:
  ***********************************************************************/
 int T0_send_command(uchar Class,uchar Ins,uchar P1,uchar P2,uchar P3, uchar *Data_Buf,uchar *Out_Buf,uchar *rslt)
 {
-     ushort len,i,len1,len2,Tc2;
+     ushort len,i,len1,len2;//,Tc2;
      uchar    ret;
      uchar  tempsw1,tempsw2;
      uchar  *ptr1,*ptr2,status[2],cmdbuf[5];
@@ -2021,7 +2027,7 @@ int  T1_IFSD_command(uchar slot)
 int  T1_Send_Block(uchar *Inbuf)
 {
      uchar   edc,tmpbuff[ICMAXBUF];
-     ushort  i,len,l;
+     ushort  i,len;//,l;
      ushort  NS,NR;
 
 
@@ -2173,7 +2179,7 @@ int Lib_IccCommand(uchar slot,APDU_SEND * ApduSend,APDU_RESP * ApduResp)
      uchar   Cla,Ins,P1,P2;
      ushort  Le,Lc,iT1Le,recelen;
      int   result;
-     uchar   *ptr; 
+     //uchar   *ptr; 
      //test
      uchar i;
      
@@ -2217,7 +2223,7 @@ int Lib_IccCommand(uchar slot,APDU_SEND * ApduSend,APDU_RESP * ApduResp)
      result=IccSendCommand( Cla,Ins, P1, P2,  Lc,ApduSend->DataIn,Le,card_Outputdata);
      s_IccRestoreIntr();
      Parity_Check_Enable=0x00;
-     ptr=ApduResp->DataOut;
+     //ptr=ApduResp->DataOut;
      if((asyncard_info[current_slot].T==1) && (result==0))
      {
         //如果为T=1协议且接收正确时进行接收数据格式转换
@@ -2304,8 +2310,8 @@ uchar Send_Byte(uchar dat)
     volatile uchar sc_sr; 
     
     uchar slot;
-    unsigned int cr,sr,etu0,etu1,tx,rx;
-    uchar channel;
+    //unsigned int cr,sr,etu0,etu1,tx,rx;
+    //uchar channel;
     u32 i;
     
 #if 0    
@@ -2323,17 +2329,17 @@ uchar Send_Byte(uchar dat)
         break;
     case 2:
     case 1:
-	channel=slot;
+	//channel=slot;
         
         USART_SendData(SC_USART, scs_inverse_ch(dat));
 
         i = 0;
         while(USART_GetFlagStatus(SC_USART, USART_FLAG_TC) == RESET)
         {
-          if(i++==0xffff)
-          {
-          return;
-          }
+            if(i++==0xffff)
+            {
+                return 0;   // wlb
+            }
         }  
         //test
         //trace_debug_printf("send date end");
@@ -2587,7 +2593,7 @@ void nDelayMs(ushort count)
 ************************************************/
 void s_IccSaveIntr(void)
 {
-    int i;
+    //int i;
     //须关闭其它中断：如按键，通信，定时    
     
 }
@@ -2756,7 +2762,7 @@ void Icc_Io(uchar channel,uchar mode)
  *************************************************/
 void   Icc_Vcc(uchar channel,uchar mode)
 {
-    int i;  
+    //int i;  
     switch(channel)
     {
 //    case 0: 
@@ -2879,7 +2885,7 @@ void   Icc_Vcc(uchar channel,uchar mode)
 /**
  * 超时定时器中断服务函数
  */
-void Timer5_Isr()
+void Timer5_Isr(void)
 {
   TIM5->SR = 0;  
   //test
@@ -3248,8 +3254,8 @@ int Lib_IccSetAutoResp(uchar slot,uchar autoresp)
  ********************************************/
 int  Lib_IccCheck(uchar slot)
 {
-    uchar status=0xff;
-    uchar ch1,ch2,ch3;
+    //uchar status=0xff;
+    //uchar ch1,ch2,ch3;
     int ret;
      
     slot=slot&0x7f;   //add 20080508
@@ -3277,8 +3283,8 @@ int  Lib_IccCheck(uchar slot)
             asyncard_info[slot].existent=0x01; 
             return SUCCESS;
         }
+        //break;
 
-        break;
     default :
         break;
     }

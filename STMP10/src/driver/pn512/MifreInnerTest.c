@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include "kf701dh.h"
+#include "mifre.h"
 
 extern void debug_printf(char * str ,...);
 
@@ -16,7 +18,7 @@ extern void ledred_off(void);
 extern void ledgreen_on(void);
 extern void ledgreen_off(void);
 extern void Buzzer_Off(void);
-extern void Buzzer_Ring(unsigned int Fre);
+extern void Buzzer_Ring(unsigned short Fre);
 
 //test RC531
 //#undef  PN512_GSNON_REG
@@ -27,16 +29,12 @@ void RF_test_spi(void)
   uchar buf[10];
   uchar buftwo[10];
   ulong ulLoop = 0;
-  ulong ulOK = 0;
-  ulong ulFail = 0;
   unsigned long r1=0,e1=0;
   s_RF_Init();
   ledall_off();
 	while(1)
 	{
-          ulLoop = 0;
-          ulOK = 0;
-          ulFail = 0;		
+          ulLoop = 0;	
             while(1)
             {
                     ulLoop++; 	 
@@ -95,7 +93,6 @@ void RF_TypeAB_test(unsigned char which_api)
 	APDU_SEND  ApduSend;
 	APDU_RESP  ApduRecv;
         long total=0,r1=0,e1=0,r2=0,e2=0,r3=0,e3=0;
-	uchar bInitFlag=0;//12/09/21
 	memcpy(ApduSend.Command,"\x00\xA4\x04\x00",4);
 	ApduSend.Lc = 0x0E;
 	memset(ApduSend.DataIn,0,sizeof(ApduSend.DataIn));
@@ -169,7 +166,6 @@ while(1)//12/09/21
 		
 		END:
 		PiccClose();
-                bInitFlag = 0;
 		debug_printf(0,0,0,"T[%d],P[%d/%d],D[%d/%d],I[%d/%d]\n",
 						total,r1,e1,r2,e2,r3,e3);
                 delay_ms(50);

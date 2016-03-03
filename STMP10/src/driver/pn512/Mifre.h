@@ -73,8 +73,12 @@ enum ISOCMD_ERROR{EE_INVALID_PARA=1,EE_NO_POWER,EE_NOT_DETECTED,EE_TX,EE_PROTOCO
 #define RF_RATE_424_FELICA 1
 #define RF_POL_0_FELICA    0 // default = 0;
 #define RF_POL_1_FELICA    1
+
+
+extern uchar PiccOpen(void);
+extern uchar PiccDetect(uchar Mode,uchar *CardType,uchar *SerialInfo,uchar *CID,uchar *Other);
+extern uchar PiccIsoCommand(uchar cid,APDU_SEND *ApduSend,APDU_RESP *ApduRecv);
+extern void PiccClose(void);
+
 #endif
-
-
-
 

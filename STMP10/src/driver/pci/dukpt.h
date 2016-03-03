@@ -5,11 +5,11 @@
 
 typedef struct
 {
-	unsigned char KeyLen;	    //key len,0,8,16,24 etc. 
-	unsigned char Key[24];      //content 
-	unsigned char CRC[2];	    //check 
-	unsigned char Reserve;
-} T_FUTURE_KEY;         	    //28 bytes 
+    unsigned char KeyLen;       //key len,0,8,16,24 etc. 
+    unsigned char Key[24];      //content 
+    unsigned char CrcCheck[2];       //check 
+    unsigned char Reserve;
+}T_FUTURE_KEY;             //28 bytes 
 
 //DUKPT key struct 
 typedef struct
@@ -53,5 +53,10 @@ typedef struct
 #define DUKPT_InvalidKSN          (-7058)
 #define DUKPT_InvalidMode         (-7059)
 #define DUKPT_NotFound            (-7060)
- 
+
+ulong bit21_to_ulong(uchar *indata);
+int  s_ReadDukptKSN(uchar appno,uchar dukptkey_id,uchar *out_ksn);
+int s_Dukpt_RequestPinOrMac(uchar mode,uchar *curkey,uchar *curkey_len,uchar *curksn);
+
 #endif
+

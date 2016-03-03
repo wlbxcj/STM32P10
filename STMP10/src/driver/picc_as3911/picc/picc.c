@@ -13,7 +13,7 @@ error code     :  RF¿¨¶Á¿¨Æ÷Ä£¿é£º  -3500~-3999
 
 //13/08/07
 #include "misc.h"
-
+#include "emv_layer4.h"
 #include "picc.h"
 
 

@@ -155,9 +155,10 @@ s16 emvTypeBAnticollision(EmvPicc_t *picc)
     /* Parse and check FSC field. */
     picc->fsci = atqb[10] >> 4;
 
-    if (picc->fsci < EMV_FSCI_MIN_PCD)
-        return EMV_ERR_PROTOCOL;
-    else if (picc->fsci > 8)
+    //if (picc->fsci < EMV_FSCI_MIN_PCD)    wlb
+    //    return EMV_ERR_PROTOCOL;
+    //else
+    if (picc->fsci > 8)
         picc->fsci = 8;
 
     /* Parse and check ISO14443-4 conformance bit. */

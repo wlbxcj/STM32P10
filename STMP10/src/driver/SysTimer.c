@@ -5,10 +5,10 @@
 ***************************/
 #include "stm32f10x_lib.h"
 #include "KF701DH.h"
-//#include "KF701DV.h"
+#include "lcd.h"
 #include "Toolkit.h"
 #include "SysTimer.h"
-
+#include "comm.h"
 /*
 设置4个软定时器，三个事件定时
 定时器：0-3为应用软件使用
@@ -151,7 +151,7 @@ extern unsigned char BeepFlag;
 extern unsigned short BeepDelay;
 void s_TimerProc(void)
 {
-    int i = 0, j = 0;
+    int i = 0;
     
     k_Timer4Count10MS++;
     
@@ -178,7 +178,6 @@ void s_TimerProc(void)
                     }
                 }
             }
-            j=1;
         }
     }
     
@@ -192,9 +191,10 @@ void s_TimerProc(void)
     
     if(k_LcdBackLightMode==1)
 	{  //delay 1min light
-        if(k_LcdBackLightTime==0) Lib_LcdSetBackLight(0);
+        if(k_LcdBackLightTime==0)
+            Lib_LcdSetBackLight(0);
         if(k_LcdBackLightTime>0)
-	{
+	    {
             k_LcdBackLightTime--;
         }
         k_LcdBackLightMode=1;

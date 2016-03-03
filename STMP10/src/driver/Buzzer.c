@@ -1,5 +1,8 @@
 #include "Buzzer.h"
 #include "Toolkit.h"
+#include "dll.h"
+#include "kf701dh.h"
+#include "vosapi.h"
 
 //void Buzzer_Init(void)
 void Buzzer_Init(u16 nFre)
@@ -92,7 +95,7 @@ void Buzzer_Ring(u16 Fre)
   {
     GPIO_ResetBits(GPIOB, GPIO_Pin_8);
     Lib_DelayMs(1);
-  GPIO_SetBits(GPIOB, GPIO_Pin_8);
+    GPIO_SetBits(GPIOB, GPIO_Pin_8);
     Lib_DelayMs(1);
     
     

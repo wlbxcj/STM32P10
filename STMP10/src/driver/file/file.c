@@ -1,14 +1,13 @@
 #include "KF701DH.h"
 #include "stm32f10x_lib.h"
 #include "..\..\inc\FunctionList.h"
-
+#include "comm.h"
 #include <string.h>
 #include "vosapi.h"
 #include "base.h"
 #include "..\..\inc\FunctionList.h"
-
+#include "FlashOperate.h"
 #include "..\pci\pci.h"
-
 #include "FlashOperate.h"
 
 #define MY_MAX_FILE_M   5
@@ -113,7 +112,8 @@ int  my_FileSeek(int fd, long offset, BYTE origin)
 int _CopyFromBack(unsigned int nAddr)
 {
   u32 bBeginPage;
-  u8  bRet,sPageBuf[2048];
+  u8  sPageBuf[2048];
+  int bRet;
 #define FLASH_PAGE_SIZE   ((u16)0x800)//2K/a block
   //test
   trace_debug_printf("CopyFromBack[%x]H\n",nAddr);
@@ -175,7 +175,7 @@ int  my_FileWrite(int fd, BYTE *dat, int len)
     return fd;
   if((gnOffset[fd]+len- k_Flist[fd].StartBlock)>k_Flist[fd].size)
     return -1;
-  nRet = sys_flash_write_operate(gnOffset[fd],(unsigned short *)dat,len);
+  nRet = sys_flash_write_operate(gnOffset[fd],(unsigned char *)dat,len);
 
   //13/05/27
   if(len<200)

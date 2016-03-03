@@ -27,7 +27,7 @@ PCI接口测试协议：
 
 #define  TEST_COM   VCOM_DEBUG //COM1   //COM2
 
-#define printf trace_debug_printf //12/11/08
+#define s_printf trace_debug_printf //12/11/08
 
 //#define USIP_GPIO_DR0           (0xA2005404) //Data register for GPIO[15..0] 
  
@@ -1016,7 +1016,7 @@ int pcimain(void)
     
     
     
-    printf("appinit()=%d \r\n",iret); 
+    s_printf("appinit()=%d \r\n",iret); 
     //for(i=0;i<3;i++)
     //{
     //    Lib_Beep();
@@ -1027,7 +1027,7 @@ int pcimain(void)
     Lib_LcdPrintxy(0,0,0x82,"    PCI TEST   ");
     
     
-    printf("   PED认证测试  \r\n");  
+    s_printf("   PED认证测试  \r\n");  
     rc =Lib_ComOpen(TEST_COM,"115200,8,n,1");
     if (rc)
     {

@@ -3345,7 +3345,7 @@ void s_RFIsr(void)
             if(RF_WorkInfo.ucCurResult == RET_RF_OK)
             {
                 #ifdef Debug_Isr
-                printf("TimerOut!\n");
+                s_printf("TimerOut!\n");
                 #endif
                 RF_WorkInfo.ucCurResult = RET_RF_ERR_TIMEOUT;
             }

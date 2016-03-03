@@ -1,3 +1,4 @@
+#include <string.h>
 
 #define BLOCK_SIZE	64
 #define HALF_BLOCK	32

@@ -43,6 +43,7 @@ void Alarm_Adjust(void);
 void Alarm_PreAdjust(void);
 void Alarm_Display(u32 AlarmVar);
 void Alarm_Show(void);
+void DateGetYYMMDD(u8 *pDateData);
 
 #endif /* __CALENDAR_H */
 

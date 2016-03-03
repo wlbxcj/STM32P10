@@ -21,19 +21,30 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f10x_it.h"
-//#include "USB_lib.h"
+#include "kf701dh.h"
 #include "TaxBox.h"
 #include "Display.h"
 #include "calendar.h"
 #include "RF1356.h"
-
+#include "usb_int.h"
 #include "kb.h"  //gplian
+#include "dll.h"
+#include "lcd.h"
+
 #define s_UartPrint trace_debug_printf //sxl
 u16 capture = 0;
 extern vu16 CCR1_Val;
 extern u8 *pLedData;
 extern u8 ActDig;
 extern u8 SecondUpdata;
+
+extern void _IC1Interrupt(void);
+extern void USB_Istr(void);
+extern void Timer5_Isr(void);
+extern void _SetLock_EraseApp(void);
+extern int TAMPERClear(void);
+extern BYTE Lib_KbGetCh(void);
+
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -214,7 +225,7 @@ void PVD_IRQHandler(void)
 *******************************************************************************/
 void TAMPER_IRQHandler(void)
 {
-  unsigned char bVal,sBuf[2048]={0};
+  //unsigned char bVal,sBuf[2048]={0};
   if(BKP_GetITStatus() != RESET)
   { /* Tamper detection event occurred */
 
@@ -227,6 +238,7 @@ void TAMPER_IRQHandler(void)
         RM_flash_erase_page(5);
         RM_flash_erase_page(6);
         flash_write_operate(0,(unsigned short*)sBuf,2048);
+#endif
         _SetLock_EraseApp();//13/04/20
         
         TAMPERClear();
@@ -250,7 +262,6 @@ void TAMPER_IRQHandler(void)
     
     /* Enable Tamper pin */
     BKP_TamperPinCmd(ENABLE);
-#endif
       
   }
   
@@ -424,10 +435,7 @@ void EXTI4_IRQHandler(void)
 *******************************************************************************/
 void DMA1_Channel1_IRQHandler(void)
 {
-  //test
-  char i;
-  i=0;
-  
+
 }
 
 /*******************************************************************************
@@ -439,9 +447,7 @@ void DMA1_Channel1_IRQHandler(void)
 *******************************************************************************/
 void DMA1_Channel2_IRQHandler(void)
 {
-  //test
-  char i;
-  i=0;
+
 }
 
 /*******************************************************************************
@@ -453,10 +459,7 @@ void DMA1_Channel2_IRQHandler(void)
 *******************************************************************************/
 void DMA1_Channel3_IRQHandler(void)
 {
-  //test
-  char i;
-  i=0;
-  
+
 }
 
 /*******************************************************************************
@@ -468,10 +471,7 @@ void DMA1_Channel3_IRQHandler(void)
 *******************************************************************************/
 void DMA1_Channel4_IRQHandler(void)
 {
-  //test
-  char i;
-  i=0;
-  
+
 }
 
 /*******************************************************************************
@@ -483,10 +483,7 @@ void DMA1_Channel4_IRQHandler(void)
 *******************************************************************************/
 void DMA1_Channel5_IRQHandler(void)
 {
-  //test
-  char i;
-  i=0;
-  
+
 }
 
 /*******************************************************************************
@@ -498,10 +495,6 @@ void DMA1_Channel5_IRQHandler(void)
 *******************************************************************************/
 void DMA1_Channel6_IRQHandler(void)
 {
-  //test
-  char i;
-  i=0;
-  
 }
 
 /*******************************************************************************
@@ -513,10 +506,6 @@ void DMA1_Channel6_IRQHandler(void)
 *******************************************************************************/
 void DMA1_Channel7_IRQHandler(void)
 {
-  //test
-  char i;
-  i=0;
-  
 }
 
 /*******************************************************************************
@@ -590,7 +579,7 @@ void EXTI9_5_IRQHandler(void)
 {
 
    unsigned long tmpFlag=0 ;  //保存需要的中断标志位
-   unsigned char i = 0 ;  //循环变量
+   //unsigned char i = 0 ;  //循环变量
    //test
    unsigned char sBuf[10];
    
@@ -871,8 +860,7 @@ void TIM1_CC_IRQHandler(void)
 extern void IT_SendWait(void);
 void TIM2_IRQHandler(void)
 {
-  
-  u16 DigData;
+  //u16 DigData;
   
   if (TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET)
   {

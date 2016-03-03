@@ -35,7 +35,7 @@ ShowSource=1
 [Disassemble mode]
 mode=0
 [Breakpoints]
-Bp0=_ "STD_CODE" "{$PROJ_DIR$\..\src\driver\com\comm.c}.594.1@1" 1 0 0 0 "" 0 ""
+Bp0=_ "STD_CODE" "{$PROJ_DIR$\..\src\driver\com\comm.c}.582.1@1" 1 0 0 0 "" 0 ""
 Count=1
 [Aliases]
 Count=0

@@ -1,3 +1,6 @@
+#ifndef __KF701DH_H__
+#define __KF701DH_H__
+
 //#include "w78e58.h"
 //#include <absacc.h>
 //#include <intrins.h>
@@ -7,7 +10,7 @@
 #include "calendar.h"
 
 #define uchar unsigned char
-#define uint  unsigned short
+#define uint  unsigned int
 #define ulong unsigned long
 
 //定时器初值
@@ -545,3 +548,8 @@ extern void power_on(void);
 函数功能：关电源保护
 ***************************************/
 extern void power_off(void);
+
+extern void WriteToBackupReg(u16 index ,u16 FirstBackupData);
+u32 CheckBackupReg(u16 index,u16 FirstBackupData);
+
+#endif

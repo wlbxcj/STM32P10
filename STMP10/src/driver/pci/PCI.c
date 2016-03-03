@@ -39,15 +39,15 @@ VOS：锁键盘与解锁键盘功能 （操作员1＆2），密码存于FLASH中，与SN有关联；
 #include "KF701DH.h"
 #include "stm32f10x_lib.h"
 #include "..\..\inc\FunctionList.h"
-
-//#include <hal/usip/hal_rng.h> 
+#include "toolkit.h"
+#include "comm.h"
 #include "base.h"
 #include "vosapi.h"
 #include "pci.h"
-//#include "usip.h"
+#include "dll.h"
 #include "..\..\inc\FunctionList.h" 
-//#include "..\datastruct\struct.h" 
-
+#include "FLASHOPERATE.h" 
+#include "dukpt.h" 
 //#include <hal/usip/hal_timer.h>
  
 #define PIN_INPUT_LIMIT
@@ -62,9 +62,20 @@ VOS：锁键盘与解锁键盘功能 （操作员1＆2），密码存于FLASH中，与SN有关联；
 
 //#define  __NEW_PCI_REQUIRE__   //PIN输入时计数：60分钟内，输入密码的次数不超过120次即可。						
 
-#define printf trace_debug_printf //12/11/08
+#define s_printf trace_debug_printf //12/11/08
 
 #define MODE_GM     0x40
+
+
+extern int  my_open(char *filename, BYTE mode, BYTE *attr);
+extern int my_FileRead(int fd, BYTE *dat, int len);
+extern int  my_FileSeek(int fd, long offset, BYTE origin);
+extern int  my_FileWrite(int fd, BYTE *dat, int len);
+extern int  my_open(char *filename, BYTE mode, BYTE *attr);
+extern int  my_FileWrite(int fd, BYTE *dat, int len);
+extern int  my_FileClose(int fd);
+extern int my_FileRead(int fd, BYTE *dat, int len);
+extern int  my_FileSeek(int fd, long offset, BYTE origin);
 
 volatile static int   g_PinInputIntervalCtrl; //PIN输入时间间隔控制：（GETPIN接口只能每隔30秒调用一次）
 
@@ -142,9 +153,8 @@ extern void DwordToByte(DWORD dwInData, BYTE *pbyOutData);
 //port
 void hal_rng_read(unsigned int *prdRand)
 {
-  
-	int fd_rng;
-	int result;
+	//int fd_rng;
+	//int result;
         static unsigned char i=0; 
         i++;
 	srand(RTC_GetCounter()+i);	
@@ -313,7 +323,7 @@ int s_PciReadPinCount(int i,DWORD *pdwOut)
 int s_PciInitMMK(void)
 {
     DWORD adwTemp[6];
-    int i, j, iRet;
+    int j, iRet;
 
     iRet = ss_BpkWriteReg(0, BPK_VALIDATE_FLAG);
     if (0 != iRet)
@@ -691,6 +701,10 @@ int s_SetLockState(int mode)
 
 int s_PciClearAppKey(uchar app_no)
 {
+#if 1
+    //13/04/02  下载应用不删除密钥
+    return 0;
+#else
     int offset;
     int iret; 
     int fd,i,nNum,nVal;
@@ -699,9 +713,7 @@ int s_PciClearAppKey(uchar app_no)
     AUTH_KEY auth_key;
     unsigned char gFileBuffer[1024];
     //printf("s_pciclearappkey(%02x)\r\n",app_no);
-//13/04/02  下载应用不删除密钥
-    return 0;
-    
+ 
     if(app_no>24)   return PCI_AppNumOver_Err;
     //clear all app master key and session key
     //memset(gFileBuffer, 0, PCI_APPKEY_SPACE);
@@ -721,7 +733,7 @@ int s_PciClearAppKey(uchar app_no)
     //clear all app auth key 
     //printf("step0: "); 
     memset(appname,0,sizeof(appname));
-    iret=SPF_GetAppName(app_no, appname);
+    iret=SPF_GetAppName(app_no, (char *)appname);
     //printf("step1=%d ",iret);
     if(appname[0]==0) //return -1;
     appname[32]=0;
@@ -745,7 +757,7 @@ int s_PciClearAppKey(uchar app_no)
         
         memset(app_name,0,sizeof(app_name));
         memcpy(app_name,auth_key.AppName,32);
-        if(strcmp(app_name,appname)==0)
+        if(strcmp((char *)app_name,(char *)appname)==0)
         {
             loffset=sizeof(AUTH_KEY);
             loffset=0-loffset;
@@ -764,6 +776,7 @@ int s_PciClearAppKey(uchar app_no)
     s_DukptEraseKey(app_no,0,0); 
     
     return 0;
+#endif
 }
 
 
@@ -811,12 +824,12 @@ int s_PciViewAuthKey(void)
 
 int s_InitSysKeyFile(unsigned char bFlag)
 {
-    int fd,needinit,i,nTimes;
+    int fd,i,nTimes;
     unsigned char gFileBuffer[1024];
     unsigned char nTmp[100],sDate[10];
     
     fd=my_open(SYSKEY_FILE,O_RDWR,(unsigned char *)"\xff\x02");
-    needinit=0;
+    //needinit=0;
     
     //13/05/27    
 if(bFlag)
@@ -842,7 +855,7 @@ if(bFlag)
         i = gFileBuffer[PCI_LIST_ADDR+12+6];
         if( (i>=0x30) && (i<=0x39))
         {
-          nTimes = atoi(&gFileBuffer[PCI_LIST_ADDR+12+6]);
+          nTimes = atoi((char *)&gFileBuffer[PCI_LIST_ADDR+12+6]);
           if(nTimes==9999)
            nTimes = 0;
           nTimes++;
@@ -852,7 +865,7 @@ if(bFlag)
         Lib_GetDateTime(sDate);
         memset(nTmp,0,sizeof(nTmp));
         
-        sprintf(nTmp,"%02x-%02x-%02x %02x:%02x:%02x %04d",sDate[0],sDate[1],sDate[2],sDate[3],sDate[4],
+        sprintf((char *)nTmp,"%02x-%02x-%02x %02x:%02x:%02x %04d",sDate[0],sDate[1],sDate[2],sDate[3],sDate[4],
                 sDate[5],nTimes);
         
         //test
@@ -920,7 +933,7 @@ if(bFlag)
         my_FileWrite(fd, gFileBuffer, (PCI_MAX_APPNUM*32*100)%1024);
 #endif
         
-        needinit=1;
+        //needinit=1;
         //return -1;
     }
     my_FileClose(fd);
@@ -960,10 +973,13 @@ int s_InitMdkFile(void)
 //for debug
 int s_CheckSysKeyFile(void)
 {
+#if 1
+    return 0;
+#else
     int fd;
     int i,flen;
     uchar buff[1024];
-    return 0;
+
     s_UartPrint(COM_DEBUG,"keyfile:\r\n");
     fd=my_open(SYSKEY_FILE,O_RDWR,(unsigned char *)"\xff\x02");
     if(fd<0)
@@ -985,7 +1001,7 @@ int s_CheckSysKeyFile(void)
     }
     my_FileClose(fd);
     return 0;
-
+#endif
 }
 
 
@@ -1056,7 +1072,7 @@ int s_ReadAuthKeyFile(uchar *appname,uchar keytype,uchar keyno,unsigned char *ou
         memcpy((uchar *)&auth_key,outdata,max_len);
         memset(app_name,0,sizeof(app_name));
         memcpy(app_name,auth_key.AppName,32);
-        if((strcmp(app_name,appname)==0)&&(auth_key.KeyType==keytype)&&(auth_key.KeyNo==keyno))
+        if((strcmp((char *)app_name,(char *)appname)==0)&&(auth_key.KeyType==keytype)&&(auth_key.KeyNo==keyno))
         {
             break;
         }
@@ -1103,7 +1119,7 @@ int s_WriteAuthKeyFile(uchar *appname,uchar keytype,uchar keyno,unsigned char *i
         offset=offset+sizeof(AUTH_KEY); 
         memset(app_name,0,sizeof(app_name));
         memcpy(app_name,auth_key.AppName,32);
-        if((strcmp(app_name,appname)==0)&&(auth_key.KeyType==keytype)&&(auth_key.KeyNo==keyno))
+        if((strcmp((char *)app_name,(char *)appname)==0)&&(auth_key.KeyType==keytype)&&(auth_key.KeyNo==keyno))
         {
             offset=sizeof(AUTH_KEY);
             offset=0-offset;
@@ -1152,7 +1168,7 @@ int s_ReadMdkFile(uchar *appname,uchar keytype,uchar keyno,unsigned char *outdat
         memcpy((uchar *)&auth_key,outdata,max_len);
         memset(app_name,0,sizeof(app_name));
         memcpy(app_name,auth_key.AppName,32);
-        if((strcmp(app_name,appname)==0)&&(auth_key.KeyType==keytype)&&(auth_key.KeyNo==keyno))
+        if((strcmp((char *)app_name,(char *)appname)==0)&&(auth_key.KeyType==keytype)&&(auth_key.KeyNo==keyno))
         {
             break;
         }
@@ -1198,7 +1214,7 @@ int s_WriteMdkFile(uchar *appname,uchar keytype,uchar keyno,unsigned char *indat
         offset=offset+sizeof(AUTH_KEY); 
         memset(app_name,0,sizeof(app_name));
         memcpy(app_name,auth_key.AppName,32);
-        if((strcmp(app_name,appname)==0)&&(auth_key.KeyType==keytype)&&(auth_key.KeyNo==keyno))
+        if((strcmp((char *)app_name,(char *)appname)==0)&&(auth_key.KeyType==keytype)&&(auth_key.KeyNo==keyno))
         {
             offset=sizeof(AUTH_KEY);
             offset=0-offset;
@@ -1587,6 +1603,8 @@ int _s_CheckPinKey(unsigned char *sKey)
      if(s_PciReadMMK(0, (DWORD*)MMK))   return PCI_ReadMMK_Err;
      if(s_PciReadMMK(1, (DWORD*)ELRCK)) return PCI_ReadMMK_Err;
      DES_TDES(MMK,24,des_key.KeyData,des_key.KeyLen,0x81);
+
+     edc = 0;   // WLB
      for(i=0;i<keylen;i++)
           edc^=des_key.KeyData[i];
       
@@ -1851,14 +1869,15 @@ int Lib_PciWriteMKey(uchar key_no,uchar key_len,uchar *key_data,uchar mode)
 
 //写加密PINKEY的主密钥　
 int Lib_PciWritePIN_MKey(uchar key_no,uchar key_len,uchar *key_data,uchar mode)
-{
+{	
+#if 1
+    return 0; //改用Lib_PciWriteWORK_MKey接口
+#else
     uchar keylrc;
     uchar i;
     int iret;
     uchar   mkeybuf[24],mkeylen;
 
-	return 0; //改用Lib_PciWriteWORK_MKey接口
-	
     //printf("PCI_WritePIN_MKey(%02x %02x %02x%02x %02x)\r\n",key_no,key_len,key_data[0],key_data[1],mode);
     switch(mode)
     {
@@ -1879,12 +1898,16 @@ int Lib_PciWritePIN_MKey(uchar key_no,uchar key_len,uchar *key_data,uchar mode)
 
     }
     return PCI_KeyMode_Err;
+#endif
 }
 
 
 //写加密MACKEY的主密钥　
 int Lib_PciWriteMAC_MKey(uchar key_no,uchar key_len,uchar *key_data,uchar mode)
 {
+#if 1
+   	return 0; //改用Lib_PciWriteWORK_MKey接口
+#else
     uchar keylrc;
     uchar i;
     int iret;
@@ -1892,7 +1915,6 @@ int Lib_PciWriteMAC_MKey(uchar key_no,uchar key_len,uchar *key_data,uchar mode)
 
     //printf("PCI_WriteMAC_MKey(%02x %02x %02x%02x %02x)\r\n",key_no,key_len,key_data[0],key_data[1],mode);
  
-	return 0; //改用Lib_PciWriteWORK_MKey接口
 
     switch(mode)
     {
@@ -1913,6 +1935,7 @@ int Lib_PciWriteMAC_MKey(uchar key_no,uchar key_len,uchar *key_data,uchar mode)
 
     }
     return PCI_KeyMode_Err;
+#endif
 }
 
 
@@ -2023,13 +2046,15 @@ int Lib_PciWriteDesKey(uchar key_no,uchar key_len,uchar *key_data,uchar mode)
 //写PIN密钥
 int Lib_PciWritePinKey(uchar key_no,uchar key_len,uchar *key_data, uchar *key_crc,uchar mode, uchar mkey_no)
 {
+#if 1
+    return 0; //改用Lib_PciWriteWorkKey接口
+#else
     uchar keylrc;
     uchar i,j;
     int iret;
     uchar mkeybuf[24],pinkeybuf[24],mkeylen;
     uchar sk_mack[24],sk_mack_len,skeycrc[8+24],macbuf[8];
 
-	return 0; //改用Lib_PciWriteWorkKey接口
 
     //printf("PCI_WritePinKey(%02x %02x %02x%02x %02x %02x)\r\n",key_no,key_len,key_data[0],key_data[1],mode,mkey_no);
     if(key_len!=8 && key_len!=16 && key_len!=24) return PCI_KeyLen_Err;
@@ -2125,7 +2150,7 @@ int Lib_PciWritePinKey(uchar key_no,uchar key_len,uchar *key_data, uchar *key_cr
     memset(pinkeybuf,0,sizeof(pinkeybuf));
     
     return iret;
-
+#endif
 }
 #endif
 
@@ -2223,10 +2248,10 @@ int Lib_PciWritePinKey(uchar key_no,uchar key_len,uchar *key_data, uchar *key_cr
 int Lib_PciWritePinKeyForEMV(uchar key_no,uchar key_len,uchar *key_data, uchar *key_crc,uchar mode, uchar mkey_no)
 {
     uchar keylrc;
-    uchar i,j;
+    uchar i;
     int iret;
     uchar mkeybuf[24],pinkeybuf[24],mkeylen;
-    uchar sk_mack[24],sk_mack_len,skeycrc[8+24];
+    uchar sk_mack[24];//,sk_mack_len,skeycrc[8+24];
 
     //printf("PCI_WritePinKey(%02x %02x %02x%02x %02x %02x)\r\n",key_no,key_len,key_data[0],key_data[1],mode,mkey_no);
  
@@ -2311,13 +2336,15 @@ int Lib_PciWritePinKeyForEMV(uchar key_no,uchar key_len,uchar *key_data, uchar *
  // 写MAC密钥　
 int Lib_PciWriteMacKey(uchar key_no,uchar key_len,uchar *key_data, uchar *key_crc,uchar mode, uchar mkey_no)
 {
+#if 1
+    return 0; //改用Lib_PciWriteWorkKey接口
+#else
     uchar keylrc;
     uchar i,j;
     int iret;
     uchar mkeybuf[24],mackeybuf[24],mkeylen;
     uchar sk_mack[24],sk_mack_len,skeycrc[8+24],macbuf[8];
 
-	return 0; //改用Lib_PciWriteWorkKey接口
 
     //printf("PCI_WriteMacKey(%02x %02x %02x%02x %02x %02x)\r\n",key_no,key_len,key_data[0],key_data[1],mode,mkey_no);
     if(key_len!=8 && key_len!=16 && key_len!=24) return PCI_KeyLen_Err;
@@ -2417,15 +2444,16 @@ int Lib_PciWriteMacKey(uchar key_no,uchar key_len,uchar *key_data, uchar *key_cr
     memset(mackeybuf,0,sizeof(mackeybuf));
     
     return iret;
+#endif
 }
 
 int Lib_PciWriteWorkKey(uchar key_no,uchar key_len,uchar *key_data, uchar *key_crc,uchar mode, uchar mkey_no)
 {
     uchar keylrc;
-    uchar i,j,encrypt;
+    uchar i,encrypt;
     int iret;
     uchar mkeybuf[24],pinkeybuf[24],mkeylen;
-    uchar sk_mack[24],sk_mack_len,skeycrc[8+24],macbuf[8];
+    uchar sk_mack[24];//,sk_mack_len,skeycrc[8+24],macbuf[8];
 
     //printf("PCI_WritePinKey(%02x %02x %02x%02x %02x %02x)\r\n",key_no,key_len,key_data[0],key_data[1],mode,mkey_no);
     if(key_len!=8 && key_len!=16 && key_len!=24) return PCI_KeyLen_Err;
@@ -2716,9 +2744,8 @@ int DES_TDES(uchar *key,uchar keylen,uchar *dat,uchar datalen,uchar mode)
 
 int s_DeriveKeySub(uchar app_n,uchar mkey_n,uchar wkey_n1,uchar wkey_n2,uchar mode,uchar wkey_type)
 {
-
-     DES_KEY mkey,wkey1;
-     uchar   mkeybuf[24],wkeybuf[24],mkeylen,wkeylen,keymode;
+     //DES_KEY mkey,wkey1;
+     uchar   mkeybuf[24],wkeybuf[24],mkeylen,wkeylen;//,keymode;
      uchar   keylrc;
      uchar   i;
      int     iret;
@@ -2880,7 +2907,7 @@ int Lib_PciGetPin(BYTE pinkey_n,BYTE min_len,BYTE max_len,BYTE *card_no,BYTE mod
 {
 	uchar i, def_max_len;
 	uchar temp[24+8+1],one[9+8],two[9+8],three[9+8];
-	uchar pin_len,len;
+	uchar pin_len;//,len;
 	uchar pinkeybuf[24], pinkeylen,pinbuf[24],strict_buf[8];
 	int   iret;
 	DWORD timebefore,timeafter,timemiddle,timetemp;
@@ -3022,7 +3049,8 @@ int Lib_PciGetPin(BYTE pinkey_n,BYTE min_len,BYTE max_len,BYTE *card_no,BYTE mod
 	  //DES_TDES(pinkeybuf,pinkeylen,three,8,1);
 	  //memcpy(pin_block, three, 8);
 
-	  Lib_sm4(three,16,one,pinkeybuf,1);
+	  //Lib_sm4(three,16,one,pinkeybuf,1);  //  WLB
+      Gm_Sm4(three,16,one,pinkeybuf,1);
 	  //DES_TDES(pinkeybuf,pinkeylen,three,8,1);
 	  memcpy(pin_block, one, 16);
           
@@ -3067,8 +3095,8 @@ int Lib_PciGetPinAuto(BYTE pinkey_n,BYTE min_len,BYTE max_len,BYTE *card_no,BYTE
 {
 
 	uchar i,j, def_max_len;
-     uchar temp[24],one[9],two[9],three[9];
-     uchar pin_len,len;
+     uchar temp[24],one[9];//,two[9],three[9];
+     uchar pin_len;//,len;
      uchar pinkeybuf[24], pinkeylen,pinbuf[24];
      int   iret;
 	 BYTE  rand[16];
@@ -3159,19 +3187,17 @@ int Lib_PciGetPinAuto(BYTE pinkey_n,BYTE min_len,BYTE max_len,BYTE *card_no,BYTE
 
 int  Lib_PciGetOfflinePin(BYTE min_len,BYTE max_len,BYTE *encpin,unsigned short waittime_sec)
 {
-    uchar i, j,def_max_len,ret;
-    uchar temp[24],one[9],two[9],three[9],rand[16];
-	uchar pin_len,len;
-	uchar fixkeybuf[24], fixkeylen,pinbuf[24],strict_buf[8];
+    uchar def_max_len;//,ret;
+    uchar temp[24];//,one[9],two[9],three[9],rand[16];
+	uchar pin_len;//,len;
+	uchar fixkeybuf[24], fixkeylen,pinbuf[24];//,strict_buf[8];
 	int   iret;
-	DWORD timebefore,timeafter,timemiddle,timetemp;
-	WORD  interval=0;
-	uchar count=0;
-	DWORD dwCount[2];
-	BYTE cur_time[7];
-	
-	
-	
+	//DWORD timebefore,timeafter,timemiddle,timetemp;
+	//WORD  interval=0;
+	//uchar count=0;
+	//DWORD dwCount[2];
+	//BYTE cur_time[7];
+
 	def_max_len =14;
 	if (min_len>max_len || max_len>def_max_len)
 	{
@@ -3367,10 +3393,10 @@ void Des3_24Mac_2(uchar *key,uchar *mdat,ushort length)
 //  获取MAC
 int Des_GetMac(BYTE mackey_n,WORD inlen,BYTE *indata,BYTE *macout,BYTE mode)
 {
-    uchar   mackeybuf[24],mackeylen,keymode,datain[2050];
+    uchar   mackeybuf[24],mackeylen,datain[2050];
 
     int     iret;
-    ushort temp,i,inLen,j,k; 
+    ushort temp,i,j,k; 
     //test
     uchar MMK[24];
     //printf("PCI_GetMac(%02x %d %02x)\r\n",mackey_n,inlen,mode);  
@@ -3618,7 +3644,7 @@ int SM4_GetMac(BYTE mackey_n,WORD inlen,BYTE *indata,BYTE *macout,BYTE mode)
 {
 	uchar	mackeybuf[24],mackeylen,datain[2050];
 	int 	iret;
-	ushort temp,i,j,k;
+	//ushort temp,i,j,k;
 	
 	//gCurAppNum=App_Msg.Num;
 	
@@ -3716,7 +3742,7 @@ int  Lib_PciAccessAuth(BYTE *auth_data,BYTE mode)
   ================================================================*/ 
 int  Lib_PciDes(BYTE deskey_n, BYTE *indata, BYTE *outdata, BYTE mode)
 {
-    uchar   deskeybuf[24],deskeylen,keymode,datain[8];
+    uchar   deskeybuf[24],deskeylen,datain[8];
     int     iret;
     uchar   tmpmode=mode;
 
@@ -4044,12 +4070,12 @@ int s_WriteAuthKey(uchar *app_name,uchar key_type,uchar key_no,uchar key_len,uch
     unsigned char MMK[24];
     unsigned char ELRCK[24];
     unsigned char appname[33];
-    int offset;
+    //int offset;
     int iret,ilen;
 
     AUTH_KEY  auth_key;
     //if(app_no>24) return PCI_AppNumOver_Err;
-    ilen=strlen(app_name);
+    ilen=strlen((char *)app_name);
     if(ilen>=32) ilen=32;
     memset(appname,0,sizeof(appname));
     memcpy(appname,app_name,ilen);
@@ -4159,11 +4185,11 @@ int s_ReadAuthKey(uchar *app_name,uchar key_type,uchar key_no,uchar *key_len,uch
      unsigned char appname[33];
      AUTH_KEY auth_key;
      int iret,i,j,ilen;
-     int offset;
+     //int offset;
 
      //须对密钥内容进行加密处理；
      //if(app_no>24) return PCI_AppNumOver_Err;
-     ilen=strlen(app_name);
+     ilen=strlen((char *)app_name);
      if(ilen>=32) ilen=32;
      memset(appname,0,sizeof(appname));
      memcpy(appname,app_name,ilen);
@@ -4262,12 +4288,12 @@ int s_WriteMdkKey(uchar *app_name,uchar key_type,uchar key_no,uchar key_len,ucha
     unsigned char MMK[24];
     unsigned char ELRCK[24];
     unsigned char appname[33];
-    int offset;
+    //int offset;
     int iret,ilen;
 
     AUTH_KEY  auth_key;
     //if(app_no>24) return PCI_AppNumOver_Err;
-    ilen=strlen(app_name);
+    ilen=strlen((char *)app_name);
     if(ilen>=32) ilen=32;
     memset(appname,0,sizeof(appname));
     memcpy(appname,app_name,ilen);
@@ -4363,11 +4389,11 @@ int s_ReadMdkKey(uchar *app_name,uchar key_type,uchar key_no,uchar *key_len,ucha
      unsigned char appname[33];
      AUTH_KEY auth_key;
      int iret,i,j,ilen;
-     int offset;
+     //int offset;
 
      //须对密钥内容进行加密处理；
      //if(app_no>24) return PCI_AppNumOver_Err;
-     ilen=strlen(app_name);
+     ilen=strlen((char *)app_name);
      if(ilen>=32) ilen=32;
      memset(appname,0,sizeof(appname));
      memcpy(appname,app_name,ilen);
@@ -4578,9 +4604,9 @@ uchar PCI_char_to_bin(uchar bchar);
 void PCI_asc_to_bcd(uchar *bcd, uchar *asc, uchar asc_len)
 {
     uchar i,j;
-    uchar bOddFlag, bchar, bchar1, bchar2;
-    if (asc_len%2)  bOddFlag = 1;
-    else            bOddFlag = 0;
+    uchar bchar, bchar1, bchar2;
+    //if (asc_len%2)  bOddFlag = 1;
+    //else            bOddFlag = 0;
 
     for (i=0,j=0; j<asc_len; i++)
     {
@@ -4662,7 +4688,7 @@ int Lib_PciOffLineEncPin(RSA_PINKEY *rsa_pinkey,uchar min,uchar max,uchar *encpi
 {
 
     uint  i,modlen,explen;
-    uchar ret,iccrandomlen;
+    uchar iccrandomlen;
     uint  termrandomlen;
     uchar mod[256],exp[4],iccrandom[8],termrandom[256],strict_buf[8];
     uchar temp[17],PINDATA[300];
@@ -4857,7 +4883,7 @@ F   填充位  值为1111的四位二进制数（hex. 'F'）
 int Lib_PciOffLinePlainPin(uchar icc_slot,uchar min,uchar max,uchar *icc_command,uchar *icc_resp,ushort waittime_sec)
 {
 
-    uchar i,temp[17],ret;
+    uchar i,temp[17];//,ret;
     APDU_SEND  ApduSend;
     APDU_RESP  ApduResp;
     uchar pin_len;
@@ -5032,18 +5058,19 @@ int s_ReadMDK(uchar *mdk)
 }
 
 int s_CheckAllKeysIsDiff(uchar keytype,uchar keyno,uchar keylen,uchar *keydata)
-{
-    int fd,i,j,k,iret,ilen,offset,nVal;
-    BYTE  buff[24],abyKey[24];  
-    DWORD adwMMK[4];  
+{	
+#ifndef __CHECK_SAME_KEY__
+		return 0;
+#else
+    int fd,i,j,k,iret,offset,nVal;
+    BYTE  abyKey[24];  
+    //DWORD adwMMK[4];  
     unsigned char MMK[24],outdata[100];
     unsigned char enckey[24];    
     AUTH_KEY  auth_key;
     DES_KEY   des_key; 
 
-	#ifndef __CHECK_SAME_KEY__
-		return 0;
-	#endif
+
 	
     if(keylen!=8 && keylen!=16 && keylen!=24) return 0; 
     memset(enckey,0,sizeof(enckey));
@@ -5182,6 +5209,7 @@ int s_CheckAllKeysIsDiff(uchar keytype,uchar keyno,uchar keylen,uchar *keydata)
         } 
     }  
     return 0;
+#endif
 }
 
 
@@ -5190,7 +5218,7 @@ int  Lib_PciGetPinDukpt(uchar key_n,uchar min_len,uchar max_len,uchar *card_no,u
 { 
     uchar i, def_max_len,ret;
     uchar temp[24],one[9],two[9],three[9];
-    uchar pin_len,len;
+    uchar pin_len;
     uchar pinkeybuf[24], pinkeylen,pinbuf[24],strict_buf[8];
     int   iret;  
 	uchar tempksn[10]; 	  
@@ -5355,9 +5383,9 @@ int  Lib_PciGetPinDukpt(uchar key_n,uchar min_len,uchar max_len,uchar *card_no,u
 
 int  Lib_PciGetMacDukpt(uchar key_n,ushort inlen,uchar *indata,uchar *macout,uchar mode,uchar *out_ksn)
 {
-    uchar  mackeybuf[24],mackeylen,keymode,datain[2050]; 
+    uchar  mackeybuf[24],mackeylen,datain[2050]; 
     int    iret;
-    ushort temp,i,inLen,j,k;  
+    ushort temp,i,j,k;  
 	uchar  tempksn[10];  
     //printf("PCI_GetMacDukpt(%02x %d %02x)\r\n",mackey_n,inlen,mode);  
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -5465,9 +5493,9 @@ int s_ReadSK_MACK(uchar *sk_mack,uchar *sk_mack_len)
 //  获取加密PIN（X9.8 X3.92）　
 int Lib_PciGetPinFixK(BYTE fixkey_n,BYTE min_len,BYTE max_len,BYTE *card_no,BYTE mode,BYTE *pin_block,ushort waittime_sec)
 {
-    uchar i, j,def_max_len,ret;
+    uchar i, j,def_max_len;
     uchar temp[24],one[9],two[9],three[9],rand[16];
-	uchar pin_len,len;
+	uchar pin_len;
 	uchar fixkeybuf[24], fixkeylen,pinbuf[24],strict_buf[8];
 	int   iret;
 	DWORD timebefore,timeafter,timemiddle,timetemp;
@@ -5840,7 +5868,7 @@ int test_PciGetPin(int rnd)
 #endif 
 
 
-unsigned char CrcPageCmp(unsigned char bpage,unsigned char *sBuf)
+int CrcPageCmp(unsigned char bpage,unsigned char *sBuf)
 {
   unsigned char i;
   unsigned char sCrc[2],sCurCrc[2];
@@ -5884,34 +5912,34 @@ unsigned char CrcPageCmp(unsigned char bpage,unsigned char *sBuf)
 }
 
 
-unsigned char CrcPageCalc(unsigned char bpage,unsigned char *sBuf)
+int CrcPageCalc(unsigned char bpage,unsigned char *sBuf)
 {
-  unsigned char i;
-  unsigned char sCrc[2],sCurCrc[2];
-  i = bpage;
-  
-  if(!( (i==0) ||(i==1) ||(i==2)|| (i==3) ))
-    return -1;
-  if(i==0)
-  memcpy(&sBuf[PCI_CRC_ADDR_PAGE0],"\x00\x00",2);
-  else if(i==1)
-  memcpy(&sBuf[PCI_CRC_ADDR_PAGE1],"\x00\x00",2);
-  else if(i==2)
-  memcpy(&sBuf[PCI_CRC_ADDR_PAGE2],"\x00\x00",2);
-  else if(i==3)
-  memcpy(&sBuf[PCI_CRC_ADDR_PAGE3],"\x00\x00",2);
-  
-  CalulateCRC16(sBuf,2048,sCurCrc);
-  if(i==0)
-    memcpy(&sBuf[PCI_CRC_ADDR_PAGE0],sCurCrc,2);
-  else if(i==1)
-    memcpy(&sBuf[PCI_CRC_ADDR_PAGE1],sCurCrc,2);
-  else if(i==2)
+    unsigned char i;
+    unsigned char sCurCrc[2];
+    i = bpage;
+
+    if(!( (i==0) ||(i==1) ||(i==2)|| (i==3) ))
+        return -1;
+
+    if(i==0)
+        memcpy(&sBuf[PCI_CRC_ADDR_PAGE0],"\x00\x00",2);
+    else if(i==1)
+        memcpy(&sBuf[PCI_CRC_ADDR_PAGE1],"\x00\x00",2);
+    else if(i==2)
+        memcpy(&sBuf[PCI_CRC_ADDR_PAGE2],"\x00\x00",2);
+    else if(i==3)
+        memcpy(&sBuf[PCI_CRC_ADDR_PAGE3],"\x00\x00",2);
+
+    CalulateCRC16(sBuf,2048,sCurCrc);
+    if(i==0)
+        memcpy(&sBuf[PCI_CRC_ADDR_PAGE0],sCurCrc,2);
+    else if(i==1)
+        memcpy(&sBuf[PCI_CRC_ADDR_PAGE1],sCurCrc,2);
+    else if(i==2)
     memcpy(&sBuf[PCI_CRC_ADDR_PAGE2],sCurCrc,2);
-  else if(i==3)
-    memcpy(&sBuf[PCI_CRC_ADDR_PAGE3],sCurCrc,2);
-  
-  
-  return 0;
-  
+    else if(i==3)
+        memcpy(&sBuf[PCI_CRC_ADDR_PAGE3],sCurCrc,2);
+
+    return 0;
 }
+

@@ -25,7 +25,8 @@
 *********************************************************************************************************/
 #include "stm32f10x_lib.h"
 #include "tsc2046.h"
-
+#include "comm.h"
+#include "RF1356.h"
 
 #define TSC2046_GetCounts	10
 
@@ -47,7 +48,6 @@ void Timer_Delay(unsigned int count)
 void TSC2046_init(void)
 {
     GPIO_InitTypeDef   GPIO_InitStructure;
-    EXTI_InitTypeDef   EXTI_InitStructure;
     
     TSC3026_UNSECLECT();  
     GPIO_InitStructure.GPIO_Pin     = GPIO_Pin_11 ;

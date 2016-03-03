@@ -31,8 +31,8 @@
 #include "..\kb\kb.h"
 #include "vosapi.h"
 #include "string.h"
-
-//#include "..\src\inc\KF701DH"
+#include "comm.h"
+#include "kf701dh.h"
 
 #define MIN_AD_X 0
 #define MAX_AD_X 4094
@@ -210,8 +210,8 @@ bool getxy(unsigned int *x, unsigned int *y)
 static int get_sample (calibration *cal,
 			int index, int x, int y, char *name)
 {
-    static int last_x = -1, last_y;
-    int xTmp,yTmp;
+    //static int last_x = -1, last_y;
+    unsigned int xTmp,yTmp;
 
 //    trace_debug_printf("%04x\n",*name);
     //draw cross   
@@ -253,8 +253,8 @@ static int get_sample (calibration *cal,
         }
       }
     }
-    last_x = cal->xfb [index] = x;	
-    last_y = cal->yfb [index] = y;
+    //last_x = cal->xfb [index] = x;	
+    //last_y = cal->yfb [index] = y;
 
     trace_debug_printf("%s : LCD X = %4d Y = %4d\n\r", name, cal->xfb [index], cal->yfb [index]);	
     trace_debug_printf("%s : X = %4d Y = %4d\n\r", name, cal->x [index], cal->y [index]);
@@ -264,7 +264,7 @@ static int get_sample (calibration *cal,
 /*
 *校准信息存储在66*1024-101 这个位置
 */
-unsigned int s_Padcalibration(void)
+int s_Padcalibration(void)
 {
     int i,j, ret;
     unsigned char cal_buffer[256];
@@ -358,7 +358,7 @@ int Lib_Padcalibration(void)
     if(LCDValue >= LCD_AD_FLAG)     // 因为二合一，所以要判断一下是不是允许
         return -1;
 
-    gs_PadStatus == PAD_STAT_TS_CALIBRATING;
+    gs_PadStatus = PAD_STAT_TS_CALIBRATING;
     result = s_Padcalibration();
     gs_PadStatus = PAD_STAT_IDLE;
     return result;
@@ -382,7 +382,7 @@ int Lib_PadRecali(void)
     return 0;
 }
 */
-unsigned char s_PadSign(unsigned char * pcode,unsigned char TimeOut)
+int s_PadSign(unsigned char * pcode,unsigned char TimeOut)
 {
     int xtmp,ytmp,x1,y1,x2,y2;
     int i,j;
@@ -672,6 +672,7 @@ int Lib_PadSetCallback(int (*func)(void))
 * @return 0：成功 
 * <0：错误 
 */ 
+extern void SPI1_Init(void);
 int Lib_PadOpen(void)
 {   
     unsigned int j,k;    
@@ -774,6 +775,8 @@ int Lib_PadRead(unsigned char * pbuf)
     }
     else if(sign_finish == 2)//签名失败 
         return -1;
+
+    return -1;
 }
 
 /********************************************************************************************************

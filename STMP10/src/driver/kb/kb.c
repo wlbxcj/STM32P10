@@ -6,6 +6,7 @@
 #include  "base.h"
 #include  "comm.h"
 #include  "vosapi.h"
+#include "buzzer.h"
 
 //static  const DWORD BeepFreqTab[8]={0,493,453,403,378,328,278,253};
 static  const DWORD  BeepFreqTab[8]={0,100,200,400,800,1600,2000,2500}; 
@@ -46,9 +47,9 @@ volatile static int  kb_TimerStep;       // 保存定时器扫描步骤，可取值0,1,2
 volatile static int  kb_OffTimerCount;
 volatile static DWORD  kb_SoundFrequency;/*锋鸣器的频率*/
 volatile static int  kb_SoundDelay;      /*锋鸣器响声的延时*/
-volatile static int  kb_SoundTempDelay;
+//volatile static int  kb_SoundTempDelay;
 volatile static int  kb_BeepIntBusy;
-volatile static int  kb_BeepFunBusy;
+//volatile static int  kb_BeepFunBusy;
 volatile static int  kb_Buffer_Busy; // 是否正在清缓冲，0表示否，1表示正在清缓冲
 
 volatile int  g_KbIntrStatus;//用于指示当前按键中断处理的状态：0＝空闲
@@ -108,9 +109,7 @@ static void Disable_KB_irq(void)
 int s_KbInit(void)
 {
     int i;
-  
     GPIO_InitTypeDef GPIO_InitStructure;
-    EXTI_InitTypeDef EXTI_InitStructure ;
     
     EXTI_DeInit();
     GPIO_InitStructure.GPIO_Pin     = GPIO_Pin_5|GPIO_Pin_6|GPIO_Pin_7|GPIO_Pin_8; //-in
@@ -165,9 +164,9 @@ int s_KbInit(void)
     //kb_SoundFrequency = BeepFreqTab[4];
     kb_SoundFrequency = BeepFreqTab[7];
     kb_SoundDelay = 1;
-    kb_SoundTempDelay = 1;
+    //kb_SoundTempDelay = 1;
     kb_BeepIntBusy = 0;
-    kb_BeepFunBusy = 0;
+    //kb_BeepFunBusy = 0;
     kb_Buffer_Busy = 0;
 
     g_iKbStopSoundFlag = 0;

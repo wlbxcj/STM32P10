@@ -21,7 +21,7 @@ extern void ledred_off(void);
 extern void ledgreen_on(void);
 extern void ledgreen_off(void);
 extern void Buzzer_Off(void);
-extern void Buzzer_Ring(unsigned int Fre);
+extern void Buzzer_Ring(unsigned short Fre);
 
 
 void RF_test_spi(void)

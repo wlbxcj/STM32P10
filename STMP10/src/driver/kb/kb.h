@@ -87,7 +87,6 @@ int   Lib_KbSound(BYTE mode, WORD DlyTimeMs);
 int   Lib_KbMute(BYTE mode);
 int   Lib_KbGetStr(BYTE *str, BYTE minlen, BYTE maxlen, BYTE mode, WORD timeoutsec);
 
-
 #define DELAY_COUNT    0x0FFFF
 
 #define Keyboard_EXTI_Row1   EXTI_Line5

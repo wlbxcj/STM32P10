@@ -1548,16 +1548,16 @@ uchar DiffInit(void)
 		if(read(fd,(uchar *)&termapp,len) != len) break;
 		
 		//test
-		printf("termapp:");
-		printf("Aidlen[%d] AID:",termapp.Aidlen);
+		s_printf("termapp:");
+		s_printf("Aidlen[%d] AID:",termapp.Aidlen);
 		for(i=0;i<termapp.Aidlen;i++)
-		    printf("%02X ",termapp.Aid[i]);
-		printf("\n");
-		printf("onlinepin[%d] ucSelflag[%d]\n",termapp.onlinepin,termapp.ucSelflag);
-		printf("ulECTTLVal[%d]\n",termapp.ulECTTLVal);
-		printf("ucRdClssTxnLmtFlg[%d] ulRdClssTxnLmt[%d]\n",termapp.ucRdClssTxnLmtFlg,termapp.ulRdClssTxnLmt);
-		printf("ucRdCVMLmtFlg[%d]ulRdCVMLmt[%d] \n",termapp.ucRdCVMLmtFlg,termapp.ulRdCVMLmt);
-		printf("ucRdClssFLmtFlg[%d] ulRdClssFLmt[%d]\n",termapp.ucRdClssFLmtFlg,termapp.ulRdClssFLmt);
+		    s_printf("%02X ",termapp.Aid[i]);
+		s_printf("\n");
+		s_printf("onlinepin[%d] ucSelflag[%d]\n",termapp.onlinepin,termapp.ucSelflag);
+		s_printf("ulECTTLVal[%d]\n",termapp.ulECTTLVal);
+		s_printf("ucRdClssTxnLmtFlg[%d] ulRdClssTxnLmt[%d]\n",termapp.ucRdClssTxnLmtFlg,termapp.ulRdClssTxnLmt);
+		s_printf("ucRdCVMLmtFlg[%d]ulRdCVMLmt[%d] \n",termapp.ucRdCVMLmtFlg,termapp.ulRdCVMLmt);
+		s_printf("ucRdClssFLmtFlg[%d] ulRdClssFLmt[%d]\n",termapp.ucRdClssFLmtFlg,termapp.ulRdClssFLmt);
 		//continue;
 
 		//if(memcmp(termapp.Aid,"\xA0\x00\x00\x03\x33",5) != 0) //add visa and other for test 2011/01/06 disable

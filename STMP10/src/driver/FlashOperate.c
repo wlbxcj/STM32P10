@@ -1,6 +1,8 @@
 #include "FlashOperate.h"
 #include <string.h>
 #include "comm.h"
+#include "pci.h"
+#include "kf701dh.h"
 
 #define PCI_BACK_ADDR     (4*2048)
 
@@ -153,8 +155,9 @@ unsigned char sys_flash_write_operate(u32 Address,u8 * buff,u32 len)
   unsigned char sPageBuf[2048];
   u32 nCurAddress,nCurLen,nSize,i,nOffset;
   //test
-  unsigned char bRet,j;
-  
+  unsigned char j;
+  int bRet;
+
   //if( Address<SysStartAddr || Address+len>SysEndAddr ) 
   if(  (Address+len+SysStartAddr)>SysEndAddr ) 
     return ADDRESS_LEN_ERR;
@@ -386,8 +389,6 @@ unsigned char user_flash_write_erase_operate(u32 Address,u8 * buff,u32 len)
   
   unsigned char sPageBuf[2048];
   u32 nCurAddress,nCurLen,nSize,i,nOffset;
-  //test
-  unsigned char bRet;
 
   //trace_debug_printf("UserEndAddr = %x,address = %x\n\r",UserEndAddr,(Address + UserStartAddr));
   //if( Address<SysStartAddr || Address+len>SysEndAddr ) 
@@ -406,14 +407,14 @@ unsigned char user_flash_write_erase_operate(u32 Address,u8 * buff,u32 len)
   nOffset  = 0;
   for(i=bBeginPage;i<bEndPage;i++)
   {
-    bRet = flash_read_operate(i*FLASH_PAGE_SIZE,sPageBuf,FLASH_PAGE_SIZE);
-    bRet = flash_erase_page(i);
+    flash_read_operate(i*FLASH_PAGE_SIZE,sPageBuf,FLASH_PAGE_SIZE);
+    flash_erase_page(i);
     //nSize = nCurLen%FLASH_PAGE_SIZE;
     nSize =FLASH_PAGE_SIZE- ((nCurAddress-UserStartAddr)%FLASH_PAGE_SIZE);
     if(nSize>nCurLen)
       nSize =nCurLen;
     memcpy(&sPageBuf[nCurAddress%FLASH_PAGE_SIZE],(unsigned char *)&buff[nOffset],nSize);
-    bRet = flash_write_operate(i*FLASH_PAGE_SIZE,(unsigned short *)sPageBuf,FLASH_PAGE_SIZE);
+    flash_write_operate(i*FLASH_PAGE_SIZE,(unsigned short *)sPageBuf,FLASH_PAGE_SIZE);
     //test
     //bRet = flash_read_operate(i*FLASH_PAGE_SIZE,sPageBuf,FLASH_PAGE_SIZE);
     
@@ -437,8 +438,6 @@ unsigned char tsc_flash_write_erase_operate(u32 Address,u8 * buff,u32 len)
   
   unsigned char sPageBuf[2048];
   u32 nCurAddress,nCurLen,nSize,i,nOffset;
-  //test
-  unsigned char bRet;
 
   //trace_debug_printf("TscEndAddr = %x,address = %x\n\r",TscEndAddr,(Address + TscStartAddr));
   //if( Address<SysStartAddr || Address+len>SysEndAddr ) 
@@ -458,14 +457,14 @@ unsigned char tsc_flash_write_erase_operate(u32 Address,u8 * buff,u32 len)
   nOffset  = 0;
   for(i=bBeginPage;i<bEndPage;i++)
   {
-    bRet = flash_read_operate(i*FLASH_PAGE_SIZE,sPageBuf,FLASH_PAGE_SIZE);
-    bRet = flash_erase_page(i);
+    flash_read_operate(i*FLASH_PAGE_SIZE,sPageBuf,FLASH_PAGE_SIZE);
+    flash_erase_page(i);
     //nSize = nCurLen%FLASH_PAGE_SIZE;
     nSize =FLASH_PAGE_SIZE- ((nCurAddress-TscStartAddr)%FLASH_PAGE_SIZE);
     if(nSize>nCurLen)
       nSize =nCurLen;
     memcpy(&sPageBuf[nCurAddress%FLASH_PAGE_SIZE],(unsigned char *)&buff[nOffset],nSize);
-    bRet = flash_write_operate(i*FLASH_PAGE_SIZE,(unsigned short *)sPageBuf,FLASH_PAGE_SIZE);
+    flash_write_operate(i*FLASH_PAGE_SIZE,(unsigned short *)sPageBuf,FLASH_PAGE_SIZE);
     //test
     //bRet = flash_read_operate(i*FLASH_PAGE_SIZE,sPageBuf,FLASH_PAGE_SIZE);
     

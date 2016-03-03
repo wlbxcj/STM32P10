@@ -1,5 +1,6 @@
 #include "mifre_tmdef.h"
-
+#include "lcd.h"
+#include "comm.h"
 
 #if (TERM_TYPE == TERM_KF322)
 
@@ -2532,7 +2533,7 @@ LOOPBACK_END_2:
 		ScrPrint(0,4,0,"Loop Back Test End");
 		getkey();
 		ScrCls();
-		return;//*/
+		return;*/
 	}
 }
 void test_LoopDetTest(void)
@@ -3709,11 +3710,11 @@ void test_SetParam(void)
 	uchar ucMax;
 	uchar ucMin;
 	uchar ucRst;
-	uchar ucStep;
+	//uchar ucStep;
 	uchar ucKey = 0x00;	
-    uchar ucRet = 0;
+    //uchar ucRet = 0;
 	uchar ucTemp = 0;
-	uchar aucStr[10];
+	//uchar aucStr[10];
 	uchar ucVal = 0;
 		
 	Lib_LcdCls();

@@ -142,6 +142,7 @@ void as3911SetModulationLevelMode(AS3911ModulationLevelMode_t modulationLevelMod
 void as3911GetModulationLevelMode(AS3911ModulationLevelMode_t *modulationLevelMode
     , const void *modulationLevelData)
 {
+    (void)modulationLevelData;
     *modulationLevelMode = as3911ModulationLevelMode;
     if (AS3911_MODULATION_LEVEL_FIXED == as3911ModulationLevelMode)
 	{

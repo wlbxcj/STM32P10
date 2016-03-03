@@ -4,8 +4,8 @@
 **************************************************************/
 #define FOR_PN512_DEVICE
 #include "Mifre_TmDef.h"
-
-
+#include <string.h>
+#include "kf701dh.h"
 //const uchar PCD_VER[5]="1.14";
 //const uchar PCD_DATE[12]="201.06.08";
 
@@ -38,7 +38,6 @@ void DelayMs(unsigned int ms)//for stm32f103
 uchar PiccOpen(void)
 {
     int ucRet = RET_RF_OK;
-	uchar ucTemp = 0x00;	
 
 	ucRet=PN512_s_RF_Init();
 
@@ -82,12 +81,11 @@ void PiccClose(void)
 
 uchar PiccDetect(uchar Mode,uchar *CardType,uchar *SerialInfo,uchar *CID,uchar *Other)
 {
-   uchar ucRet = RET_RF_OK;
-	 uchar ucATSLen = 0;
-	 uchar ucATSData[256];
+    uchar ucRet = RET_RF_OK;
+    uchar ucATSLen = 0;
+    uchar ucATSData[256];
 	 uchar ucATQA[2];
 	 uchar ucTemp = 0;
-	 
 	 uchar ucSAK = 0;
 	 uchar ucCardType = 0;
 	 uchar aucSN[100];
@@ -95,6 +93,7 @@ uchar PiccDetect(uchar Mode,uchar *CardType,uchar *SerialInfo,uchar *CID,uchar *
 	 uchar aucOther[300];
 
 	 uint i=0;
+    (void)ucSAK;
 
 	 memset(aucSN,0,sizeof(aucSN));
 	 memset(aucOther, 0, sizeof(aucOther));
@@ -127,48 +126,48 @@ uchar PiccDetect(uchar Mode,uchar *CardType,uchar *SerialInfo,uchar *CID,uchar *
 	 
 	 switch(Mode)
 	 {
-	     case 0x00:  // 按照MasterCard PayPass规范寻卡并激活
-        ucRet = PN512_s_RF_ucPOLL(&ucCardType);
+        case 0x00:  // 按照MasterCard PayPass规范寻卡并激活
+            ucRet = PN512_s_RF_ucPOLL(&ucCardType);
+			if(ucRet)
+			{
+				goto PICC_DETECT_END;
+			}			
+			PN512_RF_WorkInfo.ucStatus = 	PICC_STATUS_WAKEN;
+			if (PN512_RF_WorkInfo.ucCurType == RF_TYPEA) //changed
+			{
+				
+				ucRet = PN512_s_RF_ucActPro(&ucATSLen,ucATSData);
 				if(ucRet)
 				{
-					goto PICC_DETECT_END;
-				}			
-				PN512_RF_WorkInfo.ucStatus = 	PICC_STATUS_WAKEN;
-				if (PN512_RF_WorkInfo.ucCurType == RF_TYPEA) //changed
+				goto PICC_DETECT_END;
+				}		
+				PN512_RF_WorkInfo.ucStatus = 	PICC_STATUS_ACTIV;
+			
+				aucSN[0] = PN512_RF_WorkInfo.ucUIDLen;
+				ucCID = 0; // 要求感应区内只能有一张卡片
+				
+				PN512_s_RF_vGetDetectAInfo(aucSN, aucOther);// 输出所有卡片响应信息
+				
+				memcpy(aucOther+aucOther[0]+1, ucATSData, ucATSLen);
+				aucOther[0] += ucATSLen;
+				
+		    }
+			else  // if(*CardType == 'B')
+			{
+				ucRet = PN512_s_RF_ucActTypeB(&ucATSLen, ucATSData);
+				if(ucRet)
 				{
-				
-					ucRet = PN512_s_RF_ucActPro(&ucATSLen,ucATSData);
-					if(ucRet)
-					{
-					goto PICC_DETECT_END;
-					}		
-					PN512_RF_WorkInfo.ucStatus = 	PICC_STATUS_ACTIV;
-				
-					aucSN[0] = PN512_RF_WorkInfo.ucUIDLen;
-					ucCID = 0; // 要求感应区内只能有一张卡片
-					
-					PN512_s_RF_vGetDetectAInfo(aucSN, aucOther);// 输出所有卡片响应信息
-					
-					memcpy(aucOther+aucOther[0]+1, ucATSData, ucATSLen);
-					aucOther[0] += ucATSLen;
-				
-				}
-				else  // if(*CardType == 'B')
-				{
-					ucRet = PN512_s_RF_ucActTypeB(&ucATSLen, ucATSData);
-					if(ucRet)
-					{
-					  goto PICC_DETECT_END;
-					}				
-					PN512_RF_WorkInfo.ucStatus = 	PICC_STATUS_ACTIV;
-				
-					aucSN[0] = 4;
-					memcpy(aucSN+1, (uchar*)&PN512_RF_WorkInfo.ucATQB[1], 4);
-					ucCID = 0; // 要求感应区内只能有一张卡片
-					aucOther[0] = 14;
-					memcpy(aucOther+3, (uchar*)PN512_RF_WorkInfo.ucATQB, 12);
-				break;
-				}
+				  goto PICC_DETECT_END;
+				}				
+				PN512_RF_WorkInfo.ucStatus = 	PICC_STATUS_ACTIV;
+			
+				aucSN[0] = 4;
+				memcpy(aucSN+1, (uchar*)&PN512_RF_WorkInfo.ucATQB[1], 4);
+				ucCID = 0; // 要求感应区内只能有一张卡片
+				aucOther[0] = 14;
+				memcpy(aucOther+3, (uchar*)PN512_RF_WorkInfo.ucATQB, 12);
+			    break;
+			}
 		 	break;
 
 		 case 'A':

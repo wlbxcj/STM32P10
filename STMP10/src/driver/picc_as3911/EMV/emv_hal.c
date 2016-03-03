@@ -332,7 +332,7 @@ s8 emvHalTransceive(const u8 *request, u32 requestLength, u8 *response
     {
         error = as3911Transceive(request, requestLength, response, maxResponseLength,
                     responseLength, timeout,
-                    AS3911_IGNORE_CRC | AS3911_TRANSMIT_WITHOUT_CRC);
+                    (AS3911RequestFlags_t)(AS3911_IGNORE_CRC | AS3911_TRANSMIT_WITHOUT_CRC));
         //s_UartPrint("error2 = %d\r\n", error);//sxl
         //s_UartPrint("response2=%d\r\n",response); //sxl
         //delay_ms(1); //sxll

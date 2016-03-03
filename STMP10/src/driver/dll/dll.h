@@ -6,7 +6,7 @@
 
 #ifndef _VOS_DLL_H
 #define _VOS_DLL_H
-
+#include "base.h"
 
 
 
@@ -544,9 +544,10 @@ typedef struct _SYSTEM_PARA
   BYTE sDownloadOK[10];//下载是否成功标志(DOWNLOADOK)
 }T_SYSTEM_PATA;
 
+extern int SPF_GetAppNO(const char *pName);
+extern BYTE s_ReadGrayValue(void);
+extern int SPF_GetAppName(BYTE byAppNO, char *pName);
+extern int Lib_PiccGetPara(uchar *sFlag);
+
 #endif
-
-
-
-
 

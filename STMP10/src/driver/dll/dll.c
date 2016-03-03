@@ -2,17 +2,17 @@
 #include "vosapi.h"
 #include "dll.h"
 #include "FlashOperate.h"
-//#include "base.h"
-//#include "GetFont.h"
+#include "buzzer.h"
+#include "pci.h"
 #include "..\..\inc\FunctionList.h"
-
+#include "comm.h"
 #include <time.h>
 #include "stm32f10x_lib.h"
 #include "Toolkit.h"
 #include "smartcard.h"
-
+#include "pci.h"
 #include "misc.h"
-
+#include "kf701dh.h"
 #include "..\lcd\lcd.h"
 #include "base.h"
 
@@ -36,6 +36,8 @@ int g_iActionLimits = 0;
 
 extern unsigned char _glbPiccSetPara;
 extern unsigned long LCDValue;
+extern void settime (struct tm *tDate);
+int CheckTime(uchar *str,uchar *week);
 
 int TmsTag_Read(uchar type, char *tag_str)	
 {
@@ -190,11 +192,11 @@ int s_InitVos(void)
     int iRet;
 	BYTE buf[8];
 	DWORD temp[2];
-	DWORD dwCount;
-//test
-        unsigned char MMK[24];
-        unsigned char ELRCK[16];
-        unsigned char i;
+	//DWORD dwCount;
+    /*test
+    unsigned char MMK[24];
+    unsigned char ELRCK[16];
+    unsigned char i;*/
         
 	memset(buf,0xff,sizeof(buf));
 	ByteToDword(&buf[0],4,&temp[0]);
@@ -297,7 +299,7 @@ int TAMPERClear(void)
         temp[0] = 0;
         for(i=0;i<STORAGE_WORD_COUNT;i++)
           ss_BpkWriteReg(i,temp[0]);
-  
+    return 0;
 }
 
 
@@ -403,6 +405,7 @@ int s_SystemTestSelf(void)
 DWORD s_AM_ReadMaKey(MAN_APP_KEY *psOutMaKey)
 {
     sys_flash_syspara_read(MAN_APP_KEY_M,(uchar*)psOutMaKey,sizeof(MAN_APP_KEY));
+    return 0;
 }
 
 void s_AM_WriteMaKey(MAN_APP_KEY *psInMaKey)
@@ -546,7 +549,7 @@ int CheckVOSSignKey(void)
 ****************************************************************************/
 int SPF_GetAppRunStatus(BYTE AppNo)
 {
-    int iRet = SPF_SUCCESS;
+    //int iRet = SPF_SUCCESS;
     T_SYSTEM_PATA tSystempara;
 
     if (AppNo >= APP_MAX_NUM)
@@ -589,7 +592,7 @@ int SPF_GetAppRunStatus(BYTE AppNo)
 ****************************************************************************/
 int SPF_SetAppRunStatus(BYTE AppNo, BYTE flag)
 {
-    int iRet = SPF_SUCCESS;
+    //int iRet = SPF_SUCCESS;
     T_SYSTEM_PATA tSystempara;
     
     if (AppNo >= APP_MAX_NUM)
@@ -625,21 +628,23 @@ int SPF_SetAppRunStatus(BYTE AppNo, BYTE flag)
 
 int SPF_GetAppDownUnLockStatus(BYTE AppNo)
 {
-    int iRet = SPF_SUCCESS;
+    //int iRet = SPF_SUCCESS;
     T_SYSTEM_PATA tSystempara;
     sys_flash_syspara_read(SYSPARA_M,(BYTE *)&tSystempara,sizeof(T_SYSTEM_PATA));
-    tSystempara.bAttrib &0x08;
+    //tSystempara.bAttrib &0x08;
     sys_flash_syspara_write(  SYSPARA_M,(BYTE *)&tSystempara,sizeof(T_SYSTEM_PATA));
+    return 0;
 }
 
 int SPF_SetAppDownUnLockStatus(BYTE AppNo)
 {
-    int iRet = SPF_SUCCESS;
+    //int iRet = SPF_SUCCESS;
     T_SYSTEM_PATA tSystempara;
     sys_flash_syspara_read(SYSPARA_M,(BYTE *)&tSystempara,sizeof(T_SYSTEM_PATA));
     
     tSystempara.bAttrib &=0xf7;
     
+    return 0;
 }
 
 /****************************************************************************
@@ -655,7 +660,7 @@ int SPF_SetAppDownUnLockStatus(BYTE AppNo)
 ****************************************************************************/
 int SPF_GetAppStatus(BYTE AppNo)
 {
-    int iRet = SPF_SUCCESS;
+    //int iRet = SPF_SUCCESS;
     T_SYSTEM_PATA tSystempara;
     sys_flash_syspara_read(SYSPARA_M,(BYTE *)&tSystempara,sizeof(T_SYSTEM_PATA));
     return tSystempara.bAttrib &0x07;
@@ -683,7 +688,7 @@ int SPF_GetAppStatus(BYTE AppNo)
 ****************************************************************************/
 int SPF_GetAppName(BYTE byAppNO, char *pName)
 {
-    int iRet = SPF_SUCCESS;
+    //int iRet = SPF_SUCCESS;
 
     T_SYSTEM_PATA tSystempara;
     
@@ -729,7 +734,7 @@ int SPF_GetAppName(BYTE byAppNO, char *pName)
 int SPF_GetAppNO(const char *pName)
 {
     T_SYSTEM_PATA tSystempara;
-    int i = 0,iRet = SPF_SUCCESS;
+    //int i = 0,iRet = SPF_SUCCESS;
 
     if (NULL == pName)
     {
@@ -746,7 +751,7 @@ int SPF_GetAppNO(const char *pName)
 #endif
     return 0;
     
-    return SPF_APP_NOEXIST;
+    //return SPF_APP_NOEXIST;
 
 }
 
@@ -777,20 +782,20 @@ int SPF_GetDownloadOK(BYTE byAppNO, char *pDownloadOK)
 ****************************************************************************/
 void LoadApp(void)
 {
-    int i, fd, cnt;
+    int i;
     //DWORD StartAddr, EntryAddr, dwAppInfo; 
-    char strAppFileName[17], strAppName[33];
-    int iRet, iFileLen, iAppNum;
-    APP_MSG *pAppMsg;
+    char strAppName[33];
+    int iRet, iAppNum;
+    //APP_MSG *pAppMsg;
     //SAppInfo sAppInfo;
-    BYTE abyTemp[41], byKeyLen, abyResult[10], *pbyAddr, abyData[10];
+    BYTE abyTemp[41];
 
     Lib_LcdCls();
     /*(void)Lib_LcdSetFont(8, 16, 0);
     (void)Lib_LcdSetAttr(1);
     Lib_LcdGotoxy(0, 0);
     Lib_LcdPrintfCE("    系统菜单    ", "     SYSTEM MENU    ");*/
-	Lib_LcdPrintxy(0, 8*0,0x80,"      SYSTEM MENU     ");
+	Lib_LcdPrintxy(0, 8*0,0x80,"     SYSTEM MENU    ");
     DrawThreeLine();
    /* (void)Lib_LcdSetAttr(0);
     Lib_LcdGotoxy(0, 32/2);*/
@@ -872,7 +877,7 @@ void LoadApp(void)
     (void)Lib_FileClose(fd);
 #endif
     
-    iRet = SPF_GetDownloadOK(iAppNum,abyTemp); //add 
+    iRet = SPF_GetDownloadOK(iAppNum, (char *)abyTemp); //add 
     //if(memcmp((BYTE *)(StartAddr-10),APP_DOWNLOAD_OK_FLAG,10))
     if( iRet ||   memcmp(abyTemp,APP_DOWNLOAD_OK_FLAG,10) )
     {
@@ -883,7 +888,7 @@ void LoadApp(void)
         Lib_LcdClrLine(2*8/2,LCD_HIGH_MINI-1);
 	 WriteLog("App Check Error\n", 1, 0xff);
         for(;;);
-        return;
+        //return;
     }
 
 #ifndef BPK_DEBUG
@@ -1108,13 +1113,13 @@ extern unsigned long LCDValue;
 int ShowVosVersion(void)
 
 {
-    int fd,i;
+    int i;
     uchar ret;
     uchar sn[41], VerInfo[9];//33->41
 
     memset(sn, 0, 41);
     memset(VerInfo, 0, 9);
-    fd = SPF_GetSN(sn);
+    SPF_GetSN(sn);
 #if 0    
     if (fd < 0)
     {
@@ -1780,7 +1785,7 @@ DWORD AM_InputNewPassword(BYTE *pbyOutPassword, BYTE byKeyMode)
 
 DWORD AM_SaveManageKey(int iManageNo, MANAGE_KEY *psManageKey)
 {
-    BYTE abyCrc32[4];
+    //BYTE abyCrc32[4];
     int iRet;
     BYTE abyMMK1[24];
     MAN_APP_KEY g_sMaKey;
@@ -1952,7 +1957,7 @@ void s_SaveGrayValue(BYTE level)
 
 BYTE s_ReadGrayValue(void)
 {
-	BYTE *startAddr;
+	//BYTE *startAddr;
 	BYTE buf[2]={0};
 	BYTE level;
 #if 0  //tmp disable
@@ -1989,7 +1994,7 @@ BYTE s_ReadGrayValue(void)
 int AdjustLcdGrayValue()
 {
     BYTE byVal, byRet;
-    int y;
+    //int y;
 
     (void)Lib_LcdSetFont(8, 16, 0);
     Lib_LcdCls();
@@ -2204,7 +2209,7 @@ int s_AppPciInit(void)
     int i;
     uchar ch;
     int ret;
-    DWORD dret;
+    //DWORD dret;
     
 
     if((SPF_GetAppStatus(0)&0x04)==0)//未运行
@@ -2323,7 +2328,7 @@ Loop_ReLogin:
         {
           
         case 1:
-            dret=KM_LoadKey();
+            KM_LoadKey();
 //            //if(dret == KM_WAIT_TIMEOUT_ERROR || dret == KM_SUCCESS)
 //            //{
 //			//下载密钥成功或失败都退回应用，每次只限一次下载密钥操作
@@ -2398,7 +2403,7 @@ Loop_ReLogin:
   
 }
 
-void _SetLock_EraseApp()
+void _SetLock_EraseApp(void)
 {
 #if 0
         unsigned char bVal,sBuf[2048]={0};
@@ -2429,7 +2434,7 @@ void _SetLock_EraseApp()
 int  Lib_AppInit(void)
 {
     //initial_system();
-  int ret,fd;
+  int fd;
   static unsigned char bRun=0;
   unsigned char sBuf[10]={0};
   
@@ -2614,7 +2619,7 @@ int    Lib_GetDateTime(uchar *datetime)
   
   struct tm tDate;
   int nSec,nHour,nHourOth;
-  uchar tm_hour,tm_min,tm_sec;
+  //uchar tm_hour,tm_min,tm_sec;
   uchar sBuf[10];
   //gettime(&tDate);
   
@@ -2656,7 +2661,7 @@ int CheckBCD(unsigned char str)
 int CheckTime(uchar *str,uchar *week)
 {
     long days;
-    uchar ch,day,ucBuf[12];
+    uchar day,ucBuf[12];
     int i,j,k;
     uchar ret=0;
 
@@ -2741,11 +2746,11 @@ void Lib_LedOff(WORD mask)
   //if(mask==1)
   if(mask&1)
   {
-    LED_Show(1,0);
+    LED_Show((LEDType)1,0);
   }
   //else if(mask==2)
   if(mask&2)
-    LED_Show(2,0);
+    LED_Show((LEDType)2,0);
   //else if(mask==4)
 #if 0
   if(mask&4)
@@ -2755,10 +2760,10 @@ void Lib_LedOff(WORD mask)
     LED_Show(4,0);
 #endif
   if(mask&4)
-    LED_Show(4,0);
+    LED_Show((LEDType)4,0);
   //else if(mask==8)
   if(mask&8)
-    LED_Show(3,0);
+    LED_Show((LEDType)3,0);
   
 }
 
@@ -2767,11 +2772,11 @@ void Lib_LedOn(WORD mask)
   //if(mask==1)
   if(mask&1)
   {
-    LED_Show(1,1);
+    LED_Show((LEDType)1,1);
   }
   //else if(mask==2)
   if(mask&2)
-    LED_Show(2,1);
+    LED_Show((LEDType)2,1);
   //else if(mask==4)
 #if 0
   if(mask&4)
@@ -2781,10 +2786,10 @@ void Lib_LedOn(WORD mask)
     LED_Show(4,1);
 #endif
   if(mask&4)
-    LED_Show(4,1);
+    LED_Show((LEDType)4,1);
   //else if(mask==8)
   if(mask&8)
-    LED_Show(3,1);
+    LED_Show((LEDType)3,1);
   
 }
 
@@ -3039,7 +3044,7 @@ int Lib_PiccGetPara(uchar *sFlag)
 
 int Lib_PiccSetPara( uchar bFlag)
 {
-  uchar sBuf[10],bAFlag,bBFlag;
+  uchar sBuf[10];
   
   //bAFlag = sFlag[0];
   //bBFlag = sFlag[1];
@@ -3073,7 +3078,7 @@ int Lib_PiccSetPara( uchar bFlag)
   ================================================================*/
 int  Pci_Des(BYTE deskey_n, BYTE *indata, BYTE *outdata, BYTE mode, BYTE keytype)
 {
-    uchar   deskeybuf[24],deskeylen,keymode,datain[8],keytypeL4; 
+    uchar   deskeybuf[24],deskeylen,datain[8],keytypeL4; 
     int     iret;
     uchar bCurAppNum;//因为只有一个应用
       
@@ -3187,8 +3192,9 @@ int  Pci_Des(BYTE deskey_n, BYTE *indata, BYTE *outdata, BYTE mode, BYTE keytype
 
 void   Lib_Reboot(void)
 {
-  Buzzer_Off();
-  NVIC_GenerateSystemReset();
-  NVIC_GenerateCoreReset();
-  while(1);
+    Buzzer_Off();
+    NVIC_GenerateSystemReset();
+    NVIC_GenerateCoreReset();
+    while(1);
 }
+

@@ -21,7 +21,9 @@ int  Lib_ComClose(unsigned char channel);
 int  Lib_ComSendByte(unsigned char channel, unsigned char ch);
 int  Lib_ComRecvByte(unsigned char channel, unsigned char *ch, int ms);
 int  Lib_ComReset(unsigned char channel);
-
+extern void trace_debug_printf(char *str,...);
+extern void debug_printf(u8 col,u8 row,u8 mode,char *str,...);
+extern unsigned char getkey(void);
 
 
 #endif

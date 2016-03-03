@@ -117,4 +117,12 @@ s16 emvInitLayer4(EmvPicc_t*  picc);
  */
 s16 emvTransceiveApdu(const u8 *apdu, u32 apduLength, u8 *response,
         u32 maxResponseLength, u32 *responseLength);
+
+extern s16 emvPiccOpen(void);
+extern s16 emvPiccClose(void);
+extern s16 emvPiccCheck(uchar mode,uchar *CardType,uchar *SerialNo);
+extern s16 emvPiccCommand (APDU_SEND *ApduSend, APDU_RESP *ApduResp);
+extern s16 emvPiccRemove(void);
+
 #endif /* EMV_LAYER4_H */
+

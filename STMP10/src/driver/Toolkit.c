@@ -223,7 +223,7 @@ void AddCSAndSendUARTRsp(u8* cmd, u8 length)
 {
     CalulateCRC16(cmd, length, cmd + length);
     GetU16(cmd + length);
-    Comm_SendPacket(cmd, length + 2);//send 4 bytes Header and parameter
+    //Comm_SendPacket(cmd, length + 2);//send 4 bytes Header and parameter
 }
 
 /// @param None
@@ -333,15 +333,33 @@ void SYSCLOCKInit(void)
 *******************************************************************************/
 void Set_USBClock(void)
 {
-    
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB, ENABLE);
-
     /* USBCLK = PLLCLK/1.5 =48 MHz */
     RCC_USBCLKConfig(RCC_USBCLKSource_PLLCLK_1Div5);
     /* Enable USB clock */
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_USB, ENABLE);
 }
+
+/*******************************************************************************
+* Function Name  : Enter_LowPowerMode
+* Description    : Power-off system clocks and power while entering suspend mode
+* Input          : None.
+* Return         : None.
+*******************************************************************************/
+void Enter_LowPowerMode(void)
+{
+}
+
+/*******************************************************************************
+* Function Name  : Leave_LowPowerMode
+* Description    : Restores system clocks and power while exiting suspend mode
+* Input          : None.
+* Return         : None.
+*******************************************************************************/
+void Leave_LowPowerMode(void)
+{
+}
+
+
 #endif
 /*******************************************************************************
 * Function Name  : NVIC_Configuration

@@ -154,7 +154,7 @@
         </option>
         <option>
           <name>CCDefines</name>
-          <state></state>
+          <state>STM32F10X_HD</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -215,7 +215,7 @@
         <option>
           <name>CCAllowList</name>
           <version>1</version>
-          <state>1001010</state>
+          <state>1111111</state>
         </option>
         <option>
           <name>CCDebugInfo</name>
@@ -288,6 +288,12 @@
           <state>$PROJ_DIR$\..\src\driver\picc_as3911\picc</state>
           <state>$PROJ_DIR$\..\src\driver\picc_as3911\EMV</state>
           <state>$PROJ_DIR$\..\src\driver\ts\</state>
+          <state>$PROJ_DIR$\..\src\driver\lcd\</state>
+          <state>$PROJ_DIR$\..\src\driver\dll</state>
+          <state>$PROJ_DIR$\..\src\driver\pci</state>
+          <state>$PROJ_DIR$\..\src\driver\encrypt</state>
+          <state>$PROJ_DIR$\..\src\driver\usb\</state>
+          <state>$PROJ_DIR$\..\src\library\STM32_USB-FS-Device_Driver\inc</state>
         </option>
         <option>
           <name>CCStdIncCheck</name>
@@ -311,7 +317,7 @@
         </option>
         <option>
           <name>CCOptLevel</name>
-          <state>2</state>
+          <state>3</state>
         </option>
         <option>
           <name>CCOptStrategy</name>
@@ -320,7 +326,7 @@
         </option>
         <option>
           <name>CCOptLevelSlave</name>
-          <state>2</state>
+          <state>3</state>
         </option>
         <option>
           <name>CompilerMisraRules98</name>
@@ -1878,7 +1884,7 @@
           <name>$PROJ_DIR$\..\src\driver\pn512\Mifre.h</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\src\driver\pn512\Mifre_TmDef.h</name>
+          <name>$PROJ_DIR$\..\src\driver\pn512\mifre_tmdef.h</name>
         </file>
         <file>
           <name>$PROJ_DIR$\..\src\driver\pn512\MifreCmd.c</name>
@@ -1927,6 +1933,27 @@
         </file>
         <file>
           <name>$PROJ_DIR$\..\src\driver\ts\tsc2046.h</name>
+        </file>
+      </group>
+      <group>
+        <name>USB</name>
+        <file>
+          <name>$PROJ_DIR$\..\src\driver\usb\hw_config.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\src\driver\usb\usb_desc.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\src\driver\usb\usb_endp.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\src\driver\usb\usb_istr.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\src\driver\usb\usb_prop.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\src\driver\usb\usb_pwr.c</name>
         </file>
       </group>
       <group>
@@ -2104,7 +2131,7 @@
         <name>$PROJ_DIR$\..\src\inc\kb.h</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\src\inc\KF701DH.h</name>
+        <name>$PROJ_DIR$\..\src\inc\kf701dh.h</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\src\inc\KF701DV.h</name>
@@ -2237,6 +2264,27 @@
       </file>
       <file>
         <name>$PROJ_DIR$\..\src\library\src\stm32f10x_wwdg.c</name>
+      </file>
+    </group>
+    <group>
+      <name>STM32_USB-FS-Device_Driver</name>
+      <file>
+        <name>$PROJ_DIR$\..\src\library\STM32_USB-FS-Device_Driver\src\usb_core.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\src\library\STM32_USB-FS-Device_Driver\src\usb_init.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\src\library\STM32_USB-FS-Device_Driver\src\usb_int.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\src\library\STM32_USB-FS-Device_Driver\src\usb_mem.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\src\library\STM32_USB-FS-Device_Driver\src\usb_regs.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\src\library\STM32_USB-FS-Device_Driver\src\usb_sil.c</name>
       </file>
     </group>
   </group>

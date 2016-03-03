@@ -50,6 +50,11 @@ int  s_Dukpt_NRKGP(void);
 void s_DukptGetCRC(unsigned char *address, unsigned int size, unsigned char *crcOut);
 
 extern int DES_TDES(uchar *key,uchar keylen,uchar *dat,uchar datalen,uchar mode);
+extern int  my_open(char *filename, BYTE mode, BYTE *attr);
+extern int  my_FileWrite(int fd, BYTE *dat, int len);
+extern int  my_FileClose(int fd);
+extern int my_FileRead(int fd, BYTE *dat, int len);
+extern int  my_FileSeek(int fd, long offset, BYTE origin);
 
 /*============================================================
 　功能：清除所有与密钥有关的全局变量；
@@ -63,17 +68,10 @@ void s_ClearDukptGlobalParameter(void)
 	memset(g_bDukpt_KeyReg,0,sizeof(g_bDukpt_KeyReg));
 } 
 
-int s_PciDukptInit(void)
-{ 
-    memset(g_bDukpt_KSN,0,sizeof(g_bDukpt_KSN));
-    s_ClearDukptGlobalParameter();
-    s_InitDukptKeyFile();   
-    return 0;
-}  
 
 int s_InitDukptKeyFile(void)
 {
-    int iret,i,fd; 
+    int i,fd; 
     T_DUKPT_KEY  dukpt_key;
     
     memset(&dukpt_key,0,sizeof(dukpt_key));
@@ -91,6 +89,13 @@ int s_InitDukptKeyFile(void)
     return 0;
 } 
 
+int s_PciDukptInit(void)
+{ 
+    memset(g_bDukpt_KSN,0,sizeof(g_bDukpt_KSN));
+    s_ClearDukptGlobalParameter();
+    s_InitDukptKeyFile();   
+    return 0;
+}
 
 /*============================================================
 　功能：将3字节数组转换为长整型数据
@@ -456,7 +461,7 @@ int s_ReadDukptFutureKey(uchar appno,uchar dukptkey_id,uchar futurekey_id,uchar 
 	future_key=dukpt_key.FutureKey[futurekey_id-1];
 	if(future_key.KeyLen==0)      return DUKPT_NoKey; 
 	s_DukptGetCRC(future_key.Key, (unsigned int)future_key.KeyLen,CRC);
-	if(memcmp(CRC,future_key.CRC,2))
+	if(memcmp(CRC,future_key.CrcCheck,2))
 	{
 		memset(&future_key,0,sizeof(future_key));
 		return DUKPT_InvalidCrc;
@@ -482,7 +487,7 @@ int  s_WriteDukptFutureKey(uchar appno,uchar dukptkey_id,uchar futurekey_id,ucha
 	 
 	memset(&future_key,0,sizeof(future_key));
 	//memset(&dukpt_key,0,sizeof(dukpt_key));
-	s_DukptGetCRC(keydata, (unsigned int)keylen,future_key.CRC);
+	s_DukptGetCRC(keydata, (unsigned int)keylen,future_key.CrcCheck);
 	future_key.KeyLen=keylen; 
 	memcpy(future_key.Key,keydata,8); 
 	memcpy(future_key.Key+8,keydata+8,8);  
