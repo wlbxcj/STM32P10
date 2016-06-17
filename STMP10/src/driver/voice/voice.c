@@ -13,102 +13,41 @@
 #include  "comm.h"
 #include  "vosapi.h"
 
-////////////////////////////////////////////////////////////////////////
-/*
-PA11-------------S1
-PA12------------S2
-PA13------------S3
-PA14------------S4
-PA15------------SBT
-PB3------------SPY0030_CS~ 
-*/
-#if 0
-#define VOICE_S1   GPIO_Pin_11
-#define VOICE_S2   GPIO_Pin_12
-//#define VOICE_S3   GPIO_Pin_13
-#define VOICE_S3   GPIO_Pin_9 //sxl
-//#define VOICE_S4   GPIO_Pin_14
-#define VOICE_S4   GPIO_Pin_4 //sxl
-#endif
-//顺序倒过来
-//#define VOICE_S1   GPIO_Pin_14
-#define VOICE_S1   GPIO_Pin_4 //sxl
-//#define VOICE_S2   GPIO_Pin_13
-#define VOICE_S2   GPIO_Pin_9 //sxl
-#define VOICE_S3   GPIO_Pin_12
-#define VOICE_S4   GPIO_Pin_11
-
-//#define VOICE_STB  GPIO_Pin_15
-#define VOICE_STB  GPIO_Pin_0 //sxl
-
-//#define SPY_CS     GPIO_Pin_3
-#define SPY_CS     GPIO_Pin_2
-
-#if 0
-#define SET_S1_HIGH			(GPIO_SetBits(GPIOA, VOICE_S1))
-#define SET_S1_LOW			(GPIO_ResetBits(GPIOA, VOICE_S1))
-#define SET_S2_HIGH			(GPIO_SetBits(GPIOA, VOICE_S2))
-#define SET_S2_LOW			(GPIO_ResetBits(GPIOA, VOICE_S2))
-#define SET_S3_HIGH			(GPIO_SetBits(GPIOA, VOICE_S3))
-#define SET_S3_LOW			(GPIO_ResetBits(GPIOA, VOICE_S3))
-#define SET_S4_HIGH			(GPIO_SetBits(GPIOA, VOICE_S4))
-#define SET_S4_LOW			(GPIO_ResetBits(GPIOA, VOICE_S4)) 
-#define SET_STB_HIGH		        (GPIO_SetBits(GPIOA, VOICE_STB))
-#define SET_STB_LOW			(GPIO_ResetBits(GPIOA, VOICE_STB))
-
-#define SET_SPY_CS_HIGH		        (GPIO_SetBits(GPIOB, SPY_CS)) 
-#define SET_SPY_CS_LOW		        (GPIO_ResetBits(GPIOB, SPY_CS))
-
-#endif
-
-//#define SET_S1_HIGH	    (GPIO_WriteBit(GPIOA, VOICE_S1,1))
-//#define SET_S1_LOW	    (GPIO_WriteBit(GPIOA, VOICE_S1,0))
-#define SET_S1_HIGH			(GPIO_WriteBit(GPIOC, VOICE_S1, (BitAction)1)) //sxl
-#define SET_S1_LOW			(GPIO_WriteBit(GPIOC, VOICE_S1, (BitAction)0)) //sxl
-//#define SET_S2_HIGH	    (GPIO_WriteBit(GPIOA, VOICE_S2,1))
-//#define SET_S2_LOW	    (GPIO_WriteBit(GPIOA, VOICE_S2,0))
-#define SET_S2_HIGH			(GPIO_WriteBit(GPIOB, VOICE_S2, (BitAction)1)) //sxl
-#define SET_S2_LOW			(GPIO_WriteBit(GPIOB, VOICE_S2, (BitAction)0)) //sxl
-#define SET_S3_HIGH			(GPIO_WriteBit(GPIOA, VOICE_S3, (BitAction)1))
-#define SET_S3_LOW			(GPIO_WriteBit(GPIOA, VOICE_S3, (BitAction)0))
-#define SET_S4_HIGH			(GPIO_WriteBit(GPIOA, VOICE_S4, (BitAction)1))
-#define SET_S4_LOW			(GPIO_WriteBit(GPIOA, VOICE_S4, (BitAction)0)) 
-
-#define SET_STB_HIGH		        (GPIO_WriteBit(GPIOA, VOICE_STB, (BitAction)1))
-#define SET_STB_LOW			        (GPIO_WriteBit(GPIOA, VOICE_STB, (BitAction)0))
-
-//#define SET_SPY_CS_HIGH		    (GPIO_WriteBit(GPIOB, SPY_CS,1)) 
-#define SET_SPY_CS_HIGH		        (GPIO_WriteBit(GPIOB, SPY_CS, (BitAction)1)) 
-//#define SET_SPY_CS_LOW		    (GPIO_WriteBit(GPIOB, SPY_CS,0))
-#define SET_SPY_CS_LOW		        (GPIO_WriteBit(GPIOB, SPY_CS, (BitAction)1))
-
-
-#define s_DelayUs WaitNuS
-#define s_DelayMs1 delay_ms
+#include  "voice.h"
 
 extern void WaitNuS(u32 x);
 
 int s_VoiceInit(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
-  
-    GPIO_InitStructure.GPIO_Pin     = VOICE_S1|VOICE_S2|VOICE_S3|VOICE_S4|VOICE_STB; 
+ 
+    GPIO_InitStructure.GPIO_Pin     = VOICE_S1; 
     GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_Out_PP;
     GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_50MHz;
+    GPIO_Init(S1_PORT, &GPIO_InitStructure);
+
+    GPIO_InitStructure.GPIO_Pin     = VOICE_S2; 
+    GPIO_Init(S2_PORT, &GPIO_InitStructure);
+
+    GPIO_InitStructure.GPIO_Pin     = VOICE_S3; 
+    GPIO_Init(S3_PORT, &GPIO_InitStructure);
+
+    GPIO_InitStructure.GPIO_Pin     = VOICE_S4; 
+    GPIO_Init(S4_PORT, &GPIO_InitStructure);
+
+    GPIO_InitStructure.GPIO_Pin     = VOICE_STB; 
     GPIO_Init(GPIOA, &GPIO_InitStructure);
-  
+
+    GPIO_InitStructure.GPIO_Pin     = SPY_CS; 
+    GPIO_Init(GPIOB, &GPIO_InitStructure);
+
     SET_S1_LOW;
     SET_S2_LOW;
     SET_S3_LOW;
     SET_S4_LOW;
     SET_STB_LOW;
-    
-    GPIO_InitStructure.GPIO_Pin     = SPY_CS; 
-    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_Out_PP;
-    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_50MHz;
-    GPIO_Init(GPIOB, &GPIO_InitStructure);
+   
     SET_SPY_CS_HIGH;
-    
 #if 0   
     //test
     for(;;)
@@ -143,10 +82,12 @@ int SetVoice(uchar voiceID)
 		return VOICE_ID_ERR;
 	}
 
+    trace_debug_printf("SetVoice (%d)\r\n", voiceID);
+
 	switch(voiceID)
 	{
 	case VOICE_PLS_INPUT_PWD: // H L L L
-	//case VOICE_PLS_SWIPE_MAGCARD: // L L L H  //顺序要反？
+	//case VOICE_PLS_SWIPE_MAGCARD: // L L L H  //????????
 
 		SET_S1_HIGH;
 		SET_S2_LOW;
@@ -209,7 +150,7 @@ int SetVoice(uchar voiceID)
 		SET_S4_LOW;
 		break;
 
-	case VOICE_PLS_SWIPE_MAGCARD: // L L L H
+	case VOICE_PLS_SWIPE_MAGCARD: // L L L H  4
         //case  VOICE_PLS_INPUT_PWD:         
 		SET_S1_LOW;
 		SET_S2_LOW;
@@ -287,7 +228,7 @@ int SetVoice(uchar voiceID)
 		SET_S4_LOW;
 		break;
 
-	case VOICE_WELCOME: //H L L H
+	case VOICE_WELCOME: //H L L H   8
 		SET_S1_HIGH;
 		SET_S2_LOW;
 		SET_S3_LOW;

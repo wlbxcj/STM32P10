@@ -1310,16 +1310,41 @@ static unsigned char sm4_key[16] =
 	0x11,0x22,0x33,0x44,0x55,0x66,0x77,0x88,0x11,0x22,0x33,0x44,0x55,0x66,0x77,0x88
 
 };
+
+static unsigned char sm4_out[16] =
+{
+	0x95,0x0F,0xA2,0xC8,0x8C,0x42,0xAB,0x1C,0xE0,0xD6,0xFC,0x25,0xC1,0xB5,0x48,0x51
+};
+
 void gm_test(void)
 {
 	unsigned char out[16];
+    int ret;
 
 	s_printf("********Sm4 Test********\r\n");
 	Gm_Sm4(sm4_data,16, out, sm4_key, 1);
+	if (memcmp(out, sm4_out, 16) == 0) {
+		s_printf("SM4加密: 成功");
+	} else {
+		s_printf("SM4加密: 失败");
+	}
+
+    Gm_Sm4(sm4_out,16, out, sm4_key, 0);
+	if (memcmp(out, sm4_data, 16) == 0) {
+		s_printf("SM4解密: 成功");
+	} else {
+		s_printf("SM4解密: 失败");
+	}
 
 	s_printf("********Sm2 Test********\r\n");
 	//Gm_Sm2Verify(id, 16, publicKey, sign, msg, sizeof(msg));
-        Sm2_Verify(id, 16, publicKey, sign, msg, sizeof(msg));
+    ret = Sm2_Verify(id, 16, publicKey, sign, msg, sizeof(msg));
+	if (ret == 0) {
+		s_printf("SM2验签: 成功");
+	} else {
+		s_printf("SM2验签: 失败");
+	}
+	
 	s_printf("********Finish********\r\n");
 
 	Kb_GetKey();

@@ -650,6 +650,7 @@ int s_PadSign(unsigned char * pcode,unsigned char TimeOut)
 int Lib_PadSign(unsigned char * pcode,unsigned char TimeOut)
 {  
     int result;
+
     if(LCDValue >= LCD_AD_FLAG)     // 因为二合一，所以要判断一下是不是允许
         return -1;
 

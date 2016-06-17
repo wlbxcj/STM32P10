@@ -17,7 +17,8 @@
       
 
 #include "var.h"
-
+#include <ctype.h>
+#include <stdio.h>
 //#include "bsp_cipher.h"
 #include "rsaapp.h"
 
@@ -27,8 +28,11 @@
 extern int socketfd;
 extern int connectFlag;
 extern int ConnectServer();
-
-uchar EMVSendAndReceiveByTcp(int nSendLen,uchar *SendBuff,uchar time,uchar bReceFlag,int *pnReceLen,uchar *ReceBuff);
+extern void BuildTLVString(ushort uiEmvTag, uchar *psData, int iLength, uchar **ppsOutData);
+extern void dat_asctobcd(unsigned char *bcd,unsigned char *asc, unsigned short asc_len );
+extern unsigned char EMVSendAndReceiveByTcp(int nSendLen,uchar *SendBuff,uchar time,uchar bReceFlag,int *pnReceLen,uchar *ReceBuff);
+extern unsigned int RTC_GetCounter(void);
+extern int Contactless_GetTLVData(unsigned short Tag, uchar *DtOut, int *nDtLen);
 
 uchar gbPrintSignature=0;
 
@@ -287,8 +291,8 @@ int  EMVMMI_MenuAppSel(int TryCnt, char  *List[], int AppNum)
 */
 int  EMVMMI_InputAmount(unsigned char *AuthAmt, unsigned char *CashBackAmt)
 {
-	char sTemp[20],sDisp[100],sAmount[100];
-	uchar bValue;
+	char sAmount[100];//sTemp[20],sDisp[100],
+	//uchar bValue;
 	memset(sAmount,0,sizeof(sAmount) );
         #ifdef KF311_M
           strcpy((char*)AuthAmt,"000");
@@ -869,17 +873,18 @@ uchar GenSendData(int nSendLen,uchar * sBuff,unsigned int * nLen)
 
 uchar EMVSendAndReceiveForBatch(int nSendLen,uchar *SendBuff,uchar time,uchar bReceFlag,int *pnReceLen,uchar *ReceBuff)
 {
-	uchar tmpBuff[700],bValue=0;
-	int i,nRecNum;
-	int nTotalLen;
-	int nHeadTime;
+
       
 #ifdef KF311_M
         return 0;
 #else
+    uchar tmpBuff[700],bValue=0;
+	int i,nRecNum;
+	int nTotalLen;
+	int nHeadTime;
 	// use Authorisation aip+type??
-//liantest
-TraceDisp("open com\n");
+    //liantest
+    TraceDisp("open com\n");
 	
 	//if need reverse,create reverse  090529
 	if( open_com( 3, 115200, 5 ) )   //5s
@@ -1505,6 +1510,7 @@ uchar SeparateData(int nRecLen,uchar *ReceBuff,unsigned char *RspCode, unsigned 
 		
 	}      
 
+    return 0;
 }  
 
 
@@ -1522,7 +1528,7 @@ void MakeTranReadyForPayICData(unsigned char *pBuf,unsigned short *pnLen)
 	*p = 0x91;//QPBOC ?? MSD when set --方案标识号
 	p+=1;
 	gettime(&sTime);
-	sprintf(sBuf,"20%02d%02d%02d%02d%02d%02d",sTime.tm_year,sTime.tm_mon,sTime.tm_mday,
+	sprintf((char *)sBuf,"20%02d%02d%02d%02d%02d%02d",sTime.tm_year,sTime.tm_mon,sTime.tm_mday,
 		     sTime.tm_hour,sTime.tm_min,sTime.tm_sec);
 	dat_asctobcd(p, sBuf, 14);
 	p+=7;
@@ -1827,8 +1833,8 @@ void EMVIF_ClearDsp(void)
  
 uchar WaitKey(unsigned int iTimeInt)
 {
-	unsigned long s_time, ul_time;
-	unsigned char bKey;
+	//unsigned long s_time, ul_time;
+	//unsigned char bKey;
         
         return 0;
 /*
@@ -1849,12 +1855,12 @@ uchar WaitKey(unsigned int iTimeInt)
 
 uchar WaitKeyTest(unsigned int iTimeInt)
 {
-	unsigned long s_time, ul_time;
-	unsigned char bKey;
+
         
         return 0;
 #if 0
-	//fortest
+	//f	unsigned long s_time, ul_time;
+	unsigned char bKey;ortest
 	return getkey();
 	
 	time(&s_time);
@@ -2070,8 +2076,8 @@ void EMVIF_GetRandNumber(unsigned int *prdRand)
 #define RNG_IOC_MAGIC 'N'
 #define RNG_WORD 		_IO(RNG_IOC_MAGIC, 0)
 #endif	  
-	int fd_rng;
-	int result;
+	//int fd_rng;
+	//int result;
 
 	srand(RTC_GetCounter());	
 	//11/06/13

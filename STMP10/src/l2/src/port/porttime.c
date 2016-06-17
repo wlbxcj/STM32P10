@@ -12,27 +12,29 @@ unsigned int time(unsigned int *tm)
   return *tm;
 }
 
+struct tm  ptTemp;        // ´Ólocaltime ÒÆ³ö
+
 struct tm * localtime(const unsigned int *nSec)
 {
     unsigned int nHour,nHourOth;
-    struct tm  ptTm;
+    //struct tm  ptTm;
  //   struct tm  RetTm;    
     unsigned char sBuf[10];
 
-    
    // *ptTm = RetTm;
     nHour = (*nSec)/3600;
     nHourOth = (*nSec)%3600;
     
-    ptTm.tm_hour = (nHour);
-    ptTm.tm_min =  (nHourOth/60);
-    ptTm.tm_sec =  (nHourOth%60);
+    ptTemp.tm_hour = (nHour);
+    ptTemp.tm_min =  (nHourOth/60);
+    ptTemp.tm_sec =  (nHourOth%60);
       
     DateGet(sBuf);//CCYY MM DD
-    ptTm.tm_year = (sBuf[2]*10) + sBuf[3];
-    ptTm.tm_mon = (sBuf[4]*10) + sBuf[5];
-    ptTm.tm_mday = (sBuf[6]*10) + sBuf[7];
-    return &ptTm; 
+    ptTemp.tm_year = (sBuf[2]*10) + sBuf[3];
+    ptTemp.tm_mon = (sBuf[4]*10) + sBuf[5];
+    ptTemp.tm_mday = (sBuf[6]*10) + sBuf[7];
+
+    return &ptTemp; 
 }
 
 unsigned int mktime(struct tm * ptTm)

@@ -1,7 +1,5 @@
-
-
 #include "port.h"
-
+#include "flashoperate.h"
 
 #define MAX_FILE_M   7
 
@@ -15,9 +13,6 @@
 
 #define QPBOCCAPK_OFFSET_M  0x630
 
-extern unsigned char flash_read_operate(u32 Address,u8 * buff,u32 len); //在flashoperate.c 里面有 guohonglv
-extern unsigned char flash_erase_page(unsigned char page_num);  //在flashoperate.c 里面有 guohonglv
-extern unsigned char flash_write_operate(u32 Address,u16 * buff,u32 len); //在flashoperate.c 里面有 guohonglv
 /*
  name           size
 termAppFile    (39+1)*50=2000    page 0
@@ -283,20 +278,19 @@ static unsigned char SetWriteBit(unsigned char bRecNum)
 
 	memcpy(gtFileStru[gbCurFile].psNumAttrib,sNumAttrib,gtFileStru[gbCurFile].bOffsetLen);
 	
-	
+	return 0;
 }
 
 int stat(const char * file_name,struct stat *buf)
 {
-  //int nBegin; //never be used //guohonglv 2011/02/17
-  //假定以前已open!
-  if(gbCurFile<0)
-    return -1;
-  buf->st_size = openfilesize();
-  
-  
-  return 0;
-  
+    //int nBegin; //never be used //guohonglv 2011/02/17
+    //假定以前已open!
+    if(gbCurFile < 0)
+        return -1;
+
+    buf->st_size = openfilesize();
+
+    return 0;
 }
 
 int  write (int fd,const void * buf,int count) //在linux下，原函数是：ssize_t write (int fd,const void * buf,size_t count)
@@ -383,6 +377,7 @@ int close(int fd) //在disp.c 里面有引用
   if(fd<0)
     return 0;
   gbCurFile = -1;
+  
   return 0;
 }
 
@@ -404,7 +399,7 @@ int open( const char * pathname, int flags) ////在disp.c 里面有引用
     pPath =strrchr( sName,'\\');
 #endif
     
-    if(strcmp(&pPath[1],gtFileStru[i].sName)==0)
+    if(strcmp(&pPath[1], (char *)gtFileStru[i].sName)==0)
     {
       gbCurFile = i;
       switch(gbCurFile)
@@ -611,37 +606,36 @@ uchar FlashWriteParam(char *pIndexStr,uchar *pBuf,unsigned short nLen)
 	#define READERPARAM_OFFSET_M  0x792
 	unsigned char sPageBuf[2048];
 
-
-	
 	if(strcmp(pIndexStr,"posparam")==0)
 	{
-    //flash_read_operate(StartAddr+4*FLASH_PAGE_SIZE,sPageBuf,FLASH_PAGE_SIZE);
-    user_flash_read_operate(StartAddr+4*FLASH_PAGE_SIZE,sPageBuf,FLASH_PAGE_SIZE);
-    //flash_erase_page(4);
-    user_flash_erase_page(4);
-	memcpy(&sPageBuf[POSPARAM_OFFSET_M],(unsigned char *)pBuf,nLen);
-	//return flash_write_operate(StartAddr+4*FLASH_PAGE_SIZE,(unsigned short*)sPageBuf,FLASH_PAGE_SIZE);
-	return user_flash_write_operate(StartAddr+4*FLASH_PAGE_SIZE,(unsigned short*)sPageBuf,FLASH_PAGE_SIZE);
+        //flash_read_operate(StartAddr+4*FLASH_PAGE_SIZE,sPageBuf,FLASH_PAGE_SIZE);
+        user_flash_read_operate(StartAddr+4*FLASH_PAGE_SIZE,sPageBuf,FLASH_PAGE_SIZE);
+        //flash_erase_page(4);
+        user_flash_erase_page(4);
+    	memcpy(&sPageBuf[POSPARAM_OFFSET_M],(unsigned char *)pBuf,nLen);
+    	//return flash_write_operate(StartAddr+4*FLASH_PAGE_SIZE,(unsigned short*)sPageBuf,FLASH_PAGE_SIZE);
+    	return user_flash_write_operate(StartAddr+4*FLASH_PAGE_SIZE,(unsigned short*)sPageBuf,FLASH_PAGE_SIZE);
 		
 	}
 	else if(strcmp(pIndexStr,"readerparam")==0)
 	{
-    //flash_read_operate(StartAddr+4*FLASH_PAGE_SIZE,sPageBuf,FLASH_PAGE_SIZE);
-    user_flash_read_operate(StartAddr+4*FLASH_PAGE_SIZE,sPageBuf,FLASH_PAGE_SIZE);
-    //flash_erase_page(4);
-    user_flash_erase_page(4);
-	memcpy(&sPageBuf[READERPARAM_OFFSET_M],(unsigned char *)pBuf,nLen);
-	//return flash_write_operate(StartAddr+4*FLASH_PAGE_SIZE,(unsigned short*)sPageBuf,FLASH_PAGE_SIZE);
-	return user_flash_write_operate(StartAddr+4*FLASH_PAGE_SIZE,(unsigned short*)sPageBuf,FLASH_PAGE_SIZE);
-
+        //flash_read_operate(StartAddr+4*FLASH_PAGE_SIZE,sPageBuf,FLASH_PAGE_SIZE);
+        user_flash_read_operate(StartAddr+4*FLASH_PAGE_SIZE,sPageBuf,FLASH_PAGE_SIZE);
+        //flash_erase_page(4);
+        user_flash_erase_page(4);
+    	memcpy(&sPageBuf[READERPARAM_OFFSET_M],(unsigned char *)pBuf,nLen);
+    	//return flash_write_operate(StartAddr+4*FLASH_PAGE_SIZE,(unsigned short*)sPageBuf,FLASH_PAGE_SIZE);
+    	return user_flash_write_operate(StartAddr+4*FLASH_PAGE_SIZE,(unsigned short*)sPageBuf,FLASH_PAGE_SIZE);
 	}
+
+    return 0;
 }
 
 uchar FlashReadParam(char *pIndexStr,uchar *pBuf,unsigned short nLen)
 {
 	#define POSPARAM_OFFSET_M     0x738
 	#define READERPARAM_OFFSET_M  0x792
-	unsigned char sPageBuf[2048];
+	//unsigned char sPageBuf[2048];
 	
 	if(strcmp(pIndexStr,"posparam")==0)
 	{
@@ -655,8 +649,8 @@ uchar FlashReadParam(char *pIndexStr,uchar *pBuf,unsigned short nLen)
 		return user_flash_read_operate(StartAddr+4*FLASH_PAGE_SIZE+READERPARAM_OFFSET_M,(unsigned char *)pBuf,nLen);
 
 	}
-		
-	
+
+    return 0;
 }
 
   

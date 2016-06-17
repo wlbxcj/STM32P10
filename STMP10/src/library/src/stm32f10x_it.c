@@ -250,7 +250,7 @@ void TAMPER_IRQHandler(void)
 
     //test
     for(;;);
-    
+#if 0
     /* Clear Tamper pin interrupt pending bit */
     BKP_ClearITPendingBit();
 
@@ -262,7 +262,7 @@ void TAMPER_IRQHandler(void)
     
     /* Enable Tamper pin */
     BKP_TamperPinCmd(ENABLE);
-      
+#endif
   }
   
 }
@@ -517,6 +517,18 @@ void DMA1_Channel7_IRQHandler(void)
 *******************************************************************************/
 void ADC1_2_IRQHandler(void)
 {
+}
+
+/*******************************************************************************
+* Function Name  : USBWakeUp_IRQHandler
+* Description    : This function handles USB WakeUp interrupt request.
+* Input          : None
+* Output         : None
+* Return         : None
+*******************************************************************************/
+void USBWakeUp_IRQHandler(void)
+{
+    EXTI_ClearITPendingBit(EXTI_Line18);
 }
 
 /*******************************************************************************
@@ -1261,17 +1273,6 @@ void EXTI15_10_IRQHandler(void)
 * Return         : None
 *******************************************************************************/
 void RTCAlarm_IRQHandler(void)
-{
-}
-
-/*******************************************************************************
-* Function Name  : USBWakeUp_IRQHandler
-* Description    : This function handles USB WakeUp interrupt request.
-* Input          : None
-* Output         : None
-* Return         : None
-*******************************************************************************/
-void USBWakeUp_IRQHandler(void)
 {
 }
 

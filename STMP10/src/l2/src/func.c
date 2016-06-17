@@ -1,5 +1,7 @@
 #ifndef FUNC_H
 #define FUNC_H
+//#include "func.h"
+#include "flashoperate.h"
 
 #define uchar unsigned char
 void ClssBaseParameterSet_pboc();
@@ -1471,7 +1473,7 @@ void InitTestKeys(void)
 	
 	};
 */	
-	int i;
+	//int i;
 
 //liantest
 //printf("capk len[%i]\n",sizeof(T_EMV_TERM_CAPK) );
@@ -1515,7 +1517,7 @@ void InitTestKeys(void)
 
 uchar DiffInit(void)
 {
-	uchar buf[500];
+	//uchar buf[500];
 	int fd,len,ret;
         
 	TERMAPPLIST termapp;
@@ -1523,8 +1525,8 @@ uchar DiffInit(void)
 	T_Clss_PreProcInfo tPreProcInfo;
 	//EMV_APPLIST	stEmvApp;
 	//test
-	uchar i=0,j;
-	T_EMV_TERM_CAPK capk;
+	uchar i=0;//,j;
+	//T_EMV_TERM_CAPK capk;
 
 	Entry_DelAllAidList();
 	Entry_DelAllPreProcInfo();
@@ -1606,8 +1608,10 @@ uchar DiffInit(void)
 
 }
 
+extern unsigned char FlashFirstInit(void);
+
 uchar ClssTransInit(void)
-	{
+{
 	
 	uchar buf[100];
 	int fd,len,ret;
@@ -1618,7 +1622,7 @@ uchar ClssTransInit(void)
 	//EMV_APPLIST	stEmvApp;
 	//test
 	uchar i=0;
-	uchar sAid[20],sAidLen,sTemp[2],bKeynType;
+	//uchar sAid[20],sAidLen,sTemp[2],bKeynType;
 
 //test
 /*
@@ -1791,6 +1795,8 @@ void ClrBelow(uchar line)
 }
 
 */
+extern void ClrBelow(uchar line);
+extern void lcdshow( int line_num, int place, int clear_line_flag, unsigned char *str );
 
 uchar disp_clss_err(int err)
 {
@@ -1877,7 +1883,7 @@ void ClssBaseParameterSet_pboc()
 	#endif
 
 	//11/06/03
-	strcpy(ClssParam.aucMchNameLoc,"ABCDE12345");
+	strcpy((char *)ClssParam.aucMchNameLoc,"ABCDE12345");
 	ClssParam.usMchLocLen = sizeof(ClssParam.aucMchNameLoc);
 	//strcpy(ClssParam.aucMerchantID,"M0000000000001");
 	memcpy(ClssParam.aucMerchantID,"M00000000000001",15); //11/06/08

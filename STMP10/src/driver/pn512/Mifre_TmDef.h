@@ -21,7 +21,7 @@
 
 extern unsigned char _glbPiccSetPara;
 
-extern void DelayMs(unsigned int ms);
+//extern void DelayMs(unsigned int ms);
 
 #ifdef FOR_LINUX_SYS
 	#include <linux/types.h>

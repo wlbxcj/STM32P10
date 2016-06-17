@@ -361,10 +361,12 @@ void isr_com2(void)
 
 unsigned char kbhit(void)
 {
-    if(uart_rx_in[UART1]==uart_rx_out[UART1] && ( !buff_flow_flag[UART1] ) )
-      return 0xff;
+    unsigned int ulTemp = uart_rx_out[UART1];
+    //if(uart_rx_in[UART1]==uart_rx_out[UART1] && (!buff_flow_flag[UART1]))
+    if(uart_rx_in[UART1] == ulTemp && (!buff_flow_flag[UART1]))
+        return 0xff;
     else
-      return 0;
+        return 0;
 }
 
 #if 0
@@ -502,98 +504,112 @@ int Lib_ComCheckSend(uchar port)
 ****************************************************************************/
 int Lib_ComRecvByte(uchar port,uchar *recv_byte,int waitms)
 {
-  if(port>MAX_PORT_NUM) return COM_INVALID_PORTNO;//skx 090223
-	
-  if(!uartOpenFlag[port]) return COM_NOT_OPEN;
+    unsigned int ulTemp = 0;
 
-  if(recv_byte==NULL)
-    return COM_TX_MEMOVER;
-  
-  if(  (waitms<0))
-    return COM_INVALID_PARA;
-  
-  if(waitms == 0)
-  { 
-    if(uart_rx_in[port] == uart_rx_out[port]) 
+    if(port>MAX_PORT_NUM)
+        return COM_INVALID_PORTNO;//skx 090223
+
+    if(!uartOpenFlag[port])
+        return COM_NOT_OPEN;
+
+    if(recv_byte==NULL)
+        return COM_TX_MEMOVER;
+
+    if(  (waitms<0))
+        return COM_INVALID_PARA;
+
+    if(waitms == 0)
     {
-      if( !buff_flow_flag[port] )
-         return COM_RX_TIMEOUT;
+        ulTemp = uart_rx_out[port];
+        //if(uart_rx_in[port] == uart_rx_out[port]) 
+        if(uart_rx_in[port] == ulTemp) 
+        {
+            if( !buff_flow_flag[port] )
+                return COM_RX_TIMEOUT;
+        }
+        *recv_byte = uart_rx_buffer[port][uart_rx_out[port]++];
+        if(uart_rx_out[port] == RX_BUFFER_SIZE)
+        {
+            buff_flow_flag[port]=0;//clear flow flag
+            uart_rx_out[port] = 0;
+        }
+        return 0;
     }
-    *recv_byte = uart_rx_buffer[port][uart_rx_out[port]++];
-    if(uart_rx_out[port] == RX_BUFFER_SIZE)
+    else
     {
-       buff_flow_flag[port]=0;//clear flow flag
-       uart_rx_out[port] = 0;
-    }
-    return 0;
-  }
-  else
-  {
-    //TimerSet(3, waitms);
-    TimerSet(2, waitms/10);//10ms
-    while(uart_rx_in[port] == uart_rx_out[port] && ( !buff_flow_flag[port] ) )
-    {
-	//if( !TimerCheck(3) ) 
-	if( !TimerCheck(2) ) 
-          return COM_RX_TIMEOUT;
-    }
-    *recv_byte = uart_rx_buffer[port][uart_rx_out[port]++];
-    if(uart_rx_out[port] == RX_BUFFER_SIZE) 
-    {
-        buff_flow_flag[port]=0;//clear flow flag
-        uart_rx_out[port] = 0;
-    }
-                  
-    return 0;
-  }  
+        //TimerSet(3, waitms);
+        TimerSet(2, waitms/10);//10ms
+        ulTemp = uart_rx_out[port];
+        //while(uart_rx_in[port] == uart_rx_out[port] && ( !buff_flow_flag[port] ) )
+        while(uart_rx_in[port] == ulTemp && (!buff_flow_flag[port]))
+        {
+            ulTemp = uart_rx_out[port];
+            //if( !TimerCheck(3) ) 
+            if( !TimerCheck(2) ) 
+                return COM_RX_TIMEOUT;
+        }
+        *recv_byte = uart_rx_buffer[port][uart_rx_out[port]++];
+        if(uart_rx_out[port] == RX_BUFFER_SIZE) 
+        {
+            buff_flow_flag[port]=0;//clear flow flag
+            uart_rx_out[port] = 0;
+        }
+
+        return 0;
+    }  
 }
 
 int Lib_ComRecv(uchar port,uchar *recv_data,int max_len,int *recv_len,int waitms)
 {
-  int recvlen; 
+    int recvlen; 
+    unsigned int ulTemp = 0;
 
-  if(port>MAX_PORT_NUM) 
-    return COM_INVALID_PORTNO;
+    if(port>MAX_PORT_NUM) 
+        return COM_INVALID_PORTNO;
 	
-  if(!uartOpenFlag[port]) 
-    return COM_NOT_OPEN;
+    if(!uartOpenFlag[port]) 
+        return COM_NOT_OPEN;
   
-  if(recv_data==NULL)
-    return COM_TX_MEMOVER;
-  if( (max_len<=0) || (waitms<0))
-    return COM_INVALID_PARA;
+    if(recv_data==NULL)
+        return COM_TX_MEMOVER;
+    if( (max_len<=0) || (waitms<0))
+        return COM_INVALID_PARA;
   
-  recvlen = 0;
+    recvlen = 0;
 
-  if(waitms == 0)
-  { 
-    if(uart_rx_in[port] == uart_rx_out[port]) 
-    {
-      if( !buff_flow_flag[port] )
-         return COM_RX_TIMEOUT;
-    }
-    *recv_data = uart_rx_buffer[port][uart_rx_out[port]++];
-    if(uart_rx_out[port] == RX_BUFFER_SIZE)
-    {
-       buff_flow_flag[port]=0;//clear flow flag
-       uart_rx_out[port] = 0;
-    }
-    return 0;
-  }
-  else
-  {
-    TimerSet(2, waitms/10);//10ms 3->2
-    while(1)
-    {
-      if(uart_rx_in[port] == uart_rx_out[port] && ( !buff_flow_flag[port] ) )
-      {
-	if( !TimerCheck(2) ) //3->2
+    if(waitms == 0)
+    { 
+        ulTemp = uart_rx_out[port];
+        //if(uart_rx_in[port] == uart_rx_out[port]) 
+        if(uart_rx_in[port] == ulTemp) 
         {
-          *recv_len = recvlen;
-          return COM_RX_TIMEOUT;
+            if(!buff_flow_flag[port])
+                return COM_RX_TIMEOUT;
         }
-        continue;
-      }
+        *recv_data = uart_rx_buffer[port][uart_rx_out[port]++];
+        if(uart_rx_out[port] == RX_BUFFER_SIZE)
+        {
+            buff_flow_flag[port]=0;//clear flow flag
+            uart_rx_out[port] = 0;
+        }
+        return 0;
+    }
+    else
+    {
+        TimerSet(2, waitms/10);//10ms 3->2
+        while(1)
+        {
+            ulTemp = uart_rx_out[port];
+            //if(uart_rx_in[port] == uart_rx_out[port] && ( !buff_flow_flag[port] ) )
+            if(uart_rx_in[port] == ulTemp && (!buff_flow_flag[port]))
+            {
+	            if( !TimerCheck(2) ) //3->2
+                {
+                    *recv_len = recvlen;
+                    return COM_RX_TIMEOUT;
+                }
+                continue;
+            }
       recv_data[recvlen++] = uart_rx_buffer[port][uart_rx_out[port]++];
       if(uart_rx_out[port] == RX_BUFFER_SIZE) 
       {

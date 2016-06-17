@@ -12,6 +12,9 @@ unsigned char flash_write_operate_nocheckcomplete(u32 Address,u16 * buff,u32 len
 unsigned char flash_read_operate(u32 Address,u8 * buff,u32 len);
 unsigned char sys_flash_write_operate(u32 Address,u8 * buff,u32 len);
 unsigned char sys_flash_read_operate(u32 Address,u8 * buff,u32 len);
+unsigned char user_flash_read_operate(u32 Address,u8 * buff,u32 len);
+unsigned char user_flash_erase_page(unsigned char page_num);
+unsigned char user_flash_write_operate(u32 Address,u16 * buff,u32 len);
 
 /*
 Address:0x0807D800+?

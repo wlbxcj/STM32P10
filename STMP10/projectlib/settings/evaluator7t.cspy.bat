@@ -22,12 +22,12 @@
 @REM but they are listed at the end of this file for reference.
 
 
-"C:\Program Files (x86)\IAR Systems\Embedded Workbench 5.4\common\bin\cspybat" "C:\Program Files (x86)\IAR Systems\Embedded Workbench 5.4\arm\bin\armproc.dll" "C:\Program Files (x86)\IAR Systems\Embedded Workbench 5.4\arm\bin\armangel.dll"  %1 --plugin "C:\Program Files (x86)\IAR Systems\Embedded Workbench 5.4\arm\bin\<libsupport_plugin>" --backend -B "--endian=little" "--cpu=Cortex-M3" "--fpu=None" "-p" "C:\Program Files (x86)\IAR Systems\Embedded Workbench 5.4\arm\config\debugger\samsung\ios3c4510b.ddf" "--semihosting" "--device=STM32F10xxC" "--rdi_heartbeat" "--drv_communication=COM1:38400" 
+"D:\Program Files (x86)\IAR Systems\Embedded Workbench 5.4\common\bin\cspybat" "D:\Program Files (x86)\IAR Systems\Embedded Workbench 5.4\arm\bin\armproc.dll" "D:\Program Files (x86)\IAR Systems\Embedded Workbench 5.4\arm\bin\armangel.dll"  %1 --plugin "D:\Program Files (x86)\IAR Systems\Embedded Workbench 5.4\arm\bin\<libsupport_plugin>" --backend -B "--endian=little" "--cpu=Cortex-M3" "--fpu=None" "-p" "D:\Program Files (x86)\IAR Systems\Embedded Workbench 5.4\arm\config\debugger\samsung\ios3c4510b.ddf" "--semihosting" "--device=STM32F10xxC" "--rdi_heartbeat" "--drv_communication=COM1:38400" 
 
 
 @REM Loaded plugins:
-@REM    C:\Program Files (x86)\IAR Systems\Embedded Workbench 5.4\arm\bin\armlibsupport.dll
-@REM    C:\Program Files (x86)\IAR Systems\Embedded Workbench 5.4\common\plugins\CodeCoverage\CodeCoverage.dll
-@REM    C:\Program Files (x86)\IAR Systems\Embedded Workbench 5.4\common\plugins\Profiling\Profiling.dll
-@REM    C:\Program Files (x86)\IAR Systems\Embedded Workbench 5.4\common\plugins\stack\stack.dll
-@REM    C:\Program Files (x86)\IAR Systems\Embedded Workbench 5.4\common\plugins\SymList\SymList.dll
+@REM    D:\Program Files (x86)\IAR Systems\Embedded Workbench 5.4\arm\bin\armlibsupport.dll
+@REM    D:\Program Files (x86)\IAR Systems\Embedded Workbench 5.4\common\plugins\CodeCoverage\CodeCoverage.dll
+@REM    D:\Program Files (x86)\IAR Systems\Embedded Workbench 5.4\common\plugins\Profiling\Profiling.dll
+@REM    D:\Program Files (x86)\IAR Systems\Embedded Workbench 5.4\common\plugins\stack\stack.dll
+@REM    D:\Program Files (x86)\IAR Systems\Embedded Workbench 5.4\common\plugins\SymList\SymList.dll

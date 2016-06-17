@@ -166,12 +166,15 @@ s8 as3911ClearInterrupts(u32 mask)
 {
     s8 error = ERR_NONE;
     u32 irqStatus = 0;
+    u32 ulTemp = 0;
 
     AS3911_IRQ_OFF();
 
     error |= as3911ContinuousRead(AS3911_REG_IRQ_MAIN, (u8*) &irqStatus, 3);
 	//LOG("as3911ClearInterrupts irqStatus = 0x%x", irqStatus);
-    as3911InterruptStatus |= irqStatus & as3911InterruptMask;
+	ulTemp = irqStatus & as3911InterruptMask;
+    //as3911InterruptStatus |= irqStatus & as3911InterruptMask;
+    as3911InterruptStatus |= ulTemp;
     as3911InterruptStatus &= ~mask;
 
     AS3911_IRQ_ON();
@@ -187,8 +190,10 @@ s8 as3911WaitForInterruptTimed(u32 mask, u16 timeout, u32 *irqs)
     bool_t timerExpired = FALSE;
     u32 irqStatus = 0;
     u32 tmpirqStatus = 0;//sxl
+    u32 ulTemp = 0;
 	//ulong after_tick;
     unsigned int uiBeginTime = GetTimerCount();
+
     if (timeout > 0){
       GetTimerCount();   //13/10/17 sxl
 		//TimerSet(4, timeout); 
@@ -208,7 +213,9 @@ s8 as3911WaitForInterruptTimed(u32 mask, u16 timeout, u32 *irqs)
      
       AS3911_IRQ_OFF();
       as3911ContinuousRead(AS3911_REG_IRQ_MAIN, (u8*) &tmpirqStatus, 3);
-      as3911InterruptStatus |= tmpirqStatus & as3911InterruptMask;
+      ulTemp = tmpirqStatus & as3911InterruptMask;
+      //as3911InterruptStatus |= tmpirqStatus & as3911InterruptMask;
+      as3911InterruptStatus |= ulTemp;
       irqStatus = as3911InterruptStatus & mask;
       AS3911_IRQ_ON();
       //s_UartPrint("as3911ContinuousRead=%d\r\n",as3911ContinuousRead);//sxl
@@ -280,6 +287,8 @@ s8 as3911GetInterrupts(u32 mask, u32 *irqs)
 // void as3911Isr(void)
 void _IC1Interrupt(void)
 {
+    u32 ulTemp = 0;
+
     do
     {
         u32 irqStatus = 0;
@@ -287,7 +296,9 @@ void _IC1Interrupt(void)
         AS3911_IRQ_CLR();
 
         as3911ContinuousRead(AS3911_REG_IRQ_MAIN, (u8*) &irqStatus, 3);
-        as3911InterruptStatus |= irqStatus & as3911InterruptMask;
+        ulTemp = irqStatus & as3911InterruptMask;
+        //as3911InterruptStatus |= irqStatus & as3911InterruptMask;
+        as3911InterruptStatus |= ulTemp;
     } while (AS3911_IRQ_IS_SET());
 }
 

@@ -1,10 +1,10 @@
 
 #include "stm32f10x_lib.h"
-
+#include "flashoperate.h"
 #include "usb_lib.h"
 #include "hw_config.h"
 #include "usb_core.h"
-
+//#include "vosapi.h"
 //#define SKX_FOR_LIB//生成库文件
 
 #ifndef SKX_FOR_LIB
@@ -17,9 +17,6 @@
 #include "kb.h"
 
 #include "ASCII8X8.h"
-
-#define VOICE_PLS_INPUT_PWD					1		//请输入密码
-
 
 //#define FLASH_4M
 //#define FLASH_8M
@@ -63,138 +60,6 @@ extern int  g_iVosFirstRunFlag;  // 1:first run, 0:not first run
 
 //#include "rc531/Mifre_TmDef.h"
 #include "pn512/Mifre_TmDef.h"
-
-//#if 0
-/**
-  * @brief Sets System clock frequency to 72MHz and configure HCLK, PCLK2 
-  *        and PCLK1 prescalers. 
-  * @param None.
-  * @arg None.
-  * @note : This function should be used only after reset.
-  * @retval value: None.
-  */
-static void SetSysClockTo72(void)
-{
-#define  uint8_t unsigned          char
-#define  uint16_t unsigned          short
-#define  uint32_t unsigned int
-  
-#define  RCC_CR_HSEON                        ((unsigned int)0x00010000)        /*!< External High Speed clock enable */
-#define  RCC_CR_HSERDY                       ((unsigned int)0x00020000)        /*!< External High Speed clock ready flag */
-#define HSEStartUp_TimeOut   ((uint16_t)0x0500) /*!< Time out for HSE start up */
-#define  FLASH_ACR_PRFTBE                    ((uint8_t)0x10)               /*!<Prefetch Buffer Enable */
-#define  FLASH_ACR_LATENCY                   ((uint8_t)0x03)               /*!<LATENCY[2:0] bits (Latency) */
-#define  FLASH_ACR_LATENCY_0                 ((uint8_t)0x00)               /*!<Bit 0 */
-#define  FLASH_ACR_LATENCY_1                 ((uint8_t)0x01)               /*!<Bit 0 */
-#define  FLASH_ACR_LATENCY_2                 ((uint8_t)0x02)               /*!<Bit 1 */
-#define  RCC_CFGR_HPRE_DIV1                  ((unsigned int)0x00000000)        /*!< SYSCLK not divided */
-#define  RCC_CFGR_PPRE2_DIV1                 ((unsigned int)0x00000000)        /*!< HCLK not divided */
-#define  RCC_CFGR_PPRE1_DIV2                 ((unsigned int)0x00000400)        /*!< HCLK divided by 2 */
-#define  RCC_CFGR_PLLSRC                     ((unsigned int)0x00010000)        /*!< PLL entry clock source */
-#define  RCC_CFGR_PLLXTPRE                   ((unsigned int)0x00020000)        /*!< HSE divider for PLL entry */
-#define  RCC_CFGR_PLLMULL                    ((uint32_t)0x003C0000)        /*!< PLLMUL[3:0] bits (PLL multiplication factor) */
-#define  RCC_CFGR_PLLMULL9                   ((uint32_t)0x001C0000)        /*!< PLL input clock*9 */
-#define  RCC_CR_PLLON                        ((uint32_t)0x01000000)        /*!< PLL enable */
-#define  RCC_CR_PLLRDY                       ((uint32_t)0x02000000)        /*!< PLL clock ready flag */
-#define  RCC_CFGR_SW                         ((uint32_t)0x00000003)        /*!< SW[1:0] bits (System clock Switch) */
-#define  RCC_CFGR_SW_PLL                     ((uint32_t)0x00000002)        /*!< PLL selected as system clock */
-
-#define  RCC_CFGR_SWS                        ((uint32_t)0x0000000C)        /*!< SWS[1:0] bits (System Clock Switch Status) */
-  
-  volatile unsigned int  StartUpCounter = 0, HSEStatus = 0;
-  
-  /*!< SYSCLK, HCLK, PCLK2 and PCLK1 configuration ---------------------------*/    
-  /*!< Enable HSE */    
-  RCC->CR |= ((unsigned int)RCC_CR_HSEON);
- 
-  /*!< Wait till HSE is ready and if Time out is reached exit */
-  do
-  {
-    HSEStatus = RCC->CR & RCC_CR_HSERDY;
-    StartUpCounter++;  
-  } while((HSEStatus == 0) && (StartUpCounter != HSEStartUp_TimeOut));
-
-  if ((RCC->CR & RCC_CR_HSERDY) != RESET)
-  {
-    HSEStatus = (unsigned int)0x01;
-  }
-  else
-  {
-    HSEStatus = (unsigned int)0x00;
-  }  
-
-  if (HSEStatus == (unsigned int)0x01)
-  {
-    /*!< Enable Prefetch Buffer */
-    FLASH->ACR |= FLASH_ACR_PRFTBE;
-
-    /*!< Flash 2 wait state */
-    FLASH->ACR &= (unsigned int)((unsigned int)~FLASH_ACR_LATENCY);
-    FLASH->ACR |= (unsigned int)FLASH_ACR_LATENCY_2;    
- 
-    /*!< HCLK = SYSCLK */
-    RCC->CFGR |= (unsigned int)RCC_CFGR_HPRE_DIV1;
-      
-    /*!< PCLK2 = HCLK */
-    RCC->CFGR |= (unsigned int)RCC_CFGR_PPRE2_DIV1;
-    
-    /*!< PCLK1 = HCLK */
-    RCC->CFGR |= (unsigned int)RCC_CFGR_PPRE1_DIV2;
-    
-    /*!< PLLCLK = 8MHz * 9 = 72 MHz */
-    RCC->CFGR &= (unsigned int)((unsigned int)~(RCC_CFGR_PLLSRC | RCC_CFGR_PLLXTPRE | RCC_CFGR_PLLMULL));
-    RCC->CFGR |= (unsigned int)(RCC_CFGR_PLLSRC | RCC_CFGR_PLLMULL9);
-
-    /*!< Enable PLL */
-    RCC->CR |= RCC_CR_PLLON;
-
-    /*!< Wait till PLL is ready */
-    while((RCC->CR & RCC_CR_PLLRDY) == 0)
-    {
-    }
-
-    /*!< Select PLL as system clock source */
-    RCC->CFGR &= (unsigned int)((unsigned int)~(RCC_CFGR_SW));
-    RCC->CFGR |= (unsigned int)RCC_CFGR_SW_PLL;    
-
-    /*!< Wait till PLL is used as system clock source */
-    while ((RCC->CFGR & (unsigned int)RCC_CFGR_SWS) != (unsigned int)0x08)
-    {
-    }
-  }
-  else
-  { /*!< If HSE fails to start-up, the application will have wrong clock 
-         configuration. User can add here some code to deal with this error */    
-
-    /*!< Go to infinite loop */
-    while (1)
-    {
-    }
-  }
-}
-
-void SystemInit (void)
-{
-  /*!< RCC system reset(for debug purpose) */
-  /*!< Set HSION bit */
-  RCC->CR |= (unsigned int)0x00000001;
-  /*!< Reset SW[1:0], HPRE[3:0], PPRE1[2:0], PPRE2[2:0], ADCPRE[1:0] and MCO[2:0] bits */
-  RCC->CFGR &= (unsigned int)0xF8FF0000;  
-  /*!< Reset HSEON, CSSON and PLLON bits */
-  RCC->CR &= (unsigned int)0xFEF6FFFF;
-  /*!< Reset HSEBYP bit */
-  RCC->CR &= (unsigned int)0xFFFBFFFF;
-  /*!< Reset PLLSRC, PLLXTPRE, PLLMUL[3:0] and USBPRE bits */
-  RCC->CFGR &= (unsigned int)0xFF80FFFF;
-  /*!< Disable all interrupts */
-  RCC->CIR = 0x00000000;
-    
-  /*!< Configure the System clock frequency, HCLK, PCLK2 and PCLK1 prescalers */
-  /*!< Configure the Flash Latency cycles and enable prefetch buffer */
-  SetSysClockTo72();
-
-}
-//#endif
 
 #if 0
 /************************************************************
@@ -251,11 +116,11 @@ unsigned char CheckFirst()
 
 void testreset()
 {
-     int iRet,i,ret;
-     uchar kb;
-     int ExitPinPedProc =1;
-     uchar sBuf[100];
-	APDU_SEND ApduSend;
+    int iRet,i = 0;//,ret;
+     //uchar kb;
+     //int ExitPinPedProc =1;
+     //uchar sBuf[100];
+    APDU_SEND ApduSend;
 	APDU_RESP ApduResp;
 #if 0
      Lib_IccClose(1);
@@ -282,8 +147,8 @@ void testreset()
 		else
 		{
 		    trace_debug_printf("\ncommand:");
-		    for(i=0;i<ApduResp.LenOut;i++)
-			  trace_debug_printf("%02x ",ApduResp.DataOut[i]);
+		    for(i=0; i<ApduResp.LenOut; i++)
+			    trace_debug_printf("%02x ",ApduResp.DataOut[i]);
 		}
 #if 0
      Lib_IccClose(2);
@@ -316,30 +181,10 @@ void testreset()
 
 void main()
 {
-    // uchar CmdBuf[256];
-    uchar RF1356Infor[4][16];
-    uchar CmdDataOldType = 0xFF;  
-    uchar CmdDataType = 0xFF;
-    uchar KeepTime = 0xFF;
-    uint  BuzzerFre;
-    uint  BuzzerTime;
-    uchar LineX,ByteY,AsciiLength,ByteLength;
-    uchar i,j,Status;
-    uchar buzzerTab[5]={3200,5200,7200,9200,11200};
-
-    int nRet,nLen;
-    uchar sBuf[100];
-    //#define SysStartAddr  ((u32)0X08033800)//
-
-    //lian
-    extern int ContactlessCardProc(uchar *psAmountBcd,uchar *psRet);
-    struct tm tTime;
-
-    //DisplayType = initial_system();//115200
     initial_system();//115200
+    /* 所有的测试程序都要放在maintest中 */
+    maintest();
 
-    
-   //Lib_AppInit();
 #if 0   
  //触发
    if(CheckFirst())
@@ -375,46 +220,8 @@ void main()
       }
    }
 #endif
-
-   //RF_TypeAB_test(0);
-   //smartcardtest();
-   //testreset();
-   //Test_PsamFunc(0);
-   //for(;;);
-#if 0  
-   //手写板通讯
-   nRet = Lib_ComOpen(1,"57600,8,N,1");
-   nRet = Sign_panel_handshake(NULL);
-   i = 0;
-   for(;;)
-   {
-
-     nRet = Lib_ComRecvByte(1,sBuf,5);
-     //nRet = Lib_ComRecv(1,sBuf,50,&nLen,200);
-     if(nRet==0)
-       trace_debug_printf("rece[%02x]",sBuf[0]);
-     
-   }
-#endif
    
-   //flash_op_test();
-   //s_PciInit();
-   //s_InitVos();
-//#if 0   
- //Buzzer_Ring(3200);  
-  //delay_ms(500); 
-  //Buzzer_Off();
-//#endif  
-  //buz_on();
-  //for(;;);
-  
-   //TestLcd();
-  //Test_ClkFunc();
-   //Test_BeepLoop();
-   //pcimain();
-   //for(;;);
-   
-   maintest();
+#if 0
    //TestKbGetch();
    s_KbInit();
    for(;;)
@@ -525,30 +332,6 @@ void main()
   
   extern void RfTestAll(void);
 
-  s_VoiceInit();
- 
-  
-  //for(;;)
-  {
-  /*  
-  SetVoice(VOICE_PLS_INPUT_PWD);
-  delay_ms(100);
-  */  
-  
-  SetVoice(2);
-  delay_ms(100);
- /* 
-  SetVoice(3);
-  delay_ms(100);
-  SetVoice(4);
-  delay_ms(100);
- */ 
-
-
-
-  
-  }
-  
   RF_TypeAB_test(0);
   //MifreQpbocTest();
   //lian disable
@@ -570,13 +353,11 @@ void main()
   delay_ms(5000);   
   Lcdarray_clear(0x0F);
   LcdBL_Control(0);
-  
+#endif
   while(1);
-    	
 }
 
-
-
+#if 0
 void FileTest()
 {
 #pragma pack(1)
@@ -1376,6 +1157,6 @@ TraceDisp("Entry_AppSlt[%i]\n",result);
 	return EMV_OK;
 
 }
-
+#endif
 
 #endif

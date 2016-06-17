@@ -3,10 +3,10 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
- 
+#include "usb_conf.h"
 #include "..\inc\vosapi.h" 
 #include "pcicmd.h" 
-
+#include "voice.h"
 #include "var.h"
 
 #define s_printf trace_debug_printf //12/11/08
@@ -16,6 +16,17 @@
 #define MIN_VER		1
 
 unsigned short Rs_Inquiry(unsigned char *psRet,uchar *pnAmountBcd);
+
+
+extern int Test_ShowTime(int mode);
+extern int ShowVosVersion(void);
+extern unsigned char ClssTransInit(void);
+extern unsigned char getkey(void);
+extern int  Contactless_SetTLVData(unsigned short usTag, uchar *pucDtIn, int nDtLen);
+extern unsigned char disp_clss_err(int err);
+extern void dat_bcdtoasc( uchar  *asc, uchar  *bcd, unsigned short asc_len);
+extern int Contactless_GetTLVData(unsigned short Tag, uchar *DtOut, int *nDtLen);
+extern void delay_ms(ulong t);
 
 #if 1
 
@@ -212,7 +223,7 @@ void getstring(unsigned char ucKey, char *buf)
 ***********************************/
 int Test_LcdOnce(int mode, int burnIn)
 {
-	uchar i, j, ret;
+	uchar i, j;//, ret;
 	BYTE key;
 	int sec;
 
@@ -514,7 +525,7 @@ int Test_KbFunc(int mode)
 	uchar TestAll[256], buf[30];
 	BYTE key;
 
-KB:
+//KB:
 	while(1)
 	{
 		for (i=0; i< 256; i++)
@@ -790,7 +801,7 @@ int Test_SetTime(int mode)
 		//Lib_KbGetCh();
 		return 0;
 	}
-	return 0;
+	//return 0;
 }
 
 int Test_ShowTime(int mode)
@@ -1368,11 +1379,11 @@ int CheckPicc(BYTE TypeMode, int mode, int burnIn)
 
 int Test_PiccAuto(int burnIn)
 {
-	BYTE key;
+	//BYTE key;
 	int iRet, iresult[2];
 
-	APDU_SEND ApduSend;
-	APDU_RESP ApduResp;
+	//APDU_SEND ApduSend;
+	//APDU_RESP ApduResp;
 
 	while(1)
 	{
@@ -2503,8 +2514,8 @@ LOOP:
 				break;
 			}
 			
-                  /*关闭PICC模块,统计结果*/
-                  Lib_PiccClose();			
+            /*关闭PICC模块,统计结果*/
+            //Lib_PiccClose();			
 		}
 	#endif
 	
@@ -2650,53 +2661,28 @@ int Test_LedFunc(int mode)
 	return 0;
 }
 
+extern int s_VoiceInit(void);
 
 int  Test_VoiceFunc(void)
 {
-     uchar pageNo=0, key;
-	 
+    uchar pageNo=0, key;
+
 	while(1)
 	{
+        trace_debug_printf("------KbGetCh[%02x]",key);
 		Lib_LcdCls();
 		Lib_LcdPrintxy(0, 0, 0x80, "     VOICE TEST    ");
 		//Lib_KbFlush();
-#if 1
 		Lib_LcdClrLine(2*8, LCD_HIGH_MINI-1);
 		Lib_LcdPrintxy(0, 1*8, 0x00, "1-S1  2-S2  3-S3");
 
-#else
-		if (pageNo == 0)
-		{
-			/*Lib_LcdClrLine(2*8, 8*8);
-			Lib_LcdGotoxy(0, 2*8);
-			Lib_Lcdprintf("1- S1, 2- S2\n");
-			Lib_Lcdprintf("3- S3, 4- S4\n");
-			Lib_Lcdprintf("5- S5, 6- S6\n");*/
-			Lib_LcdClrLine(8*2, LCD_HIGH_MINI-1);
-			Lib_LcdPrintxy(0, 8*1, 0x00, " 1- S1,    2- S2 ");
-			Lib_LcdPrintxy(0, 8*2, 0x00, " 3- S3,    4- S4 ");
-			Lib_LcdPrintxy(0, 8*3, 0x00, " 5- S5,    6- S6");
-		}
-		else if (pageNo == 1)
-		{
-			/*Lib_LcdClrLine(2*8, 8*8);
-			Lib_LcdGotoxy(0, 2*8);
-			Lib_Lcdprintf("1- S7,  2- S8\n");
-			Lib_Lcdprintf("3- S9,  4- S10\n");
-			Lib_Lcdprintf("5- S11, 6- S12\n");	*/
-			Lib_LcdClrLine(8*2, LCD_HIGH_MINI-1);
-			Lib_LcdPrintxy(0, 8*1, 0x00, " 1- S7,    2- S8");
-			Lib_LcdPrintxy(0, 8*2, 0x00, " 3- S9,    4- S10");
-			Lib_LcdPrintxy(0, 8*3, 0x00, " 5- S11,   6- S12");
-		}
-#endif
 		Lib_KbFlush();
 		key = Lib_KbGetCh();
 		switch(key)
 		{
 			case KEYCANCEL:
 				return 0;
-#if 0
+
 			case KEYF1:
 			case KEYF2:
 			case KEYENTER:
@@ -2705,7 +2691,6 @@ int  Test_VoiceFunc(void)
 				else
 					pageNo = 0;
 				break;
-#endif
 			case KEY1:
 				if(pageNo == 0)
 					SetVoice(VOICE_PLS_INPUT_PWD);
@@ -2730,6 +2715,7 @@ int  Test_VoiceFunc(void)
 				else 
 					SetVoice(VOICE_THANKS_USE);
 				break;
+
 			case KEY5:
 				if(pageNo == 0)
 					SetVoice(VOICE_PLS_INSERT_ICCARD);
@@ -2743,16 +2729,19 @@ int  Test_VoiceFunc(void)
 					SetVoice(VOICE_BALANCE_LACK);
 				break;
                                 
-                        case KEY7:
-                          SetVoice(VOICE_TRADE_FAILER);
-                          break;
-                        case KEY8:
-                          SetVoice(VOICE_WELCOME);
-                          break;
-                        case KEY9:  
-                          SetVoice(VOICE_THANKS_PATRONAGE);
-                          break;
-			default:
+            case KEY7:
+              SetVoice(VOICE_TRADE_FAILER);
+              break;
+
+            case KEY8:
+              SetVoice(VOICE_WELCOME);
+              break;
+
+            case KEY9:  
+              SetVoice(VOICE_THANKS_PATRONAGE);
+              break;
+
+            default:
 				break;
 		}          
 	} 
@@ -2877,109 +2866,217 @@ void Test_BeepFunc(void)
 
 void Test_Usb(void)
 {
-    unsigned char i = 0, j = 0, key= 0;
-    unsigned char sBuf0[65] = {0};
-    unsigned char sBuf1[65] = {0};
-    unsigned char ucOld     = 0;
-    
-    Lib_LcdCls();
-    Lib_LcdPrintxy(0, 0, 0x80,   "     USB HID TEST      ");
-
-    Lib_LcdPrintxy(0, 1*8, 0x00, "press any key to send...");
+    unsigned char i = 0, j = 0, key = 0;
+    unsigned char sBuf1[MAX_PACK_SIZE] = {0};
+    unsigned char sBuf0[MAX_PACK_SIZE] = {0};
+    //unsigned char ucOld     = 0;
 
     while (1)
     {
-        if (0 == Lib_KbCheck())
+        Lib_LcdCls();
+        Lib_LcdPrintxy(0, 0, 0x80,   "     USB HID TEST      ");
+        Lib_LcdPrintxy(0, 1*8, 0x00,   "1 sendself loop");
+        Lib_LcdPrintxy(0, 2*8, 0x00,   "2 press key to send");
+
+        key = Lib_KbGetCh();
+        if (KEYCANCEL == key)
         {
-            for (i = 0; i < 64; i++)
-                sBuf0[i] = i + j;
-
-            key = Lib_KbGetCh();
-            if (key == KEYCANCEL)
-                return;
-
-            Hid_Send(sBuf0, 64);
-            trace_debug_printf("KB = 0x%02X\r\n", key);
-            j++;
+            return;
         }
-
-        if (Hid_Rec(sBuf1) > 0)
+        else if (KEY1 == key)
         {
-            if ((ucOld + 1) != sBuf1[0] && ucOld != 0 && 0 != sBuf1[0])
+            Lib_LcdCls();
+            Lib_LcdPrintxy(0, 0, 0x80,   "     Sending...    ");
+            while (1)
             {
-                key = Lib_KbGetCh();
-                if (key == KEYCANCEL)
-                    return;
-            }
-            trace_debug_printf("REC:\r\n");
-            for (i = 0; i < 4; i++)
-            {
-                for (j = 0; j < 16; j++)
-                    trace_debug_printf("%02x ", sBuf1[i * 16 + j]);
+                Hid_Send(sBuf0, MAX_PACK_SIZE);
+                ///trace_debug_printf("bDeviceState = %d\r\n", Hid_GetStatus());
+                if (!Lib_KbCheck())
+                {
+                    if (KEYCANCEL == Lib_KbGetCh())
+                        break;
+                }
+                sBuf0[0]++;
+                if (Hid_Rec(sBuf1) > 0)
+                {
+                    trace_debug_printf("REC:\r\n");
+                    for (i = 0; i < MAX_PACK_SIZE / 16; i++)
+                    {
+                        for (j = 0; j < 16; j++)
+                            trace_debug_printf("%02x ", sBuf1[i * 16 + j]);
 
-                trace_debug_printf("\r\n");
+                        trace_debug_printf("\r\n");
+                    }
+                    if (MAX_PACK_SIZE % 16)
+                    {
+                        for (j = 0; j < MAX_PACK_SIZE % 16; j++)
+                            trace_debug_printf("%02x ", sBuf1[i * 16 + j]);
+                        trace_debug_printf("\r\n");
+                    }
+                }
             }
-            ucOld = sBuf1[0];
+        }
+        else if (KEY2 == key)
+        {
+            Lib_LcdCls();
+            Lib_LcdPrintxy(0, 1*8, 0x00, "press any key to send...");
+            while (1)
+            {
+                if (0 == Lib_KbCheck())
+                {
+                    for (i = 0; i < MAX_PACK_SIZE; i++)
+                        sBuf0[i] = i + j;
+
+                    key = Lib_KbGetCh();
+                    if (key == KEYCANCEL)
+                        break;
+
+                    Hid_Send(sBuf0, MAX_PACK_SIZE);
+                    trace_debug_printf("KB = 0x%02X\r\n", key);
+                    j++;
+                }
+
+                if (Hid_Rec(sBuf1) > 0)
+                {
+                    trace_debug_printf("REC:\r\n");
+                    for (i = 0; i < MAX_PACK_SIZE / 16; i++)
+                    {
+                        for (j = 0; j < 16; j++)
+                            trace_debug_printf("%02x ", sBuf1[i * 16 + j]);
+
+                        trace_debug_printf("\r\n");
+                    }
+                    if (MAX_PACK_SIZE % 16)
+                    {
+                        for (j = 0; j < MAX_PACK_SIZE % 16; j++)
+                            trace_debug_printf("%02x ", sBuf1[i * 16 + j]);
+                        trace_debug_printf("\r\n");
+                    }
+                }
+            }
         }
     }
 }
+
+/******************************************************************************* 
+ * 函数名称: Test_Tp(*)
+ * 功能描述: 触屏测试
+ * 作    者: WLB
+ * 输入参数: 无
+ * 输出参数: 无
+ * 返 回 值: 无
+ * 其它说明: 无
+ * 修改历史: 
+ *           1. 2016-4-7  WLB  Created
+ *******************************************************************************/
+void Test_Tp(void)
+{
+    BYTE key;
+
+    //while (1)
+    {
+        while(1)
+    	{
+            Lib_LcdCls();
+            Lib_KbFlush();
+            Lib_LcdPrintxy(0, 0, 0x80, "         TP TEST       ");
+            Lib_LcdClrLine(1*8, LCD_HIGH_MINI-1);
+            Lib_LcdPrintxy(0, 1*8, 0x00, "1-calibreation");
+            Lib_LcdPrintxy(0, 2*8, 0x00, "2-Signature   ");
+
+            key = Lib_KbGetCh();
+    		if (KEYCANCEL == key)
+    		{
+    			return ;
+    		}
+
+            switch (key)
+    	    {
+                case KEY1:
+                    Lib_PadOpen();
+                    Lib_Padcalibration();
+                    break;
+
+                case KEY2:
+                    Lib_PadOpen();
+                    Lib_PadSign("12345678", 30);
+                    break;
+
+                default:
+                    break;
+            }
+        }
+    }
+}
+
 void Test_AllSingleFunc(void)
 {
 	BYTE key;
+    char page = 0;
+    char MenuBuf[][25] =        // 显示的菜单必须为3的整数倍,长度要保持一致，3行为一页
+    {
+        {"1-Lcd  2-Kb   3-Clk "},
+        {"4-Led  5-Beep 6-Psam"},
+        {"7-Picc 8-usb 9-Voice"},
+        {"1-TP   2-gm         "},
+        {"                    "},
+        {"                    "},
+    };
+        
 
-	while(1)
+	//while(1)
 	{
-		Lib_LcdCls();
-		Lib_KbFlush();
-		
-                
-		Lib_LcdPrintxy(0, 0, 0x80, "     SINGLE TEST       ");
-		Lib_LcdClrLine(1*8, LCD_HIGH_MINI-1);
-		Lib_LcdPrintxy(0, 1*8, 0x00, "1-Lcd  2-Kb   3-Clk");
-		Lib_LcdPrintxy(0, 2*8, 0x00, "4-Led  5-Beep 6-Psam");
-		#if 1
-		Lib_LcdPrintxy(0, 3*8, 0x00, "7-Picc 8-usb 9-Voice");
-		#else
-             Lib_LcdPrintxy(0, 3*8, 0x00, "7-Voice");
-		#endif
-		
 		while(1)
 		{
+            Lib_LcdCls();
+    		Lib_KbFlush();
+
+    		Lib_LcdPrintxy(0, 0, 0x80, "     SINGLE TEST       ");
+    		Lib_LcdClrLine(1*8, LCD_HIGH_MINI-1);
+            Lib_LcdPrintxy(0, 1*8, 0x00, (char *)&MenuBuf[page * 3]);
+    		Lib_LcdPrintxy(0, 2*8, 0x00, (char *)&MenuBuf[page * 3 + 1]);
+    		Lib_LcdPrintxy(0, 3*8, 0x00, (char *)&MenuBuf[page * 3 + 2]);
+
 			key = Lib_KbGetCh();
-            //test
-            trace_debug_printf("1KbGetCh[%02x]",key);
 
 			if (KEYCANCEL == key)
 			{
 				return ;
 			}
 
-			if ((key < KEY1) || (key > KEY8))
-			{
-				continue;
-			}
-
 			switch (key)
 			{
 				case KEY1:
-					Test_LcdFunc();
+                    if (0 == page)
+					    Test_LcdFunc();
+                    else
+                        Test_Tp();
 					break;
-				case KEY2:
-					Test_KbFunc(1);
+
+                case KEY2:
+                    if (0 == page)
+					    Test_KbFunc(1);
+                    else
+                        gm_test();
 					break;
-				case KEY3:
+
+                case KEY3:
 					Test_ClkFunc();
 					break;
-				case KEY4:
+
+                case KEY4:
 					Test_LedFunc(1);
 					break;
-				case KEY5:
+
+                case KEY5:
 					Test_BeepFunc();
 					break;
-				case KEY6:
+
+                case KEY6:
 					Test_PsamFunc(1);
 					break;
-				case KEY7:
+
+                case KEY7:
 					Test_PiccFunc(1, 0);
 					break;
 
@@ -2991,10 +3088,14 @@ void Test_AllSingleFunc(void)
                     Test_VoiceFunc();
                     break;
 
+                case KEYENTER:
+                    page++;
+                    page %= sizeof(MenuBuf) / sizeof(MenuBuf[0]) / 3;
+                    break;
+
 				default:
 					break;
 			}
-			break;
 		}
 	}
 }
@@ -3266,7 +3367,7 @@ static void Case_0608(void)
 
 static void Case_0601(void)
 {
-	WORD wRet, Cnt;
+	WORD wRet;//, Cnt;
 	uchar i;
 
 	for (i=0; i<5; i++)
@@ -3287,9 +3388,9 @@ int maintest(void)
 {
 	int iRet;
 	BYTE key;
-        //test
-        char sDisp[200],i;
-        unsigned char sBuf[1024*3],sOutBuf[3*1024];
+    //test
+    char sDisp[200];//,i;
+    unsigned char sOutBuf[3*1024];//sBuf[1024*3],
 #if !(TEST_INIT)
 	int i, result;
 #endif
@@ -3298,27 +3399,26 @@ int maintest(void)
 	iRet = Lib_AppInit();
 #endif
 
-        //test
-        //Lib_KbSound(0,0);
-        Lib_LcdCls();
-        /*
-        Lib_WriteSN("3801234567890123456789012345678912345678");
-        Lib_ReadSN(sDisp);
-        Lib_LcdPrintxy(0, 0*8, 0x00,"SN[%s]",sDisp);
-        */
-        ShowVosVersion();
-        if(Lib_KbGetCh()=='1')
-        {
-        
+    //test
+    //Lib_KbSound(0,0);
+    Lib_LcdCls();
+    /*
+    Lib_WriteSN("3801234567890123456789012345678912345678");
+    Lib_ReadSN(sDisp);
+    Lib_LcdPrintxy(0, 0*8, 0x00,"SN[%s]",sDisp);
+    */
+    ShowVosVersion();
+    if(Lib_KbGetCh()=='1')
+    {
         iRet = Lib_PciWriteWORK_MKey(0,16,"\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11",NULL,0,0);
         Lib_LcdPrintxy(0, 1*8, 0x00,"WriteWORK_MKey[%d]",iRet);
         iRet = Lib_PciWriteWorkKey(2,16,"\x22\x22\x22\x22\x22\x22\x22\x22\x22\x22\x22\x22\x22\x22\x22\x22",NULL,0x81,0);
         Lib_LcdPrintxy(0, 2*8, 0x00,"PciWriteWorkKey[%d]",iRet);
-        }      
-        iRet = Lib_PciGetMac(2,16,sDisp,sOutBuf,1);
-        
-        Lib_LcdPrintxy(0, 3*8, 0x00,"Lib_PciGetMac[%d]",iRet);
-        Lib_KbGetCh();
+    }      
+    iRet = Lib_PciGetMac(2,16, (unsigned char *)sDisp,sOutBuf,1);
+    
+    Lib_LcdPrintxy(0, 3*8, 0x00,"Lib_PciGetMac[%d]",iRet);
+    Lib_KbGetCh();
 #if 0
         //test
 PEDWriteMkey_Wkey();
@@ -3348,8 +3448,6 @@ PEDWriteMkey_Wkey();
 	QPboc_CoreInit();
 #endif
 
-
-
 	while(1)
 	{
 		Lib_LcdCls();
@@ -3360,7 +3458,6 @@ PEDWriteMkey_Wkey();
 		Lib_LcdPrintxy(0, 0*8, 0x80, "     TEST[V%d.%d]     ", MAJ_VER, MIN_VER);
 		Lib_LcdPrintxy(0, 2*8, 0x00, "1-Machine  2-Burn-in");
 		Lib_LcdPrintxy(0, 3*8, 0x00, "3-Single   4-Board");
-		Lib_LcdPrintxy(0, 4*8, 0x00, "7-calibra  8-Sin");
 
 		while(1)
 		{
@@ -3382,20 +3479,24 @@ PEDWriteMkey_Wkey();
 
 			switch(key)
 			{
-             case KEY0:
+                case KEY0:
                     Lib_LcdCls();
                     Lib_LcdPrintxy(0,0,2,"文件编译时间\n%s %s",__DATE__,__TIME__);
                     Lib_KbGetCh();            
-                    break;		
+                    break;
+
 				case KEY1:
 					Test_Machine();
 					break;
+
 				case KEY2:
 					Test_BurnIn();
 					break;
+
 				case KEY3:
 					Test_AllSingleFunc();
 					break;
+
 				case KEY4:
 					Test_Board();
 					break;
@@ -3407,19 +3508,6 @@ PEDWriteMkey_Wkey();
 					main_API();
 					break;
 		#endif
-                case KEY7:
-                    
-                    Lib_LcdPrintxy(0, 4*8, 0x00, "------------------");
-                    delay_ms(1000);
-                    Lib_PadOpen();
-                    Lib_Padcalibration();
-                    break;
-
-                case KEY8:
-                    Lib_PadOpen();
-                    Lib_PadSign("12345678", 30);
-                    break;
-                    
 				default:
 					break;
 			}
@@ -3549,7 +3637,7 @@ unsigned short Rs_Inquiry(unsigned char *psRet,uchar *pnAmountBcd)
 
 		while(1)
 		{
-                       if(getkey() == KEYCANCEL) 
+            if(getkey() == KEYCANCEL) 
 			    return E_TRANS_CANCEL;
 			//ret = picc_detect(mode,NULL,NULL,NULL,NULL); //轮询卡片是否在感应范围内
 			ret =  Lib_PiccCheck(mode,sType,sNo);
@@ -3704,7 +3792,7 @@ unsigned short Rs_Inquiry(unsigned char *psRet,uchar *pnAmountBcd)
 			Lib_LcdPrintxy(0,0,2,"交易失败_6交易终止");
 			sprintf((char *)buf,"Error: %i",result);
 			//Lib_LcdPrintxy(0,1*16,0,buf);
-			Lib_LcdPrintxy(0,1*16,2,buf);
+			Lib_LcdPrintxy(0,1*16,2, (char *)buf);
 			return disp_clss_err(result);			
 		}
 		
@@ -3792,7 +3880,7 @@ unsigned short Rs_Inquiry(unsigned char *psRet,uchar *pnAmountBcd)
 				*psRet = RC_TRAN_FAILURE; 
 			Lib_LcdPrintxy(0,0,2,"交易失败_13文件错");
 			sprintf((char *)buf,"error: %i",result);
-			Lib_LcdPrintxy( 0,1*16,2,buf);
+			Lib_LcdPrintxy( 0,1*16,2, (char *)buf);
 			return E_TRANS_FAIL;
 		}
 		

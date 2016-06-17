@@ -1,17 +1,30 @@
-/******************** (C) COPYRIGHT 2011 STMicroelectronics ********************
-* File Name          : usb_endp.c
-* Author             : MCD Application Team
-* Version            : V3.3.0
-* Date               : 21-March-2011
-* Description        : Endpoint routines
-********************************************************************************
-* THE PRESENT FIRMWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING CUSTOMERS
-* WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER FOR THEM TO SAVE TIME.
-* AS A RESULT, STMICROELECTRONICS SHALL NOT BE HELD LIABLE FOR ANY DIRECT,
-* INDIRECT OR CONSEQUENTIAL DAMAGES WITH RESPECT TO ANY CLAIMS ARISING FROM THE
-* CONTENT OF SUCH FIRMWARE AND/OR THE USE MADE BY CUSTOMERS OF THE CODING
-* INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
-*******************************************************************************/
+/**
+  ******************************************************************************
+  * @file    usb_endp.c
+  * @author  MCD Application Team
+  * @version V4.0.0
+  * @date    21-January-2013
+  * @brief   Endpoint routines
+  ******************************************************************************
+  * @attention
+  *
+  * <h2><center>&copy; COPYRIGHT 2013 STMicroelectronics</center></h2>
+  *
+  * Licensed under MCD-ST Liberty SW License Agreement V2, (the "License");
+  * You may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at:
+  *
+  *        http://www.st.com/software_license_agreement_liberty_v2
+  *
+  * Unless required by applicable law or agreed to in writing, software 
+  * distributed under the License is distributed on an "AS IS" BASIS, 
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  *
+  ******************************************************************************
+  */
+
 
 /* Includes ------------------------------------------------------------------*/
 #ifdef STM32L1XX_MD
@@ -47,18 +60,18 @@ void HID_FifoInt(void)
     memset(&s_Hid_Fifo, 0, sizeof(s_Hid_Fifo));
 }
 
-void HID_FifoPut(unsigned char *pucData, unsigned char ucLen)
+void HID_FifoPut(unsigned char *pucData, unsigned int ulLen)
 {
-    unsigned char   ucRecLen = 0;
+    unsigned int    ulRecLen = 0;
     unsigned int    ulNextNo = 0;
     
-    if (pucData == NULL || ucLen == 0)
+    if (pucData == NULL || ulLen == 0)
         return;
 
-    ucRecLen = ucLen > MAX_PACK_SIZE ? MAX_PACK_SIZE : ucLen;
+    ulRecLen = ulLen > MAX_PACK_SIZE ? MAX_PACK_SIZE : ulLen;
 
     ulNextNo = s_Hid_Fifo.ulInNum;
-    memcpy(&Receive_Buffer[ulNextNo % HID_REC_BUFF_SIZE], pucData, ucRecLen);
+    memcpy(&Receive_Buffer[ulNextNo % HID_REC_BUFF_SIZE], pucData, ulRecLen);
 
     ulNextNo = s_Hid_Fifo.ulInNum + 1;
     // 防止回绕成0后数据不连续
@@ -122,17 +135,16 @@ int HID_FifoGet(unsigned char *pucData)
 *******************************************************************************/
 void EP1_OUT_Callback(void)
 {
-    unsigned char ucRecLen = 0;
+    unsigned int  ulRecLen = 0;
     unsigned char aucBuf[MAX_PACK_SIZE] = {0};
      
-    ucRecLen = USB_SIL_Read(EP1_OUT, aucBuf);
+    ulRecLen = USB_SIL_Read(EP1_OUT, aucBuf);
+    HID_FifoPut(aucBuf, ulRecLen);
     SetEPRxStatus(ENDP1, EP_RX_VALID);
 
-    HID_FifoPut(aucBuf, ucRecLen);
-
-#if !MY_DES
+#if 0//MY_DES
     /* 既收也发 */
-    USB_SIL_Write(EP1_IN, (uint8_t*) Receive_Buffer, ucRecLen);  
+    USB_SIL_Write(EP1_IN, (uint8_t*) Receive_Buffer, ulRecLen);  
     SetEPTxValid(ENDP1);
 #endif
 }
@@ -146,7 +158,7 @@ void EP1_OUT_Callback(void)
 *******************************************************************************/
 void EP1_IN_Callback(void)
 {
-  //PrevXferComplete = 1;
+//    PrevXferComplete = 1;
 }
-/******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
 

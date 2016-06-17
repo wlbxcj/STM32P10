@@ -513,7 +513,8 @@ int   EMV_DelAllCAPK() //2011/01/07 add
 	
 static void FromTimeToYYMMDD(struct tm * tTime,uchar * CurrYYMMDD)
 {
-	uchar sDate[4],pNewDate[4];
+	uchar sDate[4];//,pNewDate[4];
+
 	sDate[0] =dat_bytetobcd(tTime->tm_year);
 	sDate[1] =dat_bytetobcd(tTime->tm_mon);
 	sDate[2] =dat_bytetobcd(tTime->tm_mday);
@@ -577,18 +578,18 @@ int EMV_FindCAPK(unsigned char *RID,unsigned char *CAPKIndex,T_EMV_TERM_CAPK * p
 unsigned char ManagerSetCapk(unsigned short DataLen,unsigned char *UART_RecBuffer)
 {
 	unsigned char bState;
-	unsigned short nLen,nOffset;
+	unsigned short nOffset = 0;//nLen,
 	T_EMV_TERM_CAPK tCapk;
 	
 	bState= UART_RecBuffer[0];
 
-	
 	switch(bState)
 	{
 		case 0x11: //add
 			memcpy(&tCapk.RID,&UART_RecBuffer[1],6);//RID+index
 			nOffset=7;
-			nLen = UART_RecBuffer[nOffset++]*0x100+UART_RecBuffer[nOffset++];
+			//nLen = 
+            UART_RecBuffer[nOffset++]*0x100+UART_RecBuffer[nOffset++];
 			memcpy(&tCapk.HashIndicator,&UART_RecBuffer[nOffset],3);//(Hash+CAPK)Indicator+len
 			nOffset+=3;
 			memcpy(&tCapk.Modulus,&UART_RecBuffer[nOffset],tCapk.Len);
@@ -649,10 +650,10 @@ int ManagerGetCAPK(unsigned char KeyID, unsigned char *RID,unsigned short *pnLen
 int ManagetSetRevocList(unsigned short nLen,unsigned char *sBuf)
 {
 	unsigned char bState;
-	unsigned char bStruLen;
+	//unsigned char bStruLen;
 	
 	bState = sBuf[0];
-	bStruLen = sizeof(T_EMV_REVOCATIONLIST);
+	//bStruLen = sizeof(T_EMV_REVOCATIONLIST);
 	
 	switch(bState)
 	{
@@ -754,7 +755,7 @@ int  QPboc_DelExceptionList(T_TERMEXCEPTIONFILE  *ptException )
 {
 	int fid,i,k,num,len,lenStruct;
 	//T_EMV_REVOCATIONLIST bufStruct;
-	T_TERMEXCEPTIONFILE tTermException;
+	//T_TERMEXCEPTIONFILE tTermException;
 	uchar sBuf[100];
 	uchar sFileBuf[100];
 	
@@ -806,6 +807,7 @@ int  QPboc_DelAllExceptionList(void)
 	return 0;
 }
 
+extern void dat_bcdtoasc( uchar  *asc, uchar  *bcd, unsigned short asc_len);
 
 int ManagerSetExceptionList(unsigned short nLen,unsigned char *sBuf)
 {
@@ -820,8 +822,8 @@ int ManagerSetExceptionList(unsigned short nLen,unsigned char *sBuf)
 	{
 		if(nLen!= (bStruLen+1))
 			return 1;
-		dat_bcdtoasc(sStr, tTermException.PAN, 20);
-		RemoveTailChars(sStr,'F');
+		dat_bcdtoasc((unsigned char *)sStr, tTermException.PAN, 20);
+		RemoveTailChars((unsigned char *)sStr,'F');
 		bLen = strlen(sStr);
 		tTermException.bLen = (bLen+1)/2;
 	}
@@ -857,7 +859,7 @@ int ManagerFindExceptionList(unsigned short nLen,unsigned char *sBuf)
 	memcpy(sPanSeq,&sBuf[10],1);
 	dat_bcdtoasc(sStr, sPan, 20);
 	RemoveTailChars(sStr,'F');
-	sPanLen = strlen(sStr);
+	sPanLen = strlen((char *)sStr);
 	
 	if(QPboc_SearchExceptionList((sPanLen+1)/2,sPan,sPanSeq))
 		return 2;
@@ -913,7 +915,8 @@ int ManagerSetPbocParameter(unsigned short nLen,unsigned char *sBuf)
 		{0x00,0,NULL},
 	};
 	unsigned short i;
-	if(nLen<sizeof(T_PBOC_PARAMETER)-100)
+
+    if(nLen<sizeof(T_PBOC_PARAMETER)-100)
 		return 1;
 	memcpy(&tPbocPara,sBuf,sizeof(T_PBOC_PARAMETER) );
 	i=0;
@@ -925,6 +928,8 @@ int ManagerSetPbocParameter(unsigned short nLen,unsigned char *sBuf)
 			return 2;
 		i++;
 	}
+
+    return 0;
 }
 
 /*
@@ -1000,15 +1005,15 @@ int ManagerSetAid(unsigned short nLen,unsigned char *sBuf)
 	Entry_GetPreProcInfo(tAllAid.bAidLen,tAllAid.sAid,&tPreProcInfoIn);
 	memset(sStr,0,sizeof(sStr));
 	memcpy(sStr,tAllAid.ulRdClssTxnLmt,11);
-	tPreProcInfoIn.ulRdClssTxnLmt = atoi(sStr);
+	tPreProcInfoIn.ulRdClssTxnLmt = atoi((char *)sStr);
 
 	memset(sStr,0,sizeof(sStr));
 	memcpy(sStr,tAllAid.ulRdClssFLmt,11);
-	tPreProcInfoIn.ulRdClssFLmt= atoi(sStr);
+	tPreProcInfoIn.ulRdClssFLmt= atoi((char *)sStr);
 	
 	memset(sStr,0,sizeof(sStr));
 	memcpy(sStr,tAllAid.ulRdCVMLmt,11);
-	tPreProcInfoIn.ulRdCVMLmt= atoi(sStr);
+	tPreProcInfoIn.ulRdCVMLmt= atoi((char *)sStr);
 
 	tPreProcInfoIn.ulTermFLmt = dat_hextoul(tAllAid.sRFU,4);
 	tPreProcInfoIn.ucStatusCheckFlg = tAllAid.sRFU[4];
@@ -1026,7 +1031,7 @@ int ManagerSetAid(unsigned short nLen,unsigned char *sBuf)
 	tPreProcInfoIn.ucRdClssFLmtFlg= tAllAid.sRFU[9];
 		
 	Entry_SetPreProcInfo(&tPreProcInfoIn);
-	
+	return 0;
 }
 
 int ManagerSetAllAid(unsigned short nLen,unsigned char *sBuf)
@@ -1096,15 +1101,15 @@ int ManagerSetAllAid(unsigned short nLen,unsigned char *sBuf)
 		Entry_GetPreProcInfo(tAllAid.bAidLen,tAllAid.sAid,&tPreProcInfoIn);
 		memset(sStr,0,sizeof(sStr));
 		memcpy(sStr,tAllAid.ulRdClssTxnLmt,11);
-		tPreProcInfoIn.ulRdClssTxnLmt = atoi(sStr);
+		tPreProcInfoIn.ulRdClssTxnLmt = atoi((char *)sStr);
 
 		memset(sStr,0,sizeof(sStr));
 		memcpy(sStr,tAllAid.ulRdClssFLmt,11);
-		tPreProcInfoIn.ulRdClssFLmt= atoi(sStr);
+		tPreProcInfoIn.ulRdClssFLmt= atoi((char *)sStr);
 	
 		memset(sStr,0,sizeof(sStr));
 		memcpy(sStr,tAllAid.ulRdCVMLmt,11);
-		tPreProcInfoIn.ulRdCVMLmt= atoi(sStr);
+		tPreProcInfoIn.ulRdCVMLmt= atoi((char *)sStr);
 
 		tPreProcInfoIn.ulTermFLmt = dat_hextoul(tAllAid.sRFU,4);
 		tPreProcInfoIn.ucStatusCheckFlg = tAllAid.sRFU[4];
@@ -1182,8 +1187,7 @@ uchar GetCardFromTrack(uchar *szCardNo,uchar *track2,uchar *track3)
    
 uchar AppSetClss_capk(uchar index,uchar *rid)
 {
-
-	int fd;
+	//int fd;
 	T_EMV_TERM_CAPK capk;
 
 	if(EMV_FindCAPK(rid,&index,&capk))

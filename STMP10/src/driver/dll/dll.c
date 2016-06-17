@@ -410,18 +410,17 @@ DWORD s_AM_ReadMaKey(MAN_APP_KEY *psOutMaKey)
 
 void s_AM_WriteMaKey(MAN_APP_KEY *psInMaKey)
 {
-  int nRet;  
-  nRet = sys_flash_syspara_write(MAN_APP_KEY_M,(uchar*)psInMaKey,sizeof(MAN_APP_KEY));
-  if(nRet)
-  {
+    int nRet;  
+    nRet = sys_flash_syspara_write(MAN_APP_KEY_M,(uchar*)psInMaKey,sizeof(MAN_APP_KEY));
+    if(nRet)
+    {
         Lib_LcdCls();
        /* Lib_LcdGotoxy(0, 0);
         Lib_Lcdprintf("Write flash error!=%d,", iRet);*/
-	Lib_LcdPrintxy(0, 8*0,0x00,"Write flash error!=%d,", nRet);
+	    Lib_LcdPrintxy(0, 8*0,0x00,"Write flash error!=%d,", nRet);
         while (1);
     
-  }
-  
+    }
 }
 // 0x55:Lock
 BYTE AM_GetLockStatus(void)
@@ -2210,11 +2209,10 @@ int s_AppPciInit(void)
     uchar ch;
     int ret;
     //DWORD dret;
-    
 
     if((SPF_GetAppStatus(0)&0x04)==0)//Œ¥‘À––
     {
-      s_PciClearAppKey(0);
+        s_PciClearAppKey(0);
     }
     
     (void)s_PciInit(); 
@@ -2338,7 +2336,7 @@ Loop_ReLogin:
 //				}
 //                goto Loop_ReLogin;               
 //            //} 
-	  g_iActionLimits++;
+	        g_iActionLimits++;
             break;
             
 #if 0            

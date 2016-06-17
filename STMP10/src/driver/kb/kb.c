@@ -241,6 +241,7 @@ extern unsigned short BeepDelay;
 ****************************************************************************/
 void s_TimerScanKey(void)
 {
+    unsigned char ucTemp1, ucTemp2 = 0;
     //g_iKeyScanFlag = 1;
     //s_UartPrint(COM_DEBUG,"t1");
     switch(kb_TimerStep)
@@ -262,7 +263,10 @@ void s_TimerScanKey(void)
         }
         break;
     case 1:
-        if(kb_backcode!=kb_KeyCode1)
+        ucTemp1 = kb_backcode;
+        ucTemp2 = kb_KeyCode1;
+        //if(kb_backcode!=kb_KeyCode1)
+        if (ucTemp1 != ucTemp2)
         {
             kb_KeyCode2=kb_KeyCode1;
         }
@@ -271,7 +275,10 @@ void s_TimerScanKey(void)
             kb_KeyCode2=kb_ScanKey(1);
         }
 
-        if(kb_KeyCode2==kb_KeyCode1)
+        ucTemp1 = kb_KeyCode2;
+        ucTemp2 = kb_KeyCode1;
+        //if(kb_KeyCode2==kb_KeyCode1)
+        if (ucTemp1 == ucTemp2)
         {
             if(kb_KeyCode2<20)  // °´¼üË÷ÒýºÅ
             {
@@ -281,13 +288,18 @@ void s_TimerScanKey(void)
                 }
                 else */if((kb_buf_over==0)&&(kb_Buffer_Busy==0))
                 {
-                    kb_buf[kb_in_ptr]=Key_Tab[kb_KeyCode2];
+                    ucTemp1 = Key_Tab[kb_KeyCode2];
+                    //kb_buf[kb_in_ptr]=Key_Tab[kb_KeyCode2];
+                    kb_buf[kb_in_ptr] = ucTemp1;
                     kb_in_ptr++;
                     if(kb_in_ptr>=KB_BUF_MAX)
                         kb_in_ptr=0;
-                    if(kb_in_ptr==kb_out_ptr)
+
+                    ucTemp1 = kb_in_ptr;
+                    ucTemp2 = kb_out_ptr;
+                    //if(kb_in_ptr==kb_out_ptr)
+                    if(ucTemp1 == ucTemp2)
                     {
-                      
                         kb_buf_over=1;
                     }
                 }
@@ -556,12 +568,17 @@ int Lib_KbSound(BYTE mode,WORD DlyTimeMs)
 BYTE Lib_KbGetCh(void)
 {
     BYTE kbcode;
-  
+    BYTE ucTemp1, ucTemp2 = 0;
+
     for(;;)
     {
-        while((kb_in_ptr==kb_out_ptr)&&(kb_buf_over==0))
+        ucTemp1 = kb_in_ptr;
+        ucTemp2 = kb_out_ptr;
+        //while((kb_in_ptr==kb_out_ptr)&&(kb_buf_over==0))
+        while((ucTemp1 == ucTemp2)&&(kb_buf_over==0))
         {
-          
+            ucTemp1 = kb_in_ptr;
+            ucTemp2 = kb_out_ptr;
 //            if(k_ICC_CardInSert || k_MCR_BrushFlag)
 //             {
 //                 k_ICC_CardInSert=0;
@@ -608,7 +625,12 @@ BYTE Lib_KbGetCh(void)
 ****************************************************************************/
 BYTE Lib_KbUnGetCh(void)
 {
-    if((kb_in_ptr==kb_out_ptr)&&(kb_buf_over==0))
+    BYTE ucTemp1, ucTemp2 = 0;
+
+    ucTemp1 = kb_in_ptr;
+    ucTemp2 = kb_out_ptr;
+    //if((kb_in_ptr==kb_out_ptr)&&(kb_buf_over==0))
+    if((ucTemp1 == ucTemp2)&&(kb_buf_over==0))
     {
         return NOKEY;
     }

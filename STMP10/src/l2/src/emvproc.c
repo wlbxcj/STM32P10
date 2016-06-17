@@ -1,8 +1,10 @@
 
 #include "var.h"
+#include "stdio.h"
 
 //typedef unsigned short  ushort;
 #define ushort unsigned short
+extern void lcdshow( int line_num, int place, int clear_line_flag, unsigned char *str );
 
 #if 0
 //从文件中读取保存的冲正记录到全局变量,
@@ -147,8 +149,8 @@ void settimebybuf (unsigned char *sDate)
 
 	}T_PART;
 	#pragma pack() 
-	T_PART tPart;
-	struct tm sTime;
+	//T_PART tPart;
+	//struct tm sTime;
 
 	//memcpy(&tPart,&sDate[2],
 	//sTime.tm_year = 
@@ -157,11 +159,9 @@ void settimebybuf (unsigned char *sDate)
 
 unsigned char DispDateTime()
 {
-
 	struct tm  timestru;
 	short offset;
 	char sDisp[100]; 
-
 
 	gettime(&timestru);
 	//gotoxy(0,5);
@@ -171,7 +171,7 @@ unsigned char DispDateTime()
 	//gotoxy(offset,gety());
 	//printf("%s\n",sDisp);
 	
-	lcdshow(1,MIDDLE,1,sDisp);
+	lcdshow(1,MIDDLE,1, (unsigned char *)sDisp);
 	
 	memset(sDisp,0,50);
 //	if(timestru.tm_year>49)
@@ -183,8 +183,9 @@ unsigned char DispDateTime()
 	//gotoxy(offset,gety());
 	//printf(sDisp);
 
-	lcdshow(2,MIDDLE,1,sDisp);
-
+	lcdshow(2,MIDDLE,1, (unsigned char *)sDisp);
+    (void)offset;
+    return 0;
 }
 
 

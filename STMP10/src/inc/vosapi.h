@@ -867,8 +867,9 @@ int SMGetRand(unsigned int nLc,unsigned char *sRand);
 #define Sm3 Gm_Sm3
 #define Sm4 Gm_Sm4
 
-int Hid_Send(unsigned char *pucData, unsigned char ucSendLen);
+int Hid_Send(unsigned char *pucData, unsigned int ulSendLen);
 int Hid_Rec(unsigned char *pucData);
+unsigned int Hid_GetStatus(void);
 
 
 #endif

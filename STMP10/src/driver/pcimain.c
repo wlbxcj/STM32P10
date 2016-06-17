@@ -256,7 +256,7 @@ uchar ConvReturnCode(int ireturn)
 
 int RecvHostCmd(uchar *psCmdStr, uchar *bRecvLen)
 {
-    uchar  nRetVal;
+    //uchar  nRetVal;
     uint   rx_len,bOffset;
     uchar  bEdc;
     int iret; 
@@ -368,8 +368,9 @@ int RecvHostCmd(uchar *psCmdStr, uchar *bRecvLen)
 
 void SendErrorData(uchar bCmdHead, uchar bErrCode)
 {
-    uchar i, sSendBuf[10];
-    uint j,len; 
+    uchar sSendBuf[10];//i, 
+    uint len;// j,
+    
     if (bErrCode ==0)
     {
         sSendBuf[0] =bCmdHead;
@@ -394,7 +395,7 @@ void SendErrorData(uchar bCmdHead, uchar bErrCode)
 void SendBackData(uchar bCmdHead, uint slen, uchar *sdata)
 {
     uchar sSendBuf[4096];
-    uint j,i, xlen,len;
+    uint i, xlen;//,j,len;
     slen=slen%4096; 
     xlen=0;
     sSendBuf[xlen++] =bCmdHead;
@@ -424,8 +425,8 @@ uchar Pci_GetOfflinePinTest(uchar *psCmdStr)
 {
     int iret;
     uchar rc; 
-    uchar  key_n,min_len,max_len,mode;
-    uchar cardno[16],pinblock[8];
+    uchar  min_len,max_len;//,key_n,mode;
+    uchar pinblock[8];//cardno[16],
     ushort wait_sec;  
 	uchar tryflag,remaincnt;
 
@@ -471,8 +472,8 @@ uchar Pci_GetOfflinePinTest(uchar *psCmdStr)
 
 uchar Pci_OffLineEncPinTest(uchar *psCmdStr)
 {
-    uchar rc,Ret_data[300],atr[40];
-    uchar i,j,k,l;
+    uchar rc,Ret_data[300];//,atr[40];
+    uchar i,j,k;//,l;
     ushort wait_sec;    
     int iret; 
     RSA_PINKEY RSA_pinkey; 
@@ -743,6 +744,7 @@ uchar Pci_GetMacTest(uchar *psCmdStr)
 
 
 
+extern int  Lib_PciDes(BYTE deskey_n, BYTE *indata, BYTE *outdata, BYTE mode);
 uchar Pci_DesTest(uchar *psCmdStr)
 { 
     int iret; 
@@ -870,8 +872,8 @@ uchar Pci_WriteDesKeyTest(uchar *psCmdStr)
 {
     int iret;
     uchar rc; //32
-    uchar  key_no,key_len,mode,mkey_no;
-    uchar  tmpbuf[24],tmpcrc[4]; 
+    uchar  key_no,key_len,mode;//,mkey_no;
+    uchar  tmpbuf[24];//,tmpcrc[4]; 
     key_no=psCmdStr[3];
     key_len=psCmdStr[4];     
     memcpy(tmpbuf,&psCmdStr[5],key_len);
@@ -955,7 +957,7 @@ uchar Pci_WriteMAC_MKeyTest(uchar *psCmdStr)
 
 uchar Pci_GetRandTest(uchar *psCmdStr)
 {
-    uchar rc;
+    //uchar rc;
     uchar Random[2049];
     int i;
     memset(Random, 0, sizeof(Random));
@@ -976,14 +978,14 @@ uchar Pci_GetRandTest(uchar *psCmdStr)
 int pcimain(void)
 {
     int iret;
-    uchar i, rc, bRecvLen;
-    uchar temppwd[8],CmdStr[2100],  sTemp[200];//gplian disable RespStr[2100] 2100->1024
-    ulong templ;
+    uchar rc, bRecvLen;//i, 
+    uchar CmdStr[2100],  sTemp[200];//temppwd[8],gplian disable RespStr[2100] 2100->1024
+    //ulong templ;
     //test
     //uchar sTempData[2048],sTempData2[2048];
 
     
-    int j;
+    //int j;
     
     iret = Lib_AppInit();
     
@@ -1035,7 +1037,7 @@ int pcimain(void)
         ShowInfo("Open Port Fail!");
         Lib_KbGetCh();
 		for(;;);
-        return;
+        //return 0;
     }  
     ShowInfo("Receiving...");
     while(1)
@@ -1046,7 +1048,8 @@ int pcimain(void)
         {   
             if(!Lib_KbCheck())
             {
-                if(Lib_KbGetCh()==KEYCANCEL)   return;
+                if(Lib_KbGetCh()==KEYCANCEL)
+                    return 0;
             } 
             //ShowInfo("Receiving...");           
             continue;

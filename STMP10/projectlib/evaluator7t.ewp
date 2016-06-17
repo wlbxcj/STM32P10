@@ -818,7 +818,7 @@
         </option>
         <option>
           <name>IarchiveOutput</name>
-          <state>$PROJ_DIR$\..\projectlib\Debug\Exe\v10plib043.a</state>
+          <state>$PROJ_DIR$\..\projectlib\Debug\Exe\v10plib045.a</state>
         </option>
       </data>
     </settings>
@@ -1884,7 +1884,7 @@
           <name>$PROJ_DIR$\..\src\driver\pn512\Mifre.h</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\src\driver\pn512\mifre_tmdef.h</name>
+          <name>$PROJ_DIR$\..\src\driver\pn512\Mifre_TmDef.h</name>
         </file>
         <file>
           <name>$PROJ_DIR$\..\src\driver\pn512\MifreCmd.c</name>
@@ -2107,7 +2107,7 @@
         <name>$PROJ_DIR$\..\src\inc\Display.h</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\src\inc\FlashOperate.h</name>
+        <name>$PROJ_DIR$\..\src\inc\FLASHOPERATE.h</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\src\inc\FunctionList.h</name>

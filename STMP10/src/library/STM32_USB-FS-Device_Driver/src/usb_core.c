@@ -1,17 +1,30 @@
-/******************** (C) COPYRIGHT 2011 STMicroelectronics ********************
-* File Name          : usb_core.c
-* Author             : MCD Application Team
-* Version            : V3.3.0
-* Date               : 21-March-2011
-* Description        : Standard protocol processing (USB v2.0)
-********************************************************************************
-* THE PRESENT FIRMWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING CUSTOMERS
-* WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER FOR THEM TO SAVE TIME.
-* AS A RESULT, STMICROELECTRONICS SHALL NOT BE HELD LIABLE FOR ANY DIRECT,
-* INDIRECT OR CONSEQUENTIAL DAMAGES WITH RESPECT TO ANY CLAIMS ARISING FROM THE
-* CONTENT OF SUCH FIRMWARE AND/OR THE USE MADE BY CUSTOMERS OF THE CODING
-* INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
-*******************************************************************************/
+/**
+  ******************************************************************************
+  * @file    usb_core.c
+  * @author  MCD Application Team
+  * @version V4.0.0
+  * @date    28-August-2012
+  * @brief   Standard protocol processing (USB v2.0)
+  ******************************************************************************
+  * @attention
+  *
+  * <h2><center>&copy; COPYRIGHT 2012 STMicroelectronics</center></h2>
+  *
+  * Licensed under MCD-ST Liberty SW License Agreement V2, (the "License");
+  * You may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at:
+  *
+  *        http://www.st.com/software_license_agreement_liberty_v2
+  *
+  * Unless required by applicable law or agreed to in writing, software 
+  * distributed under the License is distributed on an "AS IS" BASIS, 
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  *
+  ******************************************************************************
+  */
+
 
 /* Includes ------------------------------------------------------------------*/
 #include "usb_lib.h"
@@ -22,14 +35,9 @@
 #define ValBit(VAR,Place)    (VAR & (1 << Place))
 #define SetBit(VAR,Place)    (VAR |= (1 << Place))
 #define ClrBit(VAR,Place)    (VAR &= ((1 << Place) ^ 255))
-
-#ifdef STM32F10X_CL
- #define Send0LengthData()  {PCD_EP_Write (0, 0, 0) ; vSetEPTxStatus(EP_TX_VALID);}
-#else
 #define Send0LengthData() { _SetEPTxCount(ENDP0, 0); \
     vSetEPTxStatus(EP_TX_VALID); \
   }
-#endif /* STM32F10X_CL */
 
 #define vSetEPRxStatus(st) (SaveRState = st)
 #define vSetEPTxStatus(st) (SaveTState = st)
@@ -296,9 +304,7 @@ RESULT Standard_ClearFeature(void)
       /* IN endpoint */
       if (_GetTxStallStatus(Related_Endpoint ))
       {
-      #ifndef STM32F10X_CL
         ClearDTOG_TX(Related_Endpoint);
-      #endif /* STM32F10X_CL */
         SetEPTxStatus(Related_Endpoint, EP_TX_VALID);
       }
     }
@@ -315,9 +321,7 @@ RESULT Standard_ClearFeature(void)
         }
         else
         {
-        #ifndef STM32F10X_CL
           ClearDTOG_RX(Related_Endpoint);
-        #endif /* STM32F10X_CL */
           _SetEPRxStatus(Related_Endpoint, EP_RX_VALID);
         }
       }
@@ -459,12 +463,8 @@ void DataStageOut(void)
     Buffer = (*pEPinfo->CopyData)(Length);
     pEPinfo->Usb_rLength -= Length;
     pEPinfo->Usb_rOffset += Length;
-
-  #ifdef STM32F10X_CL  
-    PCD_EP_Read(ENDP0, Buffer, Length); 
-  #else  
     PMAToUserBufferCopy(Buffer, GetEPRxAddr(ENDP0), Length);
-  #endif  /* STM32F10X_CL */
+
   }
 
   if (pEPinfo->Usb_rLength != 0)
@@ -521,14 +521,8 @@ void DataStageIn(void)
     {
       /* No more data to send so STALL the TX Status*/
       ControlState = WAIT_STATUS_OUT;
-
-    #ifdef STM32F10X_CL      
-      PCD_EP_Read (ENDP0, 0, 0);
-    #endif  /* STM32F10X_CL */ 
-    
-    #ifndef STM32F10X_CL 
       vSetEPTxStatus(EP_TX_STALL);
-    #endif  /* STM32F10X_CL */ 
+ 
     }
     
     goto Expect_Status_Out;
@@ -543,12 +537,8 @@ void DataStageIn(void)
   }
 
   DataBuffer = (*pEPinfo->CopyData)(Length);
-
-#ifdef STM32F10X_CL
-  PCD_EP_Write (ENDP0, DataBuffer, Length);
-#else   
+  
   UserToPMABufferCopy(DataBuffer, GetEPTxAddr(ENDP0), Length);
-#endif /* STM32F10X_CL */ 
 
   SetEPTxCount(ENDP0, Length);
 
@@ -598,10 +588,6 @@ void NoData_Setup0(void)
       else
       {
         Result = USB_SUCCESS;
-
-      #ifdef STM32F10X_CL
-         SetDeviceAddress(pInformation->USBwValue0);
-      #endif  /* STM32F10X_CL */
       }
     }
     /*SET FEATURE for Device*/
@@ -698,174 +684,171 @@ exit_NoData_Setup0:
 *******************************************************************************/
 void Data_Setup0(void)
 {
-  uint8_t *(*CopyRoutine)(uint16_t);
-  RESULT Result;
-  uint32_t Request_No = pInformation->USBbRequest;
+    uint8_t *(*CopyRoutine)(uint16_t);
+    RESULT Result;
+    uint32_t Request_No = pInformation->USBbRequest;
 
-  uint32_t Related_Endpoint, Reserved;
-  uint32_t wOffset, Status;
+    uint32_t Related_Endpoint, Reserved;
+    uint32_t wOffset, Status;
 
+    CopyRoutine = NULL;
+    wOffset = 0;
 
-
-  CopyRoutine = NULL;
-  wOffset = 0;
-
-  /*GET DESCRIPTOR*/
-  if (Request_No == GET_DESCRIPTOR)
-  {
-    if (Type_Recipient == (STANDARD_REQUEST | DEVICE_RECIPIENT))
+    /*GET DESCRIPTOR*/
+    if (Request_No == GET_DESCRIPTOR)
     {
-      uint8_t wValue1 = pInformation->USBwValue1;
-      if (wValue1 == DEVICE_DESCRIPTOR)
-      {
-        CopyRoutine = pProperty->GetDeviceDescriptor;
-      }
-      else if (wValue1 == CONFIG_DESCRIPTOR)
-      {
-        CopyRoutine = pProperty->GetConfigDescriptor;
-      }
-      else if (wValue1 == STRING_DESCRIPTOR)
-      {
-        CopyRoutine = pProperty->GetStringDescriptor;
-      }  /* End of GET_DESCRIPTOR */
+        if (Type_Recipient == (STANDARD_REQUEST | DEVICE_RECIPIENT))
+        {
+            uint8_t wValue1 = pInformation->USBwValue1;
+            if (wValue1 == DEVICE_DESCRIPTOR)
+            {
+                CopyRoutine = pProperty->GetDeviceDescriptor;
+            }
+            else if (wValue1 == CONFIG_DESCRIPTOR)
+            {
+                CopyRoutine = pProperty->GetConfigDescriptor;
+            }
+            else if (wValue1 == STRING_DESCRIPTOR)
+            {
+                CopyRoutine = pProperty->GetStringDescriptor;
+            }   /* End of GET_DESCRIPTOR */
+        }
     }
-  }
 
-  /*GET STATUS*/
-  else if ((Request_No == GET_STATUS) && (pInformation->USBwValue == 0)
+    /*GET STATUS*/
+    else if ((Request_No == GET_STATUS) && (pInformation->USBwValue == 0)
            && (pInformation->USBwLength == 0x0002)
            && (pInformation->USBwIndex1 == 0))
-  {
-    /* GET STATUS for Device*/
-    if ((Type_Recipient == (STANDARD_REQUEST | DEVICE_RECIPIENT))
-        && (pInformation->USBwIndex == 0))
     {
-      CopyRoutine = Standard_GetStatus;
+        /* GET STATUS for Device*/
+        if ((Type_Recipient == (STANDARD_REQUEST | DEVICE_RECIPIENT))
+            && (pInformation->USBwIndex == 0))
+        {
+            CopyRoutine = Standard_GetStatus;
+        }
+
+        /* GET STATUS for Interface*/
+        else if (Type_Recipient == (STANDARD_REQUEST | INTERFACE_RECIPIENT))
+        {
+            if (((*pProperty->Class_Get_Interface_Setting)(pInformation->USBwIndex0, 0) == USB_SUCCESS)
+                  && (pInformation->Current_Configuration != 0))
+            {
+                CopyRoutine = Standard_GetStatus;
+            }
+        }
+
+        /* GET STATUS for EndPoint*/
+        else if (Type_Recipient == (STANDARD_REQUEST | ENDPOINT_RECIPIENT))
+        {
+            Related_Endpoint = (pInformation->USBwIndex0 & 0x0f);
+            Reserved = pInformation->USBwIndex0 & 0x70;
+
+            if (ValBit(pInformation->USBwIndex0, 7))
+            {
+                /*Get Status of endpoint & stall the request if the related_ENdpoint
+                is Disabled*/
+                Status = _GetEPTxStatus(Related_Endpoint);
+            }
+            else
+            {
+                Status = _GetEPRxStatus(Related_Endpoint);
+            }
+
+            if ((Related_Endpoint < Device_Table.Total_Endpoint) && (Reserved == 0)
+                && (Status != 0))
+            {
+                CopyRoutine = Standard_GetStatus;
+            }
+        }
     }
 
-    /* GET STATUS for Interface*/
-    else if (Type_Recipient == (STANDARD_REQUEST | INTERFACE_RECIPIENT))
+    /*GET CONFIGURATION*/
+    else if (Request_No == GET_CONFIGURATION)
     {
-      if (((*pProperty->Class_Get_Interface_Setting)(pInformation->USBwIndex0, 0) == USB_SUCCESS)
-          && (pInformation->Current_Configuration != 0))
-      {
-        CopyRoutine = Standard_GetStatus;
-      }
+        if (Type_Recipient == (STANDARD_REQUEST | DEVICE_RECIPIENT))
+        {
+            CopyRoutine = Standard_GetConfiguration;
+        }
     }
-
-    /* GET STATUS for EndPoint*/
-    else if (Type_Recipient == (STANDARD_REQUEST | ENDPOINT_RECIPIENT))
+    /*GET INTERFACE*/
+    else if (Request_No == GET_INTERFACE)
     {
-      Related_Endpoint = (pInformation->USBwIndex0 & 0x0f);
-      Reserved = pInformation->USBwIndex0 & 0x70;
+        if ((Type_Recipient == (STANDARD_REQUEST | INTERFACE_RECIPIENT))
+            && (pInformation->Current_Configuration != 0) && (pInformation->USBwValue == 0)
+            && (pInformation->USBwIndex1 == 0) && (pInformation->USBwLength == 0x0001)
+            && ((*pProperty->Class_Get_Interface_Setting)(pInformation->USBwIndex0, 0) == USB_SUCCESS))
+        {
+            CopyRoutine = Standard_GetInterface;
+        }
 
-      if (ValBit(pInformation->USBwIndex0, 7))
-      {
-        /*Get Status of endpoint & stall the request if the related_ENdpoint
-        is Disabled*/
-        Status = _GetEPTxStatus(Related_Endpoint);
-      }
-      else
-      {
-        Status = _GetEPRxStatus(Related_Endpoint);
-      }
-
-      if ((Related_Endpoint < Device_Table.Total_Endpoint) && (Reserved == 0)
-          && (Status != 0))
-      {
-        CopyRoutine = Standard_GetStatus;
-      }
     }
-
-  }
-
-  /*GET CONFIGURATION*/
-  else if (Request_No == GET_CONFIGURATION)
-  {
-    if (Type_Recipient == (STANDARD_REQUEST | DEVICE_RECIPIENT))
-    {
-      CopyRoutine = Standard_GetConfiguration;
-    }
-  }
-  /*GET INTERFACE*/
-  else if (Request_No == GET_INTERFACE)
-  {
-    if ((Type_Recipient == (STANDARD_REQUEST | INTERFACE_RECIPIENT))
-        && (pInformation->Current_Configuration != 0) && (pInformation->USBwValue == 0)
-        && (pInformation->USBwIndex1 == 0) && (pInformation->USBwLength == 0x0001)
-        && ((*pProperty->Class_Get_Interface_Setting)(pInformation->USBwIndex0, 0) == USB_SUCCESS))
-    {
-      CopyRoutine = Standard_GetInterface;
-    }
-
-  }
   
-  if (CopyRoutine)
-  {
-    pInformation->Ctrl_Info.Usb_wOffset = wOffset;
-    pInformation->Ctrl_Info.CopyData = CopyRoutine;
-    /* sb in the original the cast to word was directly */
-    /* now the cast is made step by step */
-    (*CopyRoutine)(0);
-    Result = USB_SUCCESS;
-  }
-  else
-  {
-    Result = (*pProperty->Class_Data_Setup)(pInformation->USBbRequest);
-    if (Result == USB_NOT_READY)
+    if (CopyRoutine)
     {
-      pInformation->ControlState = PAUSE;
-      return;
+        pInformation->Ctrl_Info.Usb_wOffset = wOffset;
+        pInformation->Ctrl_Info.CopyData = CopyRoutine;
+        /* sb in the original the cast to word was directly */
+        /* now the cast is made step by step */
+        (*CopyRoutine)(0);
+        Result = USB_SUCCESS;
     }
-  }
-
-  if (pInformation->Ctrl_Info.Usb_wLength == 0xFFFF)
-  {
-    /* Data is not ready, wait it */
-    pInformation->ControlState = PAUSE;
-    return;
-  }
-  if ((Result == USB_UNSUPPORT) || (pInformation->Ctrl_Info.Usb_wLength == 0))
-  {
-    /* Unsupported request */
-    pInformation->ControlState = STALLED;
-    return;
-  }
-
-
-  if (ValBit(pInformation->USBbmRequestType, 7))
-  {
-    /* Device ==> Host */
-    __IO uint32_t wLength = pInformation->USBwLength;
-     
-    /* Restrict the data length to be the one host asks for */
-    if (pInformation->Ctrl_Info.Usb_wLength > wLength)
+    else
     {
-      pInformation->Ctrl_Info.Usb_wLength = wLength;
+        Result = (*pProperty->Class_Data_Setup)(pInformation->USBbRequest);
+        if (Result == USB_NOT_READY)
+        {
+          pInformation->ControlState = PAUSE;
+          return;
+        }
     }
+
+    if (pInformation->Ctrl_Info.Usb_wLength == 0xFFFF)
+    {
+        /* Data is not ready, wait it */
+        pInformation->ControlState = PAUSE;
+        return;
+    }
+    if ((Result == USB_UNSUPPORT) || (pInformation->Ctrl_Info.Usb_wLength == 0))
+    {
+        /* Unsupported request */
+        pInformation->ControlState = STALLED;
+        return;
+    }
+
+
+    if (ValBit(pInformation->USBbmRequestType, 7))
+    {
+        /* Device ==> Host */
+        __IO uint32_t wLength = pInformation->USBwLength;
+         
+        /* Restrict the data length to be the one host asks for */
+        if (pInformation->Ctrl_Info.Usb_wLength > wLength)
+        {
+            pInformation->Ctrl_Info.Usb_wLength = wLength;
+        }
     
-    else if (pInformation->Ctrl_Info.Usb_wLength < pInformation->USBwLength)
+        else if (pInformation->Ctrl_Info.Usb_wLength < pInformation->USBwLength)
+        {
+            if (pInformation->Ctrl_Info.Usb_wLength < pProperty->MaxPacketSize)
+            {
+                Data_Mul_MaxPacketSize = FALSE;
+            }
+            else if ((pInformation->Ctrl_Info.Usb_wLength % pProperty->MaxPacketSize) == 0)
+            {
+                Data_Mul_MaxPacketSize = TRUE;
+            }
+        }   
+
+        pInformation->Ctrl_Info.PacketSize = pProperty->MaxPacketSize;
+        DataStageIn();
+    }
+    else
     {
-      if (pInformation->Ctrl_Info.Usb_wLength < pProperty->MaxPacketSize)
-      {
-        Data_Mul_MaxPacketSize = FALSE;
-      }
-      else if ((pInformation->Ctrl_Info.Usb_wLength % pProperty->MaxPacketSize) == 0)
-      {
-        Data_Mul_MaxPacketSize = TRUE;
-      }
-    }   
+        pInformation->ControlState = OUT_DATA;
+        vSetEPRxStatus(EP_RX_VALID); /* enable for next data reception */
+    }
 
-    pInformation->Ctrl_Info.PacketSize = pProperty->MaxPacketSize;
-    DataStageIn();
-  }
-  else
-  {
-    pInformation->ControlState = OUT_DATA;
-    vSetEPRxStatus(EP_RX_VALID); /* enable for next data reception */
-  }
-
-  return;
+    return;
 }
 
 /*******************************************************************************
@@ -883,18 +866,9 @@ uint8_t Setup0_Process(void)
     uint8_t* b;
     uint16_t* w;
   } pBuf;
-
-#ifdef STM32F10X_CL
-  USB_OTG_EP *ep;
-  uint16_t offset = 0;
- 
-  ep = PCD_GetOutEP(ENDP0);
-  pBuf.b = ep->xfer_buff;
-#else  
   uint16_t offset = 1;
   
   pBuf.b = PMAAddr + (uint8_t *)(_GetEPRxAddr(ENDP0) * 2); /* *2 for 32 bits addr */
-#endif /* STM32F10X_CL */
 
   if (pInformation->ControlState != PAUSE)
   {
@@ -911,13 +885,13 @@ uint8_t Setup0_Process(void)
   pInformation->ControlState = SETTING_UP;
   if (pInformation->USBwLength == 0)
   {
-    /* Setup with no data stage */
-    NoData_Setup0();
+        /* Setup with no data stage */
+        NoData_Setup0();
   }
   else
   {
-    /* Setup with data stage */
-    Data_Setup0();
+        /* Setup with data stage */
+        Data_Setup0();
   }
   return Post0_Process();
 }
@@ -987,9 +961,7 @@ uint8_t Out0_Process(void)
   else if (ControlState == WAIT_STATUS_OUT)
   {
     (*pProperty->Process_Status_OUT)();
-  #ifndef STM32F10X_CL
     ControlState = STALLED;
-  #endif /* STM32F10X_CL */
   }
 
 
@@ -1014,37 +986,14 @@ uint8_t Out0_Process(void)
 *******************************************************************************/
 uint8_t Post0_Process(void)
 {
-#ifdef STM32F10X_CL  
-  USB_OTG_EP *ep;
-#endif /* STM32F10X_CL */
-      
+   
   SetEPRxCount(ENDP0, Device_Property.MaxPacketSize);
 
-  if (pInformation->ControlState == STALLED)
-  {
-    vSetEPRxStatus(EP_RX_STALL);
-    vSetEPTxStatus(EP_TX_STALL);
-  }
-
-#ifdef STM32F10X_CL
-  else if ((pInformation->ControlState == OUT_DATA) ||
-      (pInformation->ControlState == WAIT_STATUS_OUT))
-  {
-    ep = PCD_GetInEP(0);
-    ep->is_in = 0;
-    OTGD_FS_EP0StartXfer(ep);
-    
-    vSetEPTxStatus(EP_TX_VALID);
-  }
-  
-  else if ((pInformation->ControlState == IN_DATA) || 
-      (pInformation->ControlState == WAIT_STATUS_IN))
-  {
-    ep = PCD_GetInEP(0);
-    ep->is_in = 1;
-    OTGD_FS_EP0StartXfer(ep);    
-  }  
-#endif /* STM32F10X_CL */
+    if (pInformation->ControlState == STALLED)
+    {
+        vSetEPRxStatus(EP_RX_STALL);
+        vSetEPTxStatus(EP_TX_STALL);
+    }
 
   return (pInformation->ControlState == PAUSE);
 }
@@ -1058,9 +1007,6 @@ uint8_t Post0_Process(void)
 *******************************************************************************/
 void SetDeviceAddress(uint8_t Val)
 {
-#ifdef STM32F10X_CL 
-  PCD_EP_SetAddress ((uint8_t)Val);
-#else 
   uint32_t i;
   uint32_t nEP = Device_Table.Total_Endpoint;
 
@@ -1070,7 +1016,6 @@ void SetDeviceAddress(uint8_t Val)
     _SetEPAddress((uint8_t)i, (uint8_t)i);
   } /* for */
   _SetDADDR(Val | DADDR_EF); /* set device address and enable function */
-#endif  /* STM32F10X_CL */  
 }
 
 /*******************************************************************************
@@ -1089,22 +1034,23 @@ void NOP_Process(void)
  * 函数名称: Usb_Send(*)
  * 功能描述: HID数据发送
  * 作    者: WLB
- * 输入参数: unsigned char *pucData, unsigned char ucSendLen
+ * 输入参数: unsigned char *pucData    缓冲区大小必须大于等于64
+ *           unsigned char ucSendLen   等于64
  * 输出参数: 无
  * 返 回 值: <0 参数错误 0 发送成功
- * 其它说明: 
+ * 其它说明: 每包的数据大小为64
  * 修改历史: 
  *           1. 2016-3-3  WLB  Created
  *******************************************************************************/
-int Hid_Send(unsigned char *pucData, unsigned char ucSendLen)
+int Hid_Send(unsigned char *pucData, unsigned int ulSendLen)
 {
-    unsigned char ucLen = (ucSendLen > MAX_PACK_SIZE) ? MAX_PACK_SIZE : ucSendLen;
+    unsigned int ulLen = (ulSendLen > MAX_PACK_SIZE) ? MAX_PACK_SIZE : ulSendLen;
 
-    if (NULL == pucData || 0 == ucSendLen)
+    if (NULL == pucData || 0 == ulSendLen)
         return -1;
 
     /* Write the descriptor through the endpoint */    
-    USB_SIL_Write(EP1_IN, (unsigned char*)pucData, ucLen);  
+    USB_SIL_Write(EP1_IN, (unsigned char *)pucData, ulLen);  
 
     SetEPTxValid(ENDP1);
 
@@ -1127,4 +1073,32 @@ int Hid_Rec(unsigned char *pucData)
 {
     return HID_FifoGet(pucData);
 }
-/******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/
+
+/******************************************************************************* 
+ * 函数名称: Hid_GetStatus(*)
+ * 功能描述: 获取HID状态值
+ * 作    者: WLB
+ * 输入参数: 无
+ * 输出参数: 无
+ * 返 回 值: 0-5的枚举值,为5时已经可以正常使用
+ * 其它说明:    typedef enum _DEVICE_STATE
+                {
+                    UNCONNECTED,
+                    ATTACHED,
+                    POWERED,
+                    SUSPENDED,
+                    ADDRESSED,
+                    CONFIGURED
+                }   DEVICE_STATE;
+ * 修改历史: 
+ *           1. 2016-4-26  WLB  Created
+ *******************************************************************************/
+unsigned int Hid_GetStatus(void)
+{
+    extern  __IO uint32_t bDeviceState; /* USB device status */
+
+    return bDeviceState;
+}
+
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+

@@ -1001,6 +1001,8 @@ uchar PN512_s_RF_ucRATS(uchar* pucOutLen, uchar* pucATSData)
     uchar tucTemp[2];
     uchar i = 0;
     uint  uiFWITemp = 0x00, uiSFGITemp = 0x00;
+    ulong ulTemp = 0;
+    
     *pucOutLen = 0;
 
     PN512_RF_WorkInfo.FSC    = 32;
@@ -1043,7 +1045,9 @@ uchar PN512_s_RF_ucRATS(uchar* pucOutLen, uchar* pucATSData)
 	else
     {
            i = 0;
-           if(PN512_RF_WorkInfo.ulBytesReceived != PN512_RF_WorkInfo.aucBuffer[0]) // TL字节错误
+           ulTemp = PN512_RF_WorkInfo.ulBytesReceived;
+           //if(PN512_RF_WorkInfo.ulBytesReceived != PN512_RF_WorkInfo.aucBuffer[0]) // TL字节错误
+           if(ulTemp != PN512_RF_WorkInfo.aucBuffer[0]) // TL字节错误
            {
                 PN512_RF_WorkInfo.usErrNo = 0x80; // ATS TL err
                 ucRet = RET_RF_ERR_TRANSMIT; // 通信错误
@@ -1850,6 +1854,7 @@ uchar PN512_s_RF_ucMifSBlock( uint* puiRecLen)
 {
     uchar ucTempData = 0;
     uchar ucRet = RET_RF_OK;	
+    ulong ulTemp1, ulTemp2 = 0;
 
 	if ((PN512_RF_WorkInfo.aucBuffer[0] & 0x30) != 0x30)
 	{
@@ -1881,7 +1886,10 @@ uchar PN512_s_RF_ucMifSBlock( uint* puiRecLen)
 		}
     
 		// 计算临时FWT时间
-		PN512_RF_WorkInfo.ulFWTTemp = PN512_RF_WorkInfo.ucWTX * PN512_RF_WorkInfo.ulFWT;		
+		ulTemp1 = PN512_RF_WorkInfo.ucWTX;
+		ulTemp2 = PN512_RF_WorkInfo.ulFWT;
+		//PN512_RF_WorkInfo.ulFWTTemp = PN512_RF_WorkInfo.ucWTX * PN512_RF_WorkInfo.ulFWT;
+		PN512_RF_WorkInfo.ulFWTTemp = ulTemp1 * ulTemp2;
 	}
 
 	PN512_RF_WorkInfo.aucBuffer[0] = 0xf2;  
@@ -1948,7 +1956,8 @@ uchar PN512_s_RF_ucExchange(uint uiSendLen, uchar* pucInData, uint* puiRecLen, u
 	uchar tempResult = 0x00;
 	uchar i = 0;
     uchar ucResendNo = 0x00;   
-	
+	ulong ulTemp = 0;
+
 	*puiRecLen = 0; 
 
 	// 保存要发送的数据长度
@@ -2012,8 +2021,9 @@ uchar PN512_s_RF_ucExchange(uint uiSendLen, uchar* pucInData, uint* puiRecLen, u
 					 // PICC不应返回CID
 					 return	RET_RF_ERR_PROTOCOL;
 				}
-				
-				if((PN512_RF_WorkInfo.aucBuffer[0] & 0x01) == PN512_RF_WorkInfo.ucCurPCB)
+				ulTemp = PN512_RF_WorkInfo.ucCurPCB;
+				//if((PN512_RF_WorkInfo.aucBuffer[0] & 0x01) == PN512_RF_WorkInfo.ucCurPCB)
+				if((PN512_RF_WorkInfo.aucBuffer[0] & 0x01) == ulTemp)
 				{
 					 // 收到R_block(ACK)应答块块号正确, 准备发送下一个信息块
 				     uiSendCurrPos += uiTempLen;
@@ -2088,8 +2098,9 @@ uchar PN512_s_RF_ucExchange(uint uiSendLen, uchar* pucInData, uint* puiRecLen, u
 									   // PICC不应返回CID
 									   return	RET_RF_ERR_PROTOCOL;
 								}
-								
-								if((PN512_RF_WorkInfo.aucBuffer[0] & 0x01) == PN512_RF_WorkInfo.ucCurPCB)
+								ulTemp = PN512_RF_WorkInfo.ucCurPCB;
+								//if((PN512_RF_WorkInfo.aucBuffer[0] & 0x01) == PN512_RF_WorkInfo.ucCurPCB)
+                                if((PN512_RF_WorkInfo.aucBuffer[0] & 0x01) == ulTemp)
 								{
 								   // 收到R_block(ACK)应答块块号正确, 准备发送下一个信息块
 								   uiSendCurrPos +=	uiTempLen;
@@ -2189,8 +2200,9 @@ uchar PN512_s_RF_ucExchange(uint uiSendLen, uchar* pucInData, uint* puiRecLen, u
 					   // PICC不应返回CID
 					   return	RET_RF_ERR_PROTOCOL;
 				}
-				
-				if((PN512_RF_WorkInfo.aucBuffer[0] & 0x01) == PN512_RF_WorkInfo.ucCurPCB)
+				ulTemp = PN512_RF_WorkInfo.ucCurPCB;
+				//if((PN512_RF_WorkInfo.aucBuffer[0] & 0x01) == PN512_RF_WorkInfo.ucCurPCB)
+                if((PN512_RF_WorkInfo.aucBuffer[0] & 0x01) == ulTemp)
 				{
 					   // PICC回送错误块号
 					   return	RET_RF_ERR_PROTOCOL;
@@ -2272,8 +2284,9 @@ uchar PN512_s_RF_ucExchange(uint uiSendLen, uchar* pucInData, uint* puiRecLen, u
 							   // PICC不应返回CID
 							   return	RET_RF_ERR_PROTOCOL;
 						}
-						
-						if((PN512_RF_WorkInfo.aucBuffer[0] & 0x01) == PN512_RF_WorkInfo.ucCurPCB)
+						ulTemp = PN512_RF_WorkInfo.ucCurPCB;
+				        //if((PN512_RF_WorkInfo.aucBuffer[0] & 0x01) == PN512_RF_WorkInfo.ucCurPCB)
+                        if((PN512_RF_WorkInfo.aucBuffer[0] & 0x01) == ulTemp)
 						{
 							   // PICC回送错误块号
 							   return	RET_RF_ERR_PROTOCOL;
@@ -2331,7 +2344,9 @@ uchar PN512_s_RF_ucExchange(uint uiSendLen, uchar* pucInData, uint* puiRecLen, u
 		 	ScrPrint(0,6,0,"Save In %02X %02X %02X",PN512_RF_WorkInfo.aucBuffer[0],PN512_RF_WorkInfo.ucCurPCB,uiCurrRecvLen);
 			getkey();
 			debug end*/
-		   if((PN512_RF_WorkInfo.aucBuffer[0] & 0x01) != PN512_RF_WorkInfo.ucCurPCB)
+			ulTemp = PN512_RF_WorkInfo.ucCurPCB;
+		   //if((PN512_RF_WorkInfo.aucBuffer[0] & 0x01) != PN512_RF_WorkInfo.ucCurPCB)
+            if((PN512_RF_WorkInfo.aucBuffer[0] & 0x01) != ulTemp)
 		   {
 				 // PICC回送错误块号
 				 return	RET_RF_ERR_PROTOCOL;
@@ -2418,9 +2433,11 @@ uchar PN512_s_RF_ucExchange(uint uiSendLen, uchar* pucInData, uint* puiRecLen, u
 							// PICC不应返回CID
 							return RET_RF_ERR_PROTOCOL;
 					   }
-					   
-					   if((PN512_RF_WorkInfo.aucBuffer[0] & 0x01) != PN512_RF_WorkInfo.ucCurPCB)
-					   {
+
+					    ulTemp = PN512_RF_WorkInfo.ucCurPCB;
+					   //if((PN512_RF_WorkInfo.aucBuffer[0] & 0x01) != PN512_RF_WorkInfo.ucCurPCB)
+					   if((PN512_RF_WorkInfo.aucBuffer[0] & 0x01) != ulTemp)
+                       {
 							// PICC回送错误块号
 							return RET_RF_ERR_PROTOCOL;
 					   }
@@ -2498,8 +2515,10 @@ uchar PN512_s_RF_ucExchange(uint uiSendLen, uchar* pucInData, uint* puiRecLen, u
 								   // PICC不应返回CID
 								   return	RET_RF_ERR_PROTOCOL;
 							}
-							
-							if((PN512_RF_WorkInfo.aucBuffer[0] & 0x01) != PN512_RF_WorkInfo.ucCurPCB)
+
+                            ulTemp = PN512_RF_WorkInfo.ucCurPCB;
+							//if((PN512_RF_WorkInfo.aucBuffer[0] & 0x01) != PN512_RF_WorkInfo.ucCurPCB)
+							if((PN512_RF_WorkInfo.aucBuffer[0] & 0x01) != ulTemp)
 							{
 								   // PICC回送错误块号
 								   return	RET_RF_ERR_PROTOCOL;
@@ -2932,6 +2951,7 @@ void PN512_s_RFIsr(void)
 	ulong i = 0;//for debug 
 	//AT skx
 	//uint for_spi_test=0;
+    ulong ulTemp1 = 0;
 
 	PN512_sHal_MaskCpuInt();//禁止并清CPU中断
 	
@@ -3005,10 +3025,14 @@ void PN512_s_RFIsr(void)
             ulTemp = 64 - ucTempData;
 			
             // 决定本次要发送数据长度
-            if( (PN512_RF_WorkInfo.ulSendBytes - PN512_RF_WorkInfo.ulBytesSent) <= ulTemp)
+            ulTemp1 = PN512_RF_WorkInfo.ulBytesSent;
+            //if( (PN512_RF_WorkInfo.ulSendBytes - PN512_RF_WorkInfo.ulBytesSent) <= ulTemp)
+            if( (PN512_RF_WorkInfo.ulSendBytes - ulTemp1) <= ulTemp)
             {
                 // 如果需要发送长度小于缓冲区剩余空间，则全部发送
-                ulTemp = PN512_RF_WorkInfo.ulSendBytes - PN512_RF_WorkInfo.ulBytesSent;
+                ulTemp1 = PN512_RF_WorkInfo.ulBytesSent;
+                //ulTemp = PN512_RF_WorkInfo.ulSendBytes - PN512_RF_WorkInfo.ulBytesSent;
+                ulTemp = PN512_RF_WorkInfo.ulSendBytes - ulTemp1;
                 ucTempData = 0x04;
 			
                 // 发送完毕, 禁止中断LoAlert
@@ -3205,7 +3229,7 @@ extern void ledgreen_off(void);
 
 uchar PN512_s_RFExchangeCmd(uchar ucCmd)
 {
-	
+	ulong ulTemp = 0;
 	uchar ucTempData;		 // 暂存要操作的寄存器数据
 	uchar ucWaterLevelBak;	 // 备份FIFO的WaterLevel值
 	uchar ucTimerCtl;		 // 命令中用到的定时器控制方式
@@ -3505,7 +3529,9 @@ uchar PN512_s_RFExchangeCmd(uchar ucCmd)
 		PN512_s_vRFWriteReg(1, PN512_COMMAND_REG,&ucTempData); 
 
 		//收集产生的错误
-		PN512_RF_WorkInfo.ucErrFlags |= PN512_RF_WorkInfo.ucSaveErrState;
+		ulTemp = PN512_RF_WorkInfo.ucSaveErrState;
+		//PN512_RF_WorkInfo.ucErrFlags |= PN512_RF_WorkInfo.ucSaveErrState;
+        PN512_RF_WorkInfo.ucErrFlags |= ulTemp;
 
 		// 返回错误
 		if(PN512_RF_WorkInfo.ucErrFlags != 0)
@@ -3559,12 +3585,16 @@ uchar PN512_s_RFExchangeCmd(uchar ucCmd)
 			if (ucTempData != 0)
 			{
 				// 最后一个字节没有接收完
-				PN512_RF_WorkInfo.lBitsReceived += (PN512_RF_WorkInfo.ulBytesReceived-1) * 8 + ucTempData;
+				ulTemp = PN512_RF_WorkInfo.ulBytesReceived;
+				//PN512_RF_WorkInfo.lBitsReceived += (PN512_RF_WorkInfo.ulBytesReceived-1) * 8 + ucTempData;
+				PN512_RF_WorkInfo.lBitsReceived += (ulTemp-1) * 8 + ucTempData;
 			}
 			else
 			{
 				// 最后一个字节接收完
-				PN512_RF_WorkInfo.lBitsReceived += PN512_RF_WorkInfo.ulBytesReceived * 8;
+				ulTemp = PN512_RF_WorkInfo.ulBytesReceived;
+				//PN512_RF_WorkInfo.lBitsReceived += PN512_RF_WorkInfo.ulBytesReceived * 8;
+				PN512_RF_WorkInfo.lBitsReceived += ulTemp * 8;
 			}
 		}
 	}

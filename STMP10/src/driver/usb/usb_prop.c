@@ -1,17 +1,30 @@
-/******************** (C) COPYRIGHT 2011 STMicroelectronics ********************
-* File Name          : usb_prop.c
-* Author             : MCD Application Team
-* Version            : V3.3.0
-* Date               : 21-March-2011
-* Description        : All processings related to Custom HID Demo
-********************************************************************************
-* THE PRESENT FIRMWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING CUSTOMERS
-* WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER FOR THEM TO SAVE TIME.
-* AS A RESULT, STMICROELECTRONICS SHALL NOT BE HELD LIABLE FOR ANY DIRECT,
-* INDIRECT OR CONSEQUENTIAL DAMAGES WITH RESPECT TO ANY CLAIMS ARISING FROM THE
-* CONTENT OF SUCH FIRMWARE AND/OR THE USE MADE BY CUSTOMERS OF THE CODING
-* INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
-*******************************************************************************/
+/**
+  ******************************************************************************
+  * @file    usb_prop.c
+  * @author  MCD Application Team
+  * @version V4.0.0
+  * @date    21-January-2013
+  * @brief   All processings related to Custom HID Demo
+  ******************************************************************************
+  * @attention
+  *
+  * <h2><center>&copy; COPYRIGHT 2013 STMicroelectronics</center></h2>
+  *
+  * Licensed under MCD-ST Liberty SW License Agreement V2, (the "License");
+  * You may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at:
+  *
+  *        http://www.st.com/software_license_agreement_liberty_v2
+  *
+  * Unless required by applicable law or agreed to in writing, software 
+  * distributed under the License is distributed on an "AS IS" BASIS, 
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  *
+  ******************************************************************************
+  */
+
 
 /* Includes ------------------------------------------------------------------*/
 #ifdef STM32L1XX_MD
@@ -33,19 +46,20 @@
 /* Private variables ---------------------------------------------------------*/
 uint32_t ProtocolValue;
 __IO uint8_t EXTI_Enable;
-
+__IO uint8_t Request = 0;
+uint8_t Report_Buf[2];   
 /* -------------------------------------------------------------------------- */
 /*  Structures initializations */
 /* -------------------------------------------------------------------------- */
 
 DEVICE Device_Table =
-  {
+{
     EP_NUM,
     1
-  };
+};
 
 DEVICE_PROP Device_Property =
-  {
+{
     CustomHID_init,
     CustomHID_Reset,
     CustomHID_Status_In,
@@ -58,7 +72,8 @@ DEVICE_PROP Device_Property =
     CustomHID_GetStringDescriptor,
     0,
     0x40 /*MAX PACKET SIZE*/
-  };
+};
+
 USER_STANDARD_REQUESTS User_Standard_Requests =
   {
     CustomHID_GetConfiguration,
@@ -73,10 +88,10 @@ USER_STANDARD_REQUESTS User_Standard_Requests =
   };
 
 ONE_DESCRIPTOR Device_Descriptor =
-  {
+{
     (uint8_t*)CustomHID_DeviceDescriptor,
     CUSTOMHID_SIZ_DEVICE_DESC
-  };
+};
 
 ONE_DESCRIPTOR Config_Descriptor =
   {
@@ -106,6 +121,10 @@ ONE_DESCRIPTOR String_Descriptor[4] =
 
 /* Extern variables ----------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
+
+/*CustomHID_SetReport_Feature function prototypes*/
+uint8_t *CustomHID_SetReport_Feature(uint16_t Length);
+
 /* Extern function prototypes ------------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -118,18 +137,18 @@ ONE_DESCRIPTOR String_Descriptor[4] =
 *******************************************************************************/
 void CustomHID_init(void)
 {
-  /* Update the serial number string descriptor with the data from the unique 
-  ID*/
-  Get_SerialNum();
-    
-  pInformation->Current_Configuration = 0;
-  /* Connect the device */
-  PowerOn();
+    /* Update the serial number string descriptor with the data from the unique 
+    ID*/
+    Get_SerialNum();
 
-  /* Perform basic device initialization operations */
-  USB_SIL_Init();
+    pInformation->Current_Configuration = 0;
+    /* Connect the device */
+    PowerOn();
 
-  bDeviceState = UNCONNECTED;
+    /* Perform basic device initialization operations */
+    USB_SIL_Init();
+
+    bDeviceState = UNCONNECTED;
 }
 
 /*******************************************************************************
@@ -141,22 +160,12 @@ void CustomHID_init(void)
 *******************************************************************************/
 void CustomHID_Reset(void)
 {
-    /* Set Joystick_DEVICE as not configured */
+  /* Set CustomHID_DEVICE as not configured */
     pInformation->Current_Configuration = 0;
     pInformation->Current_Interface = 0;/*the default Interface*/
 
     /* Current Feature initialization */
     pInformation->Current_Feature = CustomHID_ConfigDescriptor[7];
-
-#ifdef STM32F10X_CL   
-    /* EP0 is already configured in DFU_Init() by USB_SIL_Init() function */
-
-    /* Init EP1 IN as Interrupt endpoint */
-    OTG_DEV_EP_Init(EP1_IN, OTG_DEV_EP_TYPE_INT, 2);
-
-    /* Init EP1 OUT as Interrupt endpoint */
-    OTG_DEV_EP_Init(EP1_OUT, OTG_DEV_EP_TYPE_INT, 2);
-#else 
     SetBTABLE(BTABLE_ADDRESS);
 
     /* Initialize Endpoint 0 */
@@ -172,20 +181,15 @@ void CustomHID_Reset(void)
     SetEPType(ENDP1, EP_INTERRUPT);
     SetEPTxAddr(ENDP1, ENDP1_TXADDR);
     SetEPRxAddr(ENDP1, ENDP1_RXADDR);
-#if MY_DES
+
     SetEPTxCount(ENDP1, MAX_PACK_SIZE);
     SetEPRxCount(ENDP1, MAX_PACK_SIZE);
-#else
-    SetEPTxCount(ENDP1, 2);
-    SetEPRxCount(ENDP1, 2);
-#endif
 
     SetEPRxStatus(ENDP1, EP_RX_VALID);
     SetEPTxStatus(ENDP1, EP_TX_NAK);
 
     /* Set this device to response on default address */
     SetDeviceAddress(0);
-#endif /* STM32F10X_CL */
 
     bDeviceState = ATTACHED;
 }
@@ -199,14 +203,15 @@ void CustomHID_Reset(void)
 *******************************************************************************/
 void CustomHID_SetConfiguration(void)
 {
-  if (pInformation->Current_Configuration != 0)
-  {
-    /* Device configured */
-    bDeviceState = CONFIGURED;
-    
-    /* Start ADC Software Conversion */ 
-  }
+    if (pInformation->Current_Configuration != 0)
+    {
+        /* Device configured */
+        bDeviceState = CONFIGURED;
+
+        /* Start ADC Software Conversion */ 
+    }
 }
+
 /*******************************************************************************
 * Function Name  : CustomHID_SetConfiguration.
 * Description    : Update the device state to addressed.
@@ -216,7 +221,7 @@ void CustomHID_SetConfiguration(void)
 *******************************************************************************/
 void CustomHID_SetDeviceAddress (void)
 {
-  bDeviceState = ADDRESSED;
+    bDeviceState = ADDRESSED;
 }
 /*******************************************************************************
 * Function Name  : CustomHID_Status_In.
@@ -251,11 +256,13 @@ RESULT CustomHID_Data_Setup(uint8_t RequestNo)
 {
   uint8_t *(*CopyRoutine)(uint16_t);
 
+  if (pInformation->USBwIndex != 0) 
+    return USB_UNSUPPORT;    
   CopyRoutine = NULL;
 
   if ((RequestNo == GET_DESCRIPTOR)
       && (Type_Recipient == (STANDARD_REQUEST | INTERFACE_RECIPIENT))
-      && (pInformation->USBwIndex0 == 0))
+        )
   {
 
     if (pInformation->USBwValue1 == REPORT_DESCRIPTOR)
@@ -266,14 +273,26 @@ RESULT CustomHID_Data_Setup(uint8_t RequestNo)
     {
       CopyRoutine = CustomHID_GetHIDDescriptor;
     }
-
+    
   } /* End of GET_DESCRIPTOR */
 
-  /*** GET_PROTOCOL ***/
-  else if ((Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT))
-           && RequestNo == GET_PROTOCOL)
-  {
-    CopyRoutine = CustomHID_GetProtocolValue;
+  /*** GET_PROTOCOL, GET_REPORT, SET_REPORT ***/
+  else if ( (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT)) )
+  {         
+        switch( RequestNo )
+        {
+            case GET_PROTOCOL:
+                CopyRoutine = CustomHID_GetProtocolValue;
+                break;
+
+            case SET_REPORT:
+                CopyRoutine = CustomHID_SetReport_Feature;
+                Request = SET_REPORT;
+                break;
+
+            default:
+              break;
+        }
   }
 
   if (CopyRoutine == NULL)
@@ -285,6 +304,26 @@ RESULT CustomHID_Data_Setup(uint8_t RequestNo)
   pInformation->Ctrl_Info.Usb_wOffset = 0;
   (*CopyRoutine)(0);
   return USB_SUCCESS;
+}
+
+/*******************************************************************************
+* Function Name  : CustomHID_SetReport_Feature
+* Description    : Set Feature request handling
+* Input          : Length.
+* Output         : None.
+* Return         : Buffer
+*******************************************************************************/
+uint8_t *CustomHID_SetReport_Feature(uint16_t Length)
+{
+  if (Length == 0)
+  {
+    pInformation->Ctrl_Info.Usb_wLength = 2;
+    return NULL;
+  }
+  else
+  {
+    return Report_Buf;
+  }
 }
 
 /*******************************************************************************
@@ -317,7 +356,7 @@ RESULT CustomHID_NoData_Setup(uint8_t RequestNo)
 *******************************************************************************/
 uint8_t *CustomHID_GetDeviceDescriptor(uint16_t Length)
 {
-  return Standard_GetDescriptorData(Length, &Device_Descriptor);
+    return Standard_GetDescriptorData(Length, &Device_Descriptor);
 }
 
 /*******************************************************************************
@@ -432,4 +471,4 @@ uint8_t *CustomHID_GetProtocolValue(uint16_t Length)
   }
 }
 
-/******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

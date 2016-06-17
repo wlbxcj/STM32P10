@@ -118,7 +118,7 @@ void  Dlynetu(ushort count);
 void Dly42500CLK(void);
 void s_IccRestoreIntr(void);
 void Icc_Io(uchar channel,uchar mode);
-static void USART3_ISR_Clr();
+//static void USART3_ISR_Clr();
 int T1_send_command(uchar nad,uchar *inbuf,uchar *outbuf);
 uchar Rece_Byte_T1(void);
 uchar Send_Byte(uchar dat);
@@ -2072,87 +2072,112 @@ int  T1_Send_Block(uchar *Inbuf)
  *************************************************/
 int  T1_Rece_Block(uchar *Outbuf)
 {
-     uchar   i,ch,edc;
-     uchar   Parity_Error_Flag;
-     ulong   T1BWT,T1CWT;
-     uchar   r_nad,r_pcb,r_len,r_inf;
-     uchar   r_len_temp; 
+    uchar   i,ch,edc;
+    uchar   Parity_Error_Flag;
+    ulong   T1BWT,T1CWT;
+    uchar   r_nad,r_pcb,r_len,r_inf;
+    uchar   r_len_temp; 
+    ulong   ulTempT, ulTempX = 0;
 
-     T1BWT=BWT*WTX+WTX*960;
-     T1CWT=CWT+4;
-     WTX=1;
-     k_IcMax_TotalTimeCount=0x00;
-     k_Ic_TotalTimeCount=0x00;
-     k_total_timeover=0x00;
+    ulTempT = BWT;
+    ulTempX = WTX;
+    //T1BWT=BWT*WTX+WTX*960;
+    T1BWT=ulTempT * ulTempX + ulTempX * 960;
+    T1CWT=CWT+4;
+    WTX=1;
+    k_IcMax_TotalTimeCount=0x00;
+    k_Ic_TotalTimeCount=0x00;
+    k_total_timeover=0x00;
 
-     k_IcMax_TimeCount=T1BWT/10+30;
-     edc=0;
-     Parity_Error_Flag=0;
-     ch=Rece_Byte_T1();   //NAD
-     k_IcMax_TimeCount=T1CWT/10+5;
-     edc=edc ^ ch;
-     *Outbuf++=ch;
-     r_nad=ch;
-     if(k_IccErrTimeOut) return ICC_T1_BWTERR;
-     if(k_IccErrPar) Parity_Error_Flag=0x01;
-     ch=Rece_Byte_T1();  // 接收PCB字符  //
-     edc=edc ^ ch;
-     *Outbuf++=ch;
-     r_pcb=ch;
-     if(k_IccErrTimeOut) return ICC_T1_CWTERR;
-     if(k_IccErrPar) Parity_Error_Flag=0x01;
-     ch=Rece_Byte_T1(); // 接收LEN数据长度  //
-     edc=edc ^ ch;
-     *Outbuf++=ch;
-     r_len=ch;
-     r_len_temp=ch;
-     if((r_pcb&0xc0)==0x80)  //add 2004-03-09
-     {
-          if(ch) r_len_temp=0;
-     }
-     else if((r_pcb&0xc0)==0xc0)
-     {
-          //if(ch!=1) r_len_temp=1;
-          if(ch>1) r_len_temp=1;
-     }
-     if(k_IccErrTimeOut) return ICC_T1_CWTERR;
-     if(k_IccErrPar) Parity_Error_Flag=0x01;
-     for(i=0;i<r_len_temp;i++)
-     {
-          ch=Rece_Byte_T1();
-          edc=edc ^ ch;
-          *Outbuf++=ch;
-          if(k_IccErrTimeOut) return ICC_T1_CWTERR;
-          if(k_IccErrPar) Parity_Error_Flag=0x01;
-     }
-     r_inf=ch;
-     ch=Rece_Byte_T1();
-     *Outbuf=ch;
-     if(k_IccErrTimeOut) return ICC_T1_CWTERR;
-     if(k_IccErrPar) Parity_Error_Flag=0x01;
-     if(ch!=edc) return ICC_T1_EDCERR;
-     if(Parity_Error_Flag) return ICC_T1_PARITYERR;
-     if(r_nad) return ICC_T1_INVALIDBLOCK;   //nad!=0
-     if((r_pcb&0x80)==0){ // I_BLOCK
-          if(r_len==0xff) return ICC_T1_INVALIDBLOCK;
-     }
-     else if((r_pcb&0xc0)==0x80){ // R_BLOCK
-          if(r_len) return ICC_T1_INVALIDBLOCK;
-          if((r_pcb&0x20)==0x20) return ICC_T1_INVALIDBLOCK; //rblock bit6=1  
-     }
-     else { // S_BLOCK
-          if(r_pcb==0xc1){ // ifs request
-               if((r_inf<0x10)||(r_inf>0xfe)) return ICC_T1_INVALIDBLOCK;
-          }
-          else if(r_pcb==0xc2)  // abort request
-               return ICC_T1_ABORTERR;
-          else if(r_pcb==0xe3) return ICC_T1_INVALIDBLOCK; //S(WTX response)      
-          else if(r_pcb==0xe2) return ICC_T1_INVALIDBLOCK; //S(ABORT response)    
-          else if(r_pcb==0xe0) return ICC_T1_INVALIDBLOCK; //S(RESYNCH response)  
-          if(r_len!=1) return ICC_T1_INVALIDBLOCK;   
-          if((r_pcb&0x1f)>4) return ICC_T1_INVALIDBLOCK;  
-     }
-     return SUCCESS;
+    k_IcMax_TimeCount=T1BWT/10+30;
+    edc=0;
+    Parity_Error_Flag=0;
+    ch=Rece_Byte_T1();   //NAD
+    k_IcMax_TimeCount=T1CWT/10+5;
+    edc=edc ^ ch;
+    *Outbuf++=ch;
+    r_nad=ch;
+    if(k_IccErrTimeOut)
+        return ICC_T1_BWTERR;
+    if(k_IccErrPar)
+        Parity_Error_Flag=0x01;
+    ch=Rece_Byte_T1();  // 接收PCB字符  //
+    edc=edc ^ ch;
+    *Outbuf++=ch;
+    r_pcb=ch;
+    if(k_IccErrTimeOut)
+        return ICC_T1_CWTERR;
+    if(k_IccErrPar)
+        Parity_Error_Flag = 0x01;
+    ch=Rece_Byte_T1(); // 接收LEN数据长度  //
+    edc=edc ^ ch;
+    *Outbuf++=ch;
+    r_len=ch;
+    r_len_temp=ch;
+    if((r_pcb&0xc0)==0x80)  //add 2004-03-09
+    {
+        if(ch) r_len_temp=0;
+    }
+    else if((r_pcb&0xc0)==0xc0)
+    {
+        //if(ch!=1) r_len_temp=1;
+        if(ch>1) r_len_temp=1;
+    }
+    if(k_IccErrTimeOut)
+        return ICC_T1_CWTERR;
+    if(k_IccErrPar)
+        Parity_Error_Flag=0x01;
+    for(i=0;i<r_len_temp;i++)
+    {
+        ch=Rece_Byte_T1();
+        edc=edc ^ ch;
+        *Outbuf++=ch;
+        if(k_IccErrTimeOut)
+            return ICC_T1_CWTERR;
+        if(k_IccErrPar)
+            Parity_Error_Flag=0x01;
+    }
+    r_inf=ch;
+    ch=Rece_Byte_T1();
+    *Outbuf=ch;
+    if(k_IccErrTimeOut)
+        return ICC_T1_CWTERR;
+    if(k_IccErrPar)
+        Parity_Error_Flag=0x01;
+    if(ch!=edc)
+        return ICC_T1_EDCERR;
+    if(Parity_Error_Flag)
+        return ICC_T1_PARITYERR;
+    if(r_nad)
+        return ICC_T1_INVALIDBLOCK;   //nad!=0
+    if((r_pcb&0x80)==0){ // I_BLOCK
+        if(r_len==0xff) return ICC_T1_INVALIDBLOCK;
+    }
+    else if((r_pcb&0xc0)==0x80){ // R_BLOCK
+        if(r_len)
+            return ICC_T1_INVALIDBLOCK;
+        if((r_pcb&0x20)==0x20)
+            return ICC_T1_INVALIDBLOCK; //rblock bit6=1  
+    }
+    else { // S_BLOCK
+        if(r_pcb==0xc1){ // ifs request
+            if((r_inf<0x10)||(r_inf>0xfe))
+                return ICC_T1_INVALIDBLOCK;
+        }
+        else if(r_pcb==0xc2)  // abort request
+           return ICC_T1_ABORTERR;
+        else if(r_pcb==0xe3)
+            return ICC_T1_INVALIDBLOCK; //S(WTX response)      
+        else if(r_pcb==0xe2)
+            return ICC_T1_INVALIDBLOCK; //S(ABORT response)    
+        else if(r_pcb==0xe0)
+            return ICC_T1_INVALIDBLOCK; //S(RESYNCH response)  
+        if(r_len!=1)
+            return ICC_T1_INVALIDBLOCK;   
+        if((r_pcb&0x1f)>4)
+            return ICC_T1_INVALIDBLOCK;  
+    }
+    return SUCCESS;
 } 
 
 
@@ -2182,7 +2207,8 @@ int Lib_IccCommand(uchar slot,APDU_SEND * ApduSend,APDU_RESP * ApduResp)
      //uchar   *ptr; 
      //test
      uchar i;
-     
+     ulong ulTemp1,ulTemp2 = 0;
+         
      SW1=0;     
      SW2=0;
      ApduResp->LenOut=0;
@@ -2258,7 +2284,10 @@ int Lib_IccCommand(uchar slot,APDU_SEND * ApduSend,APDU_RESP * ApduResp)
           ApduResp->SWA=SW1;
           ApduResp->SWB=SW2;
           //test
-          trace_debug_printf("IccCommand SW[%02x][%02x]",SW1,SW2);
+          ulTemp1 = SW1;
+          ulTemp2 = SW2;
+          trace_debug_printf("IccCommand SW[%02x][%02x]", ulTemp1, ulTemp2);
+          //trace_debug_printf("IccCommand SW[%02x][%02x]",SW1,SW2);
           for(i=0;i<recelen;i++)
             trace_debug_printf("%02x",ApduResp->DataOut[i]);
           
@@ -2887,20 +2916,30 @@ void   Icc_Vcc(uchar channel,uchar mode)
  */
 void Timer5_Isr(void)
 {
-  TIM5->SR = 0;  
+    ulong ulTemp1, ulTemp2 = 0;
+
+    TIM5->SR = 0;  
   //test
   //trace_debug_printf("k_Ic_TotalTimeCount[%d]k_Ic_TimeCount[%d]",k_Ic_TotalTimeCount,k_Ic_TimeCount);
   
     if((k_IcMax_TotalTimeCount>0)&&(k_total_timeover==0))
     {
-	k_Ic_TotalTimeCount++;
-	if(k_Ic_TotalTimeCount>k_IcMax_TotalTimeCount)
-	  k_total_timeover=1;
+    	k_Ic_TotalTimeCount++;
+        ulTemp1 = k_Ic_TotalTimeCount;
+        ulTemp2 = k_IcMax_TotalTimeCount;
+        if(ulTemp1 > ulTemp2)
+            k_total_timeover=1;
+    	//if(k_Ic_TotalTimeCount>k_IcMax_TotalTimeCount)
+    	//  k_total_timeover=1;
     }
     if((k_IcMax_TimeCount>0)&&(k_timeover==0))
     {
-	k_Ic_TimeCount++;
-        if(k_Ic_TimeCount>k_IcMax_TimeCount)
+	    k_Ic_TimeCount++;
+        
+        ulTemp1 = k_Ic_TimeCount;
+        ulTemp2 = k_IcMax_TimeCount;
+        //if(k_Ic_TimeCount>k_IcMax_TimeCount)
+        if(ulTemp1 > ulTemp2)
         {
           //test
           Icc_RST(1,HIGH);
@@ -2952,8 +2991,8 @@ void Icc_StopWaitTime(void)
 /**
  * 清智能卡控制器1中断
  */
-
-static void USART3_ISR_Clr()
+#if 0
+static void USART3_ISR_Clr(void)
 {
 	unsigned char ch;
 
@@ -2964,7 +3003,7 @@ static void USART3_ISR_Clr()
     
 	return;
 }
-
+#endif
 /**
   * @brief  Resends the byte that failed to be received (by the Smartcard) correctly.
   * @param  None

@@ -166,12 +166,12 @@ u16 BKPDataReg[BKP_DR_NUMBER] =
 ***************************************/
 uchar initial_system(void)
 {
-  u8 DisplayType;
-  extern u8 _glbPiccSetPara;
+    u8 DisplayType;
+    extern u8 _glbPiccSetPara;
   
     //init the system clock
     SYSCLOCKInit();
-    
+
     //init the interupters
     NVIC_Configuration();
     //init the SysTick for wait API
@@ -205,7 +205,7 @@ uchar initial_system(void)
     
     //AT skx
 //#if 0    
-   Tim3Init(); //for system timer
+    Tim3Init(); //for system timer
 //#endif 
    
  
@@ -256,7 +256,9 @@ uchar initial_system(void)
         //13/07/08
     Lib_PiccGetPara(&_glbPiccSetPara);
 
-    /*  USB 初始化 */
+    s_VoiceInit();
+
+    /* USB 初始化 */
     USB_Config();
     HID_FifoInt();
     USB_Init();
