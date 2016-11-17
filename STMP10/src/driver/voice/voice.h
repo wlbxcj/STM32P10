@@ -43,7 +43,7 @@
 #endif
     
     
-#if BAONA_PROJECT
+#if 0//BAONA_PROJECT
 #define VOICE_S1    GPIO_Pin_4 //sxl
 #define VOICE_S2    GPIO_Pin_9 //sxl
 #define VOICE_S3    GPIO_Pin_3
@@ -54,7 +54,7 @@
 #define S3_PORT     GPIOA
 #define S4_PORT     GPIOA
     
-#else
+//#else
     //#define VOICE_S1   GPIO_Pin_14
 #define VOICE_S1    GPIO_Pin_4 //sxl
     //#define VOICE_S2   GPIO_Pin_13

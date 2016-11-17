@@ -243,7 +243,7 @@ typedef struct
   unsigned char  sDot[18];
 } HZ_T;
 
-
+// 字模取样规则：纵向取模，字节倒序。总共会生成24字节，将末尾12字节合并为6字节，规则为(data[n] | (data[n+1] << 8))
 HZ_T tHz12X12[]=
 {
   

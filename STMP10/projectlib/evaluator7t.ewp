@@ -818,7 +818,7 @@
         </option>
         <option>
           <name>IarchiveOutput</name>
-          <state>$PROJ_DIR$\..\projectlib\Debug\Exe\v10plib045.a</state>
+          <state>$PROJ_DIR$\..\projectlib\Debug\Exe\v10plib047.a</state>
         </option>
       </data>
     </settings>
@@ -2107,7 +2107,7 @@
         <name>$PROJ_DIR$\..\src\inc\Display.h</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\src\inc\FLASHOPERATE.h</name>
+        <name>$PROJ_DIR$\..\src\inc\FlashOperate.h</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\src\inc\FunctionList.h</name>

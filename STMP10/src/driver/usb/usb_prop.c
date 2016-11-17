@@ -254,31 +254,31 @@ void CustomHID_Status_Out (void)
 *******************************************************************************/
 RESULT CustomHID_Data_Setup(uint8_t RequestNo)
 {
-  uint8_t *(*CopyRoutine)(uint16_t);
+    uint8_t *(*CopyRoutine)(uint16_t);
 
-  if (pInformation->USBwIndex != 0) 
-    return USB_UNSUPPORT;    
-  CopyRoutine = NULL;
+    if (pInformation->USBwIndex != 0) 
+        return USB_UNSUPPORT;    
+    CopyRoutine = NULL;
 
-  if ((RequestNo == GET_DESCRIPTOR)
+    if ((RequestNo == GET_DESCRIPTOR)
       && (Type_Recipient == (STANDARD_REQUEST | INTERFACE_RECIPIENT))
         )
-  {
+    {
 
-    if (pInformation->USBwValue1 == REPORT_DESCRIPTOR)
-    {
-      CopyRoutine = CustomHID_GetReportDescriptor;
-    }
-    else if (pInformation->USBwValue1 == HID_DESCRIPTOR_TYPE)
-    {
-      CopyRoutine = CustomHID_GetHIDDescriptor;
-    }
+        if (pInformation->USBwValue1 == REPORT_DESCRIPTOR)
+        {
+            CopyRoutine = CustomHID_GetReportDescriptor;
+        }
+        else if (pInformation->USBwValue1 == HID_DESCRIPTOR_TYPE)
+        {
+            CopyRoutine = CustomHID_GetHIDDescriptor;
+        }
     
-  } /* End of GET_DESCRIPTOR */
+    } /* End of GET_DESCRIPTOR */
 
-  /*** GET_PROTOCOL, GET_REPORT, SET_REPORT ***/
-  else if ( (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT)) )
-  {         
+    /*** GET_PROTOCOL, GET_REPORT, SET_REPORT ***/
+    else if ( (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT)) )
+    {         
         switch( RequestNo )
         {
             case GET_PROTOCOL:
@@ -293,17 +293,18 @@ RESULT CustomHID_Data_Setup(uint8_t RequestNo)
             default:
               break;
         }
-  }
+    }
 
-  if (CopyRoutine == NULL)
-  {
+    if (CopyRoutine == NULL)
+    {
     return USB_UNSUPPORT;
-  }
+    }
 
-  pInformation->Ctrl_Info.CopyData = CopyRoutine;
-  pInformation->Ctrl_Info.Usb_wOffset = 0;
-  (*CopyRoutine)(0);
-  return USB_SUCCESS;
+    pInformation->Ctrl_Info.CopyData = CopyRoutine;
+    pInformation->Ctrl_Info.Usb_wOffset = 0;
+    (*CopyRoutine)(0);
+
+    return USB_SUCCESS;
 }
 
 /*******************************************************************************

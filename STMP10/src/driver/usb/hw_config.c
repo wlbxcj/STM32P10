@@ -360,6 +360,31 @@ void Leave_LowPowerMode(void)
 #endif
 }
 
+//位带操作,实现51类似的GPIO控制功能
+//具体实现思想,参考<<CM3权威指南>>第五章(87页~92页).
+//IO口操作宏定义
+#define BITBAND(addr, bitnum)   ((addr & 0xF0000000)+0x2000000+((addr &0xFFFFF)<<5)+(bitnum<<2)) 
+#define MEM_ADDR(addr)          *((volatile unsigned long  *)(addr)) 
+#define BIT_ADDR(addr, bitnum)  MEM_ADDR(BITBAND(addr, bitnum)) 
+#define GPIOA_ODR_Addr          (GPIOA_BASE+12) //0x4001080C 
+#define PAout(n)                BIT_ADDR(GPIOA_ODR_Addr,n)  //输出 
+
+//USB使能连接/断线   enable:0,断开;1,允许连接	
+void USB_Port_Set(u8 enable)
+{
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA,ENABLE);    //使能PORTA时钟	 
+
+    if(enable)
+        _SetCNTR(_GetCNTR()&(~(1<<1)));//退出断电模式
+	else
+	{	  
+		_SetCNTR(_GetCNTR()|(1<<1));  // 断电模式
+		GPIOA->CRH&=0XFFF00FFF;
+		GPIOA->CRH|=0X00033000;
+		PAout(12)=0;	    		  
+	}
+} 
+
 /*******************************************************************************
 * Function Name  : USB_Config.
 * Description    : Configures the USB interrupts.
@@ -376,13 +401,13 @@ void USB_Config(void)
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);  
     /**/
     NVIC_InitStructure.NVIC_IRQChannel = USB_LP_CAN1_RX0_IRQn;        //USBμíó??è???D?????ó
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;         //?à??ó??è?? 1
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;                //×óó??è???a1
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;         //?à??ó??è?? 1
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;                //×óó??è???a1
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
 
     NVIC_InitStructure.NVIC_IRQChannel = USB_HP_CAN1_TX_IRQn;         //USB??ó??è???D?????ó
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;         //?à??ó??è?? 1
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;         //?à??ó??è?? 1
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;                //×óó??è???a0
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);

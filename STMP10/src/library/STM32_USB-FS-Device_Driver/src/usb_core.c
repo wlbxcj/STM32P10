@@ -29,6 +29,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "usb_lib.h"
 #include "string.h"
+#include "usb_prop.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -561,118 +562,122 @@ Expect_Status_Out:
 *******************************************************************************/
 void NoData_Setup0(void)
 {
-  RESULT Result = USB_UNSUPPORT;
-  uint32_t RequestNo = pInformation->USBbRequest;
-  uint32_t ControlState;
+    RESULT Result = USB_UNSUPPORT;
+    uint32_t RequestNo = pInformation->USBbRequest;
+    uint32_t ControlState;
 
-  if (Type_Recipient == (STANDARD_REQUEST | DEVICE_RECIPIENT))
-  {
-    /* Device Request*/
-    /* SET_CONFIGURATION*/
-    if (RequestNo == SET_CONFIGURATION)
+    if (Type_Recipient == (STANDARD_REQUEST | DEVICE_RECIPIENT))
     {
-      Result = Standard_SetConfiguration();
+        /* Device Request*/
+        /* SET_CONFIGURATION*/
+        if (RequestNo == SET_CONFIGURATION)
+        {
+            Result = Standard_SetConfiguration();
+        }
+        /*SET ADDRESS*/
+        else if (RequestNo == SET_ADDRESS)
+        {
+            if ((pInformation->USBwValue0 > 127) || (pInformation->USBwValue1 != 0)
+                || (pInformation->USBwIndex != 0)
+                || (pInformation->Current_Configuration != 0))
+            /* Device Address should be 127 or less*/
+            {
+            ControlState = STALLED;
+            goto exit_NoData_Setup0;
+            }
+            else
+            {
+                Result = USB_SUCCESS;
+            }
+        }
+        /*SET FEATURE for Device*/
+        else if (RequestNo == SET_FEATURE)
+        {
+            if ((pInformation->USBwValue0 == DEVICE_REMOTE_WAKEUP) \
+                && (pInformation->USBwIndex == 0))
+            {
+                Result = Standard_SetDeviceFeature();
+            }
+            else
+            {
+                Result = USB_UNSUPPORT;
+            }
+        }
+        /*Clear FEATURE for Device */
+        else if (RequestNo == CLEAR_FEATURE)
+        {
+            if (pInformation->USBwValue0 == DEVICE_REMOTE_WAKEUP
+                && pInformation->USBwIndex == 0
+                && ValBit(pInformation->Current_Feature, 5))
+            {
+                Result = Standard_ClearFeature();
+            }
+            else
+            {
+                Result = USB_UNSUPPORT;
+            }
+        }
     }
-
-    /*SET ADDRESS*/
-    else if (RequestNo == SET_ADDRESS)
-    {
-      if ((pInformation->USBwValue0 > 127) || (pInformation->USBwValue1 != 0)
-          || (pInformation->USBwIndex != 0)
-          || (pInformation->Current_Configuration != 0))
-        /* Device Address should be 127 or less*/
-      {
-        ControlState = STALLED;
-        goto exit_NoData_Setup0;
-      }
-      else
-      {
-        Result = USB_SUCCESS;
-      }
-    }
-    /*SET FEATURE for Device*/
-    else if (RequestNo == SET_FEATURE)
-    {
-      if ((pInformation->USBwValue0 == DEVICE_REMOTE_WAKEUP) \
-          && (pInformation->USBwIndex == 0))
-      {
-        Result = Standard_SetDeviceFeature();
-      }
-      else
-      {
-        Result = USB_UNSUPPORT;
-      }
-    }
-    /*Clear FEATURE for Device */
-    else if (RequestNo == CLEAR_FEATURE)
-    {
-      if (pInformation->USBwValue0 == DEVICE_REMOTE_WAKEUP
-          && pInformation->USBwIndex == 0
-          && ValBit(pInformation->Current_Feature, 5))
-      {
-        Result = Standard_ClearFeature();
-      }
-      else
-      {
-        Result = USB_UNSUPPORT;
-      }
-    }
-
-  }
 
   /* Interface Request*/
-  else if (Type_Recipient == (STANDARD_REQUEST | INTERFACE_RECIPIENT))
-  {
-    /*SET INTERFACE*/
-    if (RequestNo == SET_INTERFACE)
+    else if (Type_Recipient == (STANDARD_REQUEST | INTERFACE_RECIPIENT))
     {
-      Result = Standard_SetInterface();
+        /*SET INTERFACE*/
+        if (RequestNo == SET_INTERFACE)
+        {
+            Result = Standard_SetInterface();
+        }
     }
-  }
-
-  /* EndPoint Request*/
-  else if (Type_Recipient == (STANDARD_REQUEST | ENDPOINT_RECIPIENT))
-  {
-    /*CLEAR FEATURE for EndPoint*/
-    if (RequestNo == CLEAR_FEATURE)
+    /* EndPoint Request*/
+    else if (Type_Recipient == (STANDARD_REQUEST | ENDPOINT_RECIPIENT))
     {
-      Result = Standard_ClearFeature();
+        /*CLEAR FEATURE for EndPoint*/
+        if (RequestNo == CLEAR_FEATURE)
+        {
+            Result = Standard_ClearFeature();
+        }
+        /* SET FEATURE for EndPoint*/
+        else if (RequestNo == SET_FEATURE)
+        {
+            Result = Standard_SetEndPointFeature();
+        }
     }
-    /* SET FEATURE for EndPoint*/
-    else if (RequestNo == SET_FEATURE)
+    /* 如果不添加这个判断 PC 请求 SET IDLE 后将返回 STALL 导致部分枚举不成功 
+       modified by wlb
+    */
+    else if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT))
     {
-      Result = Standard_SetEndPointFeature();
+        if (pInformation->USBbRequest == SET_IDLE)
+            Result = USB_SUCCESS;
     }
-  }
-  else
-  {
-    Result = USB_UNSUPPORT;
-  }
-
-
-  if (Result != USB_SUCCESS)
-  {
-    Result = (*pProperty->Class_NoData_Setup)(RequestNo);
-    if (Result == USB_NOT_READY)
+    else
     {
-      ControlState = PAUSE;
-      goto exit_NoData_Setup0;
+        Result = USB_UNSUPPORT;
     }
-  }
 
-  if (Result != USB_SUCCESS)
-  {
-    ControlState = STALLED;
-    goto exit_NoData_Setup0;
-  }
+    if (Result != USB_SUCCESS)
+    {
+        Result = (*pProperty->Class_NoData_Setup)(RequestNo);
+        if (Result == USB_NOT_READY)
+        {
+            ControlState = PAUSE;
+            goto exit_NoData_Setup0;
+        }
+    }
 
-  ControlState = WAIT_STATUS_IN;/* After no data stage SETUP */
+    if (Result != USB_SUCCESS)
+    {
+        ControlState = STALLED;
+        goto exit_NoData_Setup0;
+    }
 
-  USB_StatusIn();
+    ControlState = WAIT_STATUS_IN;/* After no data stage SETUP */
+
+    USB_StatusIn();
 
 exit_NoData_Setup0:
-  pInformation->ControlState = ControlState;
-  return;
+    pInformation->ControlState = ControlState;
+    return;
 }
 
 /*******************************************************************************
@@ -860,7 +865,6 @@ void Data_Setup0(void)
 *******************************************************************************/
 uint8_t Setup0_Process(void)
 {
-
   union
   {
     uint8_t* b;
@@ -880,6 +884,7 @@ uint8_t Setup0_Process(void)
     pInformation->USBwIndex  = ByteSwap(*pBuf.w++); /* wIndex */
     pBuf.w += offset;  /* word not accessed because of 32 bits addressing */
     pInformation->USBwLength = *pBuf.w; /* wLength */
+
   }
 
   pInformation->ControlState = SETTING_UP;

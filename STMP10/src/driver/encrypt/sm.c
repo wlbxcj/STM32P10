@@ -181,7 +181,7 @@ int SMCheck()
   
 }
 
-int SMGetResponse(unsigned int *pnRecLen,unsigned char *sRecBuf)
+int SMGetResponse(unsigned int *pnRecLen,unsigned char *sRecBuf, unsigned int max_size)
 {
   unsigned int nLen,i;
   unsigned char bLrc;
@@ -197,6 +197,9 @@ int SMGetResponse(unsigned int *pnRecLen,unsigned char *sRecBuf)
 
   nLen |= SPI3DataSendReceive(0x00);
   nLen &=0x7ff;
+  if (nLen > max_size) 
+    return -1;
+
   for(i=0;i<nLen;i++)
     sRecBuf[i] = SPI3DataSendReceive(0x00);
   bLrc = SPI3DataSendReceive(0x00);
@@ -218,45 +221,80 @@ int SMGetResponse(unsigned int *pnRecLen,unsigned char *sRecBuf)
   return 0;
   
 }
+#define GM_BUFFER_LEN       1500
+
+#define GM_CHECK_TIMEOUT    1500        // 最大超时时间1.5秒
+/******************************************************************************* 
+ * 函数名称: SMCheckWithTimeOut(*)
+ * 功能描述: 带超时的检测函数，替代 SMCheck
+ * 作    者: WLB
+ * 输入参数: 
+ * 输出参数: 无
+ * 返 回 值: 检测成功返回0   超时返回 -1
+ * 其它说明: 无
+ * 修改历史: 
+ *           1. 2016-10-11  WLB  Created
+ *******************************************************************************/
+int SMCheckWithTimeOut(void)
+{
+    unsigned int six_ms = 0;
+
+    while(1)
+    {
+        if(SMCheck()==0)
+            return 0;
+
+        delay_ms(1);
+        if (++six_ms >= GM_CHECK_TIMEOUT)
+        {
+            trace_debug_printf("%s timeout error.\r\n", __FUNCTION__);
+            return -3;
+        }
+    }
+}
 
 int SMGetRand(unsigned int nLc,unsigned char *sRand)
 {
-  
-  unsigned char sBuf[1024+5];
-  int nRet;
-  unsigned int nLen;
-  memcpy(sBuf,"\xb0\xa0\x0\x0",4);
-  if(nLc>0xff)
-  {
-    sBuf[4] = 0;
-    sBuf[5] = nLc/0x100;
-    sBuf[6] = nLc%0x100;
-    SMSendApdu(5+2,sBuf);
-    
-  }
-  else
-  {
-    sBuf[4] = (unsigned char)nLc;
-    SMSendApdu(5,sBuf);
-  }
-  
-  while(1)
-  {
-     if(SMCheck()==0)
-       break;
-     delay_ms(2);//10->2
-  }
+    unsigned char sBuf[GM_BUFFER_LEN+5];
+    int nRet;
+    unsigned int nLen;
 
-  nLen = 0;
-  nRet = SMGetResponse(&nLen,sBuf);  
-  if(nRet==0 )
-  {
-    if(memcmp(&sBuf[nLen-2],"\x90\x00",2)==0)
-    memcpy(sRand,sBuf,nLc);
+    memcpy(sBuf,"\xb0\xa0\x0\x0",4);
+    if(nLc > 0xff)
+    {
+        sBuf[4] = 0;
+        sBuf[5] = nLc/0x100;
+        sBuf[6] = nLc%0x100;
+        SMSendApdu(5+2,sBuf);
+    }
     else
-      return -2;
-  }
-  return nRet;
+    {
+        sBuf[4] = (unsigned char)nLc;
+        SMSendApdu(5,sBuf);
+    }
+
+#if 0
+    while(1)
+    {
+        if(SMCheck()==0)
+            break;
+        delay_ms(2);//10->2
+    }
+#else
+    if ((nRet = SMCheckWithTimeOut()) != 0)
+        return nRet;
+#endif /* 0 */
+
+    nLen = 0;
+    nRet = SMGetResponse(&nLen,sBuf, sizeof(sBuf));  
+    if(nRet==0 )
+    {
+        if(memcmp(&sBuf[nLen-2],"\x90\x00",2)==0)
+            memcpy(sRand,sBuf,nLc);
+        else
+          return -2;
+    }
+    return nRet;
 }
 
 
@@ -267,7 +305,7 @@ mode:1-ENCRYPT
 */
 int SMSYMINIT(unsigned char *smkey,int mode)
 {
-     unsigned char sBuf[200];
+     unsigned char sBuf[GM_BUFFER_LEN];
      int nRet;
      unsigned int nLen;
 
@@ -294,16 +332,19 @@ int SMSYMINIT(unsigned char *smkey,int mode)
 #endif
      
      SMSendApdu(5+16,sBuf);
-     while(1)
-     {
-      if(SMCheck()==0)
-        break;
-      //delay_ms(10);
+#if 0
+    while(1)
+    {
+        if(SMCheck()==0)
+            break;
       delay_ms(1);
-      
-     }
-     nRet = SMGetResponse(&nLen,sBuf);
-     
+    }
+#else
+    if ((nRet = SMCheckWithTimeOut()) != 0)
+        return nRet;
+#endif /* 0 */
+
+     nRet = SMGetResponse(&nLen,sBuf, sizeof(sBuf));
      if(nRet==0)
      {
        if(memcmp(sBuf,"\x90\x00",2)==0)
@@ -328,7 +369,7 @@ int SMSYMINIT(unsigned char *smkey,int mode)
  //加密中间值
 int SMSYMMIDD(unsigned char *input,unsigned int input_len,unsigned char *output)
 {
-     unsigned char sBuf[1024+10];
+     unsigned char sBuf[GM_BUFFER_LEN+10];
      int nRet;
      unsigned int nLen;
     //test
@@ -367,16 +408,20 @@ int SMSYMMIDD(unsigned char *input,unsigned int input_len,unsigned char *output)
      printf("\r\n");
 #endif
      
-     while(1)
-     {
-      if(SMCheck()==0)
-        break;
-      //delay_ms(10);
+#if 0
+    while(1)
+    {
+        if(SMCheck()==0)
+            break;
       delay_ms(1);
-      
-     }
+    }
+#else
+    if ((nRet = SMCheckWithTimeOut()) != 0)
+        return nRet;
+#endif /* 0 */
+
      nLen = 0;
-     nRet = SMGetResponse(&nLen,sBuf);
+     nRet = SMGetResponse(&nLen,sBuf, sizeof(sBuf));
      if(nRet==0)
      {
 #if 0
@@ -407,7 +452,7 @@ int SMSYMMIDD(unsigned char *input,unsigned int input_len,unsigned char *output)
 
 int SMSYMEND(void)
 {
-     unsigned char sBuf[200];
+     unsigned char sBuf[GM_BUFFER_LEN];
      int nRet;
      unsigned int nLen;
      //test
@@ -416,15 +461,18 @@ int SMSYMEND(void)
      //加密结束
      memcpy(sBuf,"\xB0\x8E\x02\x00\x00",5);
      SMSendApdu(5,sBuf);
+#if 0
      while(1)
      {
-      if(SMCheck()==0)
-        break;
-      //delay_ms(10);
-      delay_ms(1);
-      
+        if(SMCheck()==0)
+            break;
+        delay_ms(1);
      }
-     nRet = SMGetResponse(&nLen,sBuf);
+#else
+     if ((nRet = SMCheckWithTimeOut()) != 0)
+         return nRet;
+#endif /* 0 */
+     nRet = SMGetResponse(&nLen,sBuf, sizeof(sBuf));
      if(nRet==0)
      {
 #if 0
@@ -456,7 +504,7 @@ mode:
 */
 int SMHashINIT(int mode)
 {
-     unsigned char sBuf[200];
+     unsigned char sBuf[GM_BUFFER_LEN];
      int nRet;
      unsigned int nLen;
      //test
@@ -470,15 +518,20 @@ int SMHashINIT(int mode)
  
      
      SMSendApdu(5,sBuf);
+     
+#if 0
      while(1)
      {
-      if(SMCheck()==0)
-        break;
-      //delay_ms(10);
-      delay_ms(1);
-      
+         if(SMCheck()==0)
+             break;
+         delay_ms(1);
      }
-     nRet = SMGetResponse(&nLen,sBuf);
+#else
+     if ((nRet = SMCheckWithTimeOut()) != 0)
+         return nRet;
+#endif /* 0 */
+     
+     nRet = SMGetResponse(&nLen,sBuf, sizeof(sBuf));
      
      if(nRet==0)
      {
@@ -504,7 +557,7 @@ int SMHashINIT(int mode)
 //杂凑中间值
 int SMHashMIDD(unsigned char *input,unsigned int input_len)
 {
-     unsigned char sBuf[1024+10];
+     unsigned char sBuf[GM_BUFFER_LEN+10];
      int nRet;
      unsigned int nLen;
     //test
@@ -543,16 +596,19 @@ int SMHashMIDD(unsigned char *input,unsigned int input_len)
      printf("\r\n");
 #endif
      
+#if 0
      while(1)
      {
-      if(SMCheck()==0)
-        break;
-      //delay_ms(10);
-      delay_ms(1);
-      
+         if(SMCheck()==0)
+             break;
+         delay_ms(1);
      }
+#else
+     if ((nRet = SMCheckWithTimeOut()) != 0)
+         return nRet;
+#endif /* 0 */
      nLen = 0;
-     nRet = SMGetResponse(&nLen,sBuf);
+     nRet = SMGetResponse(&nLen,sBuf, sizeof(sBuf));
      if(nRet==0)
      {
 #if 0
@@ -583,7 +639,7 @@ int SMHashMIDD(unsigned char *input,unsigned int input_len)
 
 int SMHashEND(unsigned char *sOutput )
 {
-     unsigned char sBuf[200];
+     unsigned char sBuf[GM_BUFFER_LEN];
      int nRet;
      unsigned int nLen;
      //test
@@ -593,15 +649,18 @@ int SMHashEND(unsigned char *sOutput )
      memcpy(sBuf,"\xB0\x8C\x02\x00\x00",5);
      sBuf[4] = 32;
      SMSendApdu(5,sBuf);
+#if 0
      while(1)
      {
-      if(SMCheck()==0)
-        break;
-      //delay_ms(10);
-      delay_ms(1);
-      
+         if(SMCheck()==0)
+             break;
+         delay_ms(1);//10->2
      }
-     nRet = SMGetResponse(&nLen,sBuf);
+#else
+     if ((nRet = SMCheckWithTimeOut()) != 0)
+         return nRet;
+#endif /* 0 */
+     nRet = SMGetResponse(&nLen,sBuf, sizeof(sBuf));
      if(nRet==0)
      {
 #if 0
@@ -690,29 +749,34 @@ int Sm1(unsigned char *input,unsigned int input_len,unsigned char *output,unsign
 
 int Sm2_Init()
 {
-  unsigned char sBuf[100];
-  int nRet;
-  unsigned int nLen;
+    unsigned char sBuf[GM_BUFFER_LEN];
+    int nRet;
+    unsigned int nLen;
 
-  s_printf("Gm_Sm2Init\r\n");
-  memcpy(sBuf,"\xB0\xB0\x00\x00\x00",5); //
+    s_printf("Gm_Sm2Init\r\n");
+    memcpy(sBuf,"\xB0\xB0\x00\x00\x00",5); //
 
-  SMSendApdu(5,sBuf);
-  while(1)
-  {
-      if(SMCheck()==0)
-        break;
-      delay_ms(1);
-  }
-  nRet = SMGetResponse(&nLen,sBuf);
-  if(nRet==0)
-  {
-    if(memcmp(sBuf,"\x90\x00",2)==0)
-      return 0;
-    else
-      return -2;
-  }
-  return nRet;
+    SMSendApdu(5,sBuf);
+#if 0
+     while(1)
+     {
+         if(SMCheck()==0)
+             break;
+         delay_ms(1);//10->2
+     }
+#else
+     if ((nRet = SMCheckWithTimeOut()) != 0)
+         return nRet;
+#endif /* 0 */
+    nRet = SMGetResponse(&nLen,sBuf, sizeof(sBuf));
+    if(nRet==0)
+    {
+        if(memcmp(sBuf,"\x90\x00",2)==0)
+            return 0;
+        else
+            return -2;
+    }
+    return nRet;
   
 }
 
@@ -729,7 +793,7 @@ int Sm2_Init()
 ****************************************************************************/
 int Sm2_LoadPK(unsigned char *sPx,unsigned char *sPy)
 {
-     unsigned char sBuf[100];
+     unsigned char sBuf[GM_BUFFER_LEN];
      int nRet;
      unsigned int nLen;
 
@@ -738,13 +802,18 @@ int Sm2_LoadPK(unsigned char *sPx,unsigned char *sPy)
      memcpy(sBuf,"\xB0\xB4\x00\x02\x20",5);
      memcpy(&sBuf[5],sPx,32);
      SMSendApdu(37,sBuf);
+#if 0
      while(1)
      {
-      if(SMCheck()==0)
-        break;
-      delay_ms(1);
+         if(SMCheck()==0)
+             break;
+         delay_ms(1);//10->2
      }
-     nRet = SMGetResponse(&nLen,sBuf);
+#else
+     if ((nRet = SMCheckWithTimeOut()) != 0)
+         return nRet;
+#endif /* 0 */
+     nRet = SMGetResponse(&nLen,sBuf, sizeof(sBuf));
      if(nRet)
        return nRet;
      if(memcmp(sBuf,"\x90\x00",2))
@@ -755,13 +824,18 @@ int Sm2_LoadPK(unsigned char *sPx,unsigned char *sPy)
      memcpy(sBuf,"\xB0\xB4\x00\x03\x20",5);
      memcpy(&sBuf[5],sPy,32);
      SMSendApdu(37,sBuf);
+#if 0
      while(1)
      {
-      if(SMCheck()==0)
-        break;
-      delay_ms(1);
+         if(SMCheck()==0)
+             break;
+         delay_ms(1);//10->2
      }
-     nRet = SMGetResponse(&nLen,sBuf);
+#else
+     if ((nRet = SMCheckWithTimeOut()) != 0)
+         return nRet;
+#endif /* 0 */
+     nRet = SMGetResponse(&nLen,sBuf, sizeof(sBuf));
      
      if(nRet)
        return nRet;
@@ -774,20 +848,27 @@ int Sm2_LoadPK(unsigned char *sPx,unsigned char *sPy)
 //sxl
 int Sm2_Load_PrivateKey(unsigned char *d)
 {
-     unsigned char sBuf[100];
+     unsigned char sBuf[GM_BUFFER_LEN];
      int nRet;
      unsigned int nLen;
-	 s_printf("Sm2_Load_PrivateKey\r\n");
+
+     s_printf("Sm2_Load_PrivateKey\r\n");
      memcpy(sBuf,"\xB0\xB4\x00\x01\x20",5);
      memcpy(&sBuf[5],d,32);
      SMSendApdu(37,sBuf);
+#if 0
      while(1)
      {
-      if(SMCheck()==0)
-        break;
-      delay_ms(1);
+         if(SMCheck()==0)
+             break;
+         delay_ms(1);//10->2
      }
-     nRet = SMGetResponse(&nLen,sBuf);
+#else
+     if ((nRet = SMCheckWithTimeOut()) != 0)
+         return nRet;
+#endif /* 0 */
+
+     nRet = SMGetResponse(&nLen, sBuf, sizeof(sBuf));
      if(nRet)
        return nRet;
      if(memcmp(sBuf,"\x90\x00",2))
@@ -797,9 +878,10 @@ int Sm2_Load_PrivateKey(unsigned char *d)
 //sxl
 int Sm2_GetZ(unsigned char *id, int id_len, unsigned char *Z)
 {
-  unsigned char sBuf[100];
+    unsigned char sBuf[GM_BUFFER_LEN];
   int nRet;
   unsigned int nLen, count;
+
   count = 0;
   memcpy(sBuf,"\xB0\x74\x01\x00",4); 
   count += 4;
@@ -808,13 +890,18 @@ int Sm2_GetZ(unsigned char *id, int id_len, unsigned char *Z)
   memcpy(&sBuf[count], id, id_len);
   count += id_len;  
   SMSendApdu(count,sBuf);
-  while(1)
-  {
-      if(SMCheck()==0)
-        break;
-      delay_ms(1);
-  }
-  nRet = SMGetResponse(&nLen,sBuf);
+#if 0
+     while(1)
+     {
+         if(SMCheck()==0)
+             break;
+         delay_ms(1);//10->2
+     }
+#else
+     if ((nRet = SMCheckWithTimeOut()) != 0)
+         return nRet;
+#endif /* 0 */
+    nRet = SMGetResponse(&nLen,sBuf, sizeof(sBuf));
   if(nRet==0)
   {
     if(memcmp(&sBuf[nLen-2],"\x90\x00",2)==0) {
@@ -842,9 +929,11 @@ int Sm2_GetE(const unsigned char *id, unsigned int idLen,
    const unsigned char *publicKey, const unsigned char *msg, unsigned int msgLen, 
    unsigned char *e)
 {
-	unsigned char buf[1024], h[32];
+	unsigned char buf[GM_BUFFER_LEN];
+	unsigned char h[32];
 	int totalLen;
 	 
+    memset(buf, 0, sizeof(buf));
 	//第一次sm3: id的BIT长度（2字节) + id + sm2的那些参数128字节+公钥（0x40字节)
 	buf[0] = ((idLen * 8) >> 8) & 0xff;
 	buf[1] = (idLen * 8) & 0xff;
@@ -860,6 +949,7 @@ int Sm2_GetE(const unsigned char *id, unsigned int idLen,
 		return -1;
 	}	 
 	//第二次Sm3: 第一次算出的哈希值+要验证的消息数据
+    memset(buf, 0, sizeof(buf));
 	memcpy(buf, h, 0x20);
 	totalLen = 0x20;
 	memcpy(buf + totalLen, msg, msgLen);
@@ -887,10 +977,10 @@ int Sm2_GetE(const unsigned char *id, unsigned int idLen,
 ****************************************************************************/
 int Sm2Verify(unsigned char *E,unsigned char * R,unsigned char * S)
 {
-     unsigned char sBuf[200];
-     int nRet;
-     unsigned int nLen;
-  
+    unsigned char sBuf[GM_BUFFER_LEN];
+    int nRet;
+    unsigned int nLen;
+
      //memcpy(sBuf,"\xB0\x74\x00\x00\x60\xDC\xF5\x5F\x9B\x30\xED\xC1\x30\x79\x60\x6D\x62\x80\xB7\x52\x58\x7B\xDB\xA6\x2F\x47\x1A\x3D\xA7\x7A\xA3\x49\x73\xAA\x3E\x47\x14\x9F\x8E\x28\xEE\x47\x05\x7B\x7B\xD0\x01\xB6\x11\x39\x1D\x80\xDF\x5D\xA7\x20\x3F\x3D\x30\x0E\xEC\xFB\x32\x43\xC4\x49\x8B\xA1\x0C\xFE\x3F\xB9\x1A\xB1\x5A\xA0\x37\x62\x10\xA3\xF6\x75\x11\x93\x0C\x2E\xF0\x32\x97\x01\x71\x67\xB5\x2A\xE5\x06\x03\xCA\x34\xDF\xED",101);
 	 s_printf("Gm_Sm2Verify\r\n");
 	 memcpy(sBuf,"\xB0\x74\x00\x00\x60",5);
@@ -900,15 +990,18 @@ int Sm2Verify(unsigned char *E,unsigned char * R,unsigned char * S)
      memcpy(&sBuf[5+64],S,32);
      
      SMSendApdu(101,sBuf);
+#if 0
      while(1)
      {
-      if(SMCheck()==0)
-        break;
-      //delay_ms(10);
-      delay_ms(1);
-      
+         if(SMCheck()==0)
+             break;
+         delay_ms(1);//10->2
      }
-     nRet = SMGetResponse(&nLen,sBuf);
+#else
+     if ((nRet = SMCheckWithTimeOut()) != 0)
+         return nRet;
+#endif /* 0 */
+     nRet = SMGetResponse(&nLen,sBuf, sizeof(sBuf));
      if(nRet==0)
      {
        if(memcmp(sBuf,"\x90\x00",2)==0)
@@ -945,69 +1038,84 @@ int Sm2_Verify(unsigned char *user_id, int userid_len,const
 //sxl 14/3/25
 int Sm2_ExportPK(unsigned char bPara,unsigned char *sOutput)
 {
-  unsigned char sBuf[100];
-  int nRet;
-  unsigned int nLen;
-  memcpy(sBuf,"\xB0\xB2\x00\x00\x20",5); //
-  sBuf[3] = bPara;
-  SMSendApdu(5,sBuf);
-  while(1)
-  {
-      if(SMCheck()==0)
-        break;
-      delay_ms(1);
-  }
-  nRet = SMGetResponse(&nLen,sBuf);
-  if(nRet==0)
-  {
-    if(memcmp(&sBuf[32],"\x90\x00",2)==0)
+    unsigned char sBuf[GM_BUFFER_LEN];
+    int nRet;
+    unsigned int nLen;
+
+    memcpy(sBuf,"\xB0\xB2\x00\x00\x20",5); //
+    sBuf[3] = bPara;
+    SMSendApdu(5,sBuf);
+#if 0
+     while(1)
+     {
+         if(SMCheck()==0)
+             break;
+         delay_ms(1);//10->2
+
+     }
+#else
+     if ((nRet = SMCheckWithTimeOut()) != 0)
+         return nRet;
+#endif /* 0 */
+    nRet = SMGetResponse(&nLen,sBuf, sizeof(sBuf));
+    if(nRet==0)
     {
-      memcpy(sOutput,sBuf,32);
-      return 0;
+        if(memcmp(&sBuf[32],"\x90\x00",2)==0)
+        {
+            memcpy(sOutput,sBuf,32);
+            return 0;
+        }
+        else
+            return -2;
     }
-    else
-      return -2;
-  }
-  return nRet;  
+    return nRet;  
 }
 //sxl
 int Lib_SM2GetSign(unsigned char *sOutputE,unsigned char *sOutputR,unsigned char *sOutputS)
 {
-  unsigned char sBuf[200];
-  int nRet;
-  unsigned int nLen=0;
-  memcpy(sBuf,"\xB0\x72\x03\x01\x60",5); //00->01
-  SMSendApdu(5,sBuf);
-  while(1)
-  {
-      if(SMCheck()==0)
-        break;
-      delay_ms(1);
-  }
-  nRet = SMGetResponse(&nLen,sBuf);
-  if(nRet==0)
-  {
-    if(memcmp(&sBuf[32*3],"\x90\x00",2)==0)
+    unsigned char sBuf[GM_BUFFER_LEN];
+    int nRet;
+    unsigned int nLen=0;
+
+    memcpy(sBuf,"\xB0\x72\x03\x01\x60",5); //00->01
+    SMSendApdu(5,sBuf);
+#if 0
+     while(1)
+     {
+         if(SMCheck()==0)
+             break;
+         delay_ms(1);//10->2
+
+     }
+#else
+     if ((nRet = SMCheckWithTimeOut()) != 0)
+         return nRet;
+#endif /* 0 */
+    nRet = SMGetResponse(&nLen,sBuf, sizeof(sBuf));
+    if(nRet==0)
     {
-      memcpy(sOutputE,sBuf,32);
-      memcpy(sOutputR,&sBuf[32],32);
-      memcpy(sOutputS,&sBuf[32*2],32);
-      return 0;
+        if(memcmp(&sBuf[32*3],"\x90\x00",2)==0)
+        {
+            memcpy(sOutputE,sBuf,32);
+            memcpy(sOutputR,&sBuf[32],32);
+            memcpy(sOutputS,&sBuf[32*2],32);
+            return 0;
+        }
+        else
+        {
+            s_printf("SW[%02x %02x]\r\n",sBuf[64],sBuf[65]);
+            return -2;
+        }
     }
-    else
-    {
-      s_printf("SW[%02x %02x]\r\n",sBuf[64],sBuf[65]);
-      return -2;
-    }
-  }
-  return nRet;  
+    return nRet;  
 }
 //sxl
 int Lib_SM2LoadIDSign(unsigned char bInputLen,unsigned char *sInputID)
 {
-     unsigned char sBuf[100];
+    unsigned char sBuf[GM_BUFFER_LEN];
      int nRet;
      unsigned int nLen;
+
      //memcpy(sBuf,"\xB0\x72\x01\x00\x08\x11\x22\x33\x44\x55\x66\x77\x88\x20",14); //
      memcpy(sBuf,"\xB0\x72\x01\x01\x08",5); //00->01
      sBuf[4] = bInputLen;
@@ -1015,13 +1123,18 @@ int Lib_SM2LoadIDSign(unsigned char bInputLen,unsigned char *sInputID)
      sBuf[5+bInputLen] = 0x20;
      //SMSendApdu(14,sBuf);
      SMSendApdu(5+bInputLen+1,sBuf);
+#if 0
      while(1)
      {
-      if(SMCheck()==0)
-        break;
-      delay_ms(1);
+         if(SMCheck()==0)
+             break;
+         delay_ms(1);//10->2
      }
-     nRet = SMGetResponse(&nLen,sBuf); 
+#else
+     if ((nRet = SMCheckWithTimeOut()) != 0)
+         return nRet;
+#endif /* 0 */
+    nRet = SMGetResponse(&nLen,sBuf, sizeof(sBuf));
     if(nRet==0)
     {
       if(memcmp(&sBuf[32],"\x90\x00",2)==0)
@@ -1037,54 +1150,66 @@ int Lib_SM2LoadIDSign(unsigned char bInputLen,unsigned char *sInputID)
 //sxl
 int Lib_SM2InputEandGetSign(unsigned char *sInputE,unsigned char *sOutputR,unsigned char *sOutputS)
 {
-  unsigned char sBuf[100];
-  int nRet;
-  unsigned int nLen;
-  memcpy(sBuf,"\xB0\x72\x00\x00\x20",5); //
-  memcpy(&sBuf[5],sInputE,32);
-  sBuf[5+32] = 0x40;
-  SMSendApdu(5+32+1,sBuf);
-  while(1)
-  {
-      if(SMCheck()==0)
-        break;
-      delay_ms(1);
-  }
-  nRet = SMGetResponse(&nLen,sBuf);
-  if(nRet==0)
-  {
-    if(memcmp(&sBuf[64],"\x90\x00",2)==0)
+    unsigned char sBuf[GM_BUFFER_LEN];
+    int nRet;
+    unsigned int nLen;
+
+    memcpy(sBuf,"\xB0\x72\x00\x00\x20",5); //
+    memcpy(&sBuf[5],sInputE,32);
+    sBuf[5+32] = 0x40;
+    SMSendApdu(5+32+1,sBuf);
+#if 0
+     while(1)
+     {
+         if(SMCheck()==0)
+             break;
+         delay_ms(1);//10->2
+     }
+#else
+     if ((nRet = SMCheckWithTimeOut()) != 0)
+         return nRet;
+#endif /* 0 */
+    nRet = SMGetResponse(&nLen,sBuf, sizeof(sBuf));
+    if(nRet==0)
     {
-      memcpy(sOutputR,sBuf,32);
-      memcpy(sOutputS,&sBuf[32],32);
-      return 0;
+        if(memcmp(&sBuf[64],"\x90\x00",2)==0)
+        {
+            memcpy(sOutputR,sBuf,32);
+            memcpy(sOutputS,&sBuf[32],32);
+            return 0;
+        }
+        else
+        {
+            s_printf("SW[%02x %02x]\r\n",sBuf[64],sBuf[65]);
+            return -2;
+        }
     }
-    else
-    {
-      s_printf("SW[%02x %02x]\r\n",sBuf[64],sBuf[65]);
-      return -2;
-    }
-  }
-  return nRet;  
+    return nRet;  
 }
 //sxl
 int Lib_SM2InputSign(unsigned char bInputLen,unsigned char *sInput)
 {
-     unsigned char sBuf[100];
+    unsigned char sBuf[GM_BUFFER_LEN];
      int nRet;
      unsigned int nLen;
+
      memcpy(sBuf,"\xB0\x72\x02\x01\x00",5); //00->01
      sBuf[4] = bInputLen;
      memcpy(&sBuf[5],sInput,bInputLen);
      //SMSendApdu(14,sBuf);
      SMSendApdu(5+bInputLen,sBuf);
+#if 0
      while(1)
      {
-      if(SMCheck()==0)
-        break;
-      delay_ms(1);
+         if(SMCheck()==0)
+             break;
+         delay_ms(1);//10->2
      }
-     nRet = SMGetResponse(&nLen,sBuf); 
+#else
+     if ((nRet = SMCheckWithTimeOut()) != 0)
+         return nRet;
+#endif /* 0 */
+    nRet = SMGetResponse(&nLen,sBuf, sizeof(sBuf)); 
     if(nRet==0)
     {
       if(memcmp(&sBuf[0],"\x90\x00",2)==0)
@@ -1097,21 +1222,27 @@ int Lib_SM2InputSign(unsigned char bInputLen,unsigned char *sInput)
 //sxl
 int Lib_SM2LoadIDVerify(unsigned char bInputLen,unsigned char *sInputID)
 {
-     unsigned char sBuf[100];
+    unsigned char sBuf[GM_BUFFER_LEN];
      int nRet;
      unsigned int nLen;
+
      memcpy(sBuf,"\xB0\x74\x01\x00\x08",5); //
      sBuf[4] = bInputLen;
      memcpy(&sBuf[5],sInputID,bInputLen);
      sBuf[5+bInputLen] = 0x20;
      SMSendApdu(5+bInputLen+1,sBuf);
+#if 0
      while(1)
      {
-      if(SMCheck()==0)
-        break;
-      delay_ms(1);
+        if(SMCheck()==0)
+            break;
+        delay_ms(1);//10->2
      }
-     nRet = SMGetResponse(&nLen,sBuf); 
+#else
+    if ((nRet = SMCheckWithTimeOut()) != 0)
+        return nRet;
+#endif /* 0 */
+    nRet = SMGetResponse(&nLen,sBuf, sizeof(sBuf)); 
     if(nRet==0)
     {
       if(memcmp(&sBuf[32],"\x90\x00",2)==0)
@@ -1205,15 +1336,33 @@ static unsigned char sm2_signed_data[] =
 
 int Gm_Sm3( unsigned char *input, int ilen, unsigned char *output)
 {
-  int nRet;
+    int nRet ,count,tmp,i;
 
   nRet = SMHashINIT(2);
   if(nRet)
 	return nRet;
 
-  nRet = SMHashMIDD(input,ilen);
-  if(nRet)
-	return nRet;
+#if 0   //org    一次性传入数据
+    nRet = SMHashMIDD(input,ilen);
+    if(nRet)
+      return nRet;
+#else    //分段传输，每次传输240字节
+    count = ilen/240;
+    tmp = ilen%240;
+    for(i=0;i<count;i++)
+    {
+        nRet = SMHashMIDD(&input[i*240],240);
+        if(nRet)
+            return nRet;
+    }
+    if(tmp)
+    {
+        nRet = SMHashMIDD(&input[count*240],tmp);
+        if(nRet)
+        return nRet;
+    }
+       
+#endif
 
   nRet = SMHashEND(output);
   if(nRet)
@@ -1321,28 +1470,53 @@ void gm_test(void)
 	unsigned char out[16];
     int ret;
 
+    Lib_LcdCls();
+    Lib_LcdPrintxy(0, 0, 0x80, "     GM TEST    ");
+    Lib_LcdPrintxy(0, 1*8, 0x00, "do ing...");
+    Lib_KbFlush();
+
 	s_printf("********Sm4 Test********\r\n");
 	Gm_Sm4(sm4_data,16, out, sm4_key, 1);
 	if (memcmp(out, sm4_out, 16) == 0) {
 		s_printf("SM4加密: 成功");
+        Lib_LcdClrLine(2*8, LCD_HIGH_MINI-1);
+		Lib_LcdPrintxy(0, 1*8, 0x00, "SM4 encrypt ok");
+        Lib_KbFlush();
 	} else {
 		s_printf("SM4加密: 失败");
+        Lib_LcdClrLine(2*8, LCD_HIGH_MINI-1);
+		Lib_LcdPrintxy(0, 1*8, 0x00, "SM4 encrypt error");
+        Lib_KbFlush();
 	}
+    DelayMs(1000);
 
     Gm_Sm4(sm4_out,16, out, sm4_key, 0);
 	if (memcmp(out, sm4_data, 16) == 0) {
 		s_printf("SM4解密: 成功");
+        Lib_LcdClrLine(2*8, LCD_HIGH_MINI-1);
+		Lib_LcdPrintxy(0, 1*8, 0x00, "SM4 decryption ok");
+        Lib_KbFlush();
 	} else {
 		s_printf("SM4解密: 失败");
+        Lib_LcdClrLine(2*8, LCD_HIGH_MINI-1);
+		Lib_LcdPrintxy(0, 1*8, 0x00, "SM4 decryption error");
+        Lib_KbFlush();
 	}
+    DelayMs(1000);
 
 	s_printf("********Sm2 Test********\r\n");
 	//Gm_Sm2Verify(id, 16, publicKey, sign, msg, sizeof(msg));
     ret = Sm2_Verify(id, 16, publicKey, sign, msg, sizeof(msg));
 	if (ret == 0) {
 		s_printf("SM2验签: 成功");
+        Lib_LcdClrLine(2*8, LCD_HIGH_MINI-1);
+		Lib_LcdPrintxy(0, 1*8, 0x00, "SM2 ok");
+        Lib_KbFlush();
 	} else {
 		s_printf("SM2验签: 失败");
+        Lib_LcdClrLine(2*8, LCD_HIGH_MINI-1);
+		Lib_LcdPrintxy(0, 1*8, 0x00, "SM2 error");
+        Lib_KbFlush();
 	}
 	
 	s_printf("********Finish********\r\n");

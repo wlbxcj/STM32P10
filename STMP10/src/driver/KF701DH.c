@@ -249,20 +249,23 @@ uchar initial_system(void)
     (void)s_RF_Init();//初始化非接驱动
 #endif
     
-    TSC2046_init();
+    //TSC2046_init();   // 移到触屏OPEN函数里
     //13/11/27 for sm
     SPI3_Init();
     
         //13/07/08
     Lib_PiccGetPara(&_glbPiccSetPara);
 
-    s_VoiceInit();
-
-    /* USB 初始化 */
-    USB_Config();
-    HID_FifoInt();
-    USB_Init();
-
+    if (LCDValue >= 4000 || LCDValue <= 300)    // 带USB的设备
+    {
+        USB_Port_Set(0);    //USB先断开
+        delay_ms(300);
+        USB_Port_Set(1);    //USB再次连接
+        /* USB 初始化 */
+        USB_Config();
+        HID_FifoInt();
+        USB_Init();
+    }
     return(DisplayType);
 
 }

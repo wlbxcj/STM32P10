@@ -73,10 +73,10 @@ const uint8_t CustomHID_DeviceDescriptor[CUSTOMHID_SIZ_DEVICE_DESC] =
 const uint8_t CustomHID_ConfigDescriptor[CUSTOMHID_SIZ_CONFIG_DESC] =
 {
     /*  配置描述符  */
-    0x09, /* bLength: Configuration Descriptor size */
-    USB_CONFIGURATION_DESCRIPTOR_TYPE, /* bDescriptorType: Configuration */
-    CUSTOMHID_SIZ_CONFIG_DESC,
-    /* wTotalLength: Bytes returned */
+    0x09,         /* bLength: Configuration Descriptor size */
+    USB_CONFIGURATION_DESCRIPTOR_TYPE,  /* bDescriptorType: Configuration */
+    CUSTOMHID_SIZ_CONFIG_DESC,          /* wTotalLength: Bytes returned */
+    
     0x00,
     0x01,         /* bNumInterfaces: 1 interface    该配置所支持的接口数 */
     0x01,         /* bConfigurationValue: Configuration value 该配置的值 */
@@ -102,7 +102,7 @@ const uint8_t CustomHID_ConfigDescriptor[CUSTOMHID_SIZ_CONFIG_DESC] =
                     224：无线控制类，254：特定应用类，255厂商定义的设备*/
     0x00,         /* bInterfaceSubClass : 1=BOOT, 0=no boot 子类    */
     0x00,         /* nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse 接口协议  */
-    0x00,            /* iInterface: Index of string descriptor     字符串索引值    */
+    0x00,         /* iInterface: Index of string descriptor     字符串索引值    */
 
     /*  HID 描述符  */
     /******************** Descriptor of Custom HID HID ********************/
@@ -136,8 +136,7 @@ const uint8_t CustomHID_ConfigDescriptor[CUSTOMHID_SIZ_CONFIG_DESC] =
     0x07,	        /* bLength: Endpoint Descriptor size */
     USB_ENDPOINT_DESCRIPTOR_TYPE,	/* bDescriptorType: */
 			        /*	Endpoint descriptor type */
-    0x01,	        /* bEndpointAddress: */
-			        /*	Endpoint Address (OUT) */
+    0x01,	        /* bEndpointAddress:  (OUT) */
     0x03,	        /* bmAttributes: Interrupt endpoint */
     (MAX_PACK_SIZE & 0xFF),  //0x40,           /* wMaxPacketSize: 64 Bytes max       端点支持的最大包长度*/
     ((MAX_PACK_SIZE>> 8) & 0xFF),
@@ -535,32 +534,46 @@ const u8 CustomHID_ReportDescriptor[CUSTOMHID_SIZ_REPORT_DESC] =
 }; /* CustomHID_ReportDescriptor */
 
 #else
+/*
+Short Items
+    BYTE[0] :
+        bit0-bit1: 0 = 0 bytes  1 = 1 byte 2 = 2 bytes 3 = 4 bytes
+        bit2-bit3: 0 = Main     1 = Global 2 = Local   3 = Reserved
+        bit4-bit7: Numeric expression specifying the function of the item
+    BYTE[1..4]: DATA
+
+Long items
+    BYTE[0] : 0xFE
+    BYTE[1] : bDataSize
+    BYRE[2] : bLongItemTag
+    BYTE[3..n] : DATA
+*/
 const uint8_t CustomHID_ReportDescriptor[CUSTOMHID_SIZ_REPORT_DESC] =
  {
 #if 1
     //#ifdef 0 
-    0x05, 0x8c, /* USAGE_PAGE (ST Page) */ 
-    0x09, 0x01, /* USAGE (Demo Kit) */ 
-    0xa1, 0x01, /* COLLECTION (Application) */ 
+    0x05, 0x8c,         /* USAGE_PAGE (ST Page) */ 
+    0x09, 0x01,         /* USAGE (Demo Kit) */ 
+    0xa1, 0x01,         /* COLLECTION (Application) */ 
     /* 6 */ 
     
     // The Input report 
-    0x09,0x03, // USAGE ID - Vendor defined 
-    0x15,0x00, // LOGICAL_MINIMUM (0) 
-    0x26,0x00, 0xFF, // LOGICAL_MAXIMUM (255) 
-    0x75,0x08, // REPORT_SIZE (8) 
-    //0x95,0x40, // REPORT_COUNT (64)
+    0x09,0x03,          // USAGE ID - Vendor defined 
+    0x15,0x00,          // LOGICAL_MINIMUM (0) 
+    0x26,0x00, 0xFF,    // LOGICAL_MAXIMUM (255) 
+    0x75,0x08,          // REPORT_SIZE (8 bit) 
+    //0x95,0x40,        // REPORT_COUNT (64)
     0x95,MAX_PACK_SIZE,
-    0x81,0x02, // INPUT (Data,Var,Abs) 
+    0x81,0x02,          // INPUT (Data,Var,Abs) 
     //19
     // The Output report 
-    0x09,0x04, // USAGE ID - Vendor defined 
-    0x15,0x00, // LOGICAL_MINIMUM (0) 
-    0x26,0x00,0xFF, // LOGICAL_MAXIMUM (255) 
-    0x75,0x08, // REPORT_SIZE (8) 
-    //0x95,0x40, // REPORT_COUNT (64)
+    0x09,0x04,          // USAGE ID - Vendor defined 
+    0x15,0x00,          // LOGICAL_MINIMUM (0) 
+    0x26,0x00,0xFF,     // LOGICAL_MAXIMUM (255) 
+    0x75,0x08,          // REPORT_SIZE (8 bit) 
+    //0x95,0x40,        // REPORT_COUNT (64)
     0x95,MAX_PACK_SIZE,
-    0x91,0x02, // OUTPUT (Data,Var,Abs) 
+    0x91,0x02,          // OUTPUT (Data,Var,Abs) 
     //32
     0xc0 /* END_COLLECTION */ 
     //#endif 

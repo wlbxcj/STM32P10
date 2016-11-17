@@ -2667,6 +2667,8 @@ int  Test_VoiceFunc(void)
 {
     uchar pageNo=0, key;
 
+    //s_VoiceInit();
+
 	while(1)
 	{
         trace_debug_printf("------KbGetCh[%02x]",key);
@@ -3395,7 +3397,7 @@ int maintest(void)
 	int i, result;
 #endif
 
-#if !TEST_INIT
+#if TEST_INIT
 	iRet = Lib_AppInit();
 #endif
 
@@ -3458,6 +3460,7 @@ PEDWriteMkey_Wkey();
 		Lib_LcdPrintxy(0, 0*8, 0x80, "     TEST[V%d.%d]     ", MAJ_VER, MIN_VER);
 		Lib_LcdPrintxy(0, 2*8, 0x00, "1-Machine  2-Burn-in");
 		Lib_LcdPrintxy(0, 3*8, 0x00, "3-Single   4-Board");
+		Lib_LcdPrintxy(0, 4*8, 0x00, "7-calibra  8-Sin");
 
 		while(1)
 		{
@@ -3508,6 +3511,19 @@ PEDWriteMkey_Wkey();
 					main_API();
 					break;
 		#endif
+                case KEY7:
+                    
+                    Lib_LcdPrintxy(0, 4*8, 0x00, "------------------");
+                    delay_ms(1000);
+                    Lib_PadOpen();
+                    Lib_Padcalibration();
+                    break;
+
+                case KEY8:
+                    Lib_PadOpen();
+                    Lib_PadSign("12345678", 30);
+                    break;
+                    
 				default:
 					break;
 			}

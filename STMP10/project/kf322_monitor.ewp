@@ -706,7 +706,7 @@
           <name>IlinkAdditionalLibs</name>
           <state>$PROJ_DIR$\..\src\library\lib_entry_001.a</state>
           <state>$PROJ_DIR$\..\src\library\lib_qpboc_001.a</state>
-          <state>$PROJ_DIR$\..\projectlib\Debug\Exe\v10plib045.a</state>
+          <state>$PROJ_DIR$\..\projectlib\Debug\Exe\v10plib047.a</state>
         </option>
         <option>
           <name>IlinkOverrideProgramEntryLabel</name>

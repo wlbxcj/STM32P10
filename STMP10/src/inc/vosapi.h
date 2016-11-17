@@ -647,6 +647,7 @@ extern BYTE g_byCurAppNum;
 #define PCI_RsaKey_Err        (-7031) 
 #define PCI_AuthTimes_Err     (-7032) 
 #define PCI_KeySame_Err       (-7040)
+#define PCI_DES_Err           (-7041)
 
 
 #define DUKPT_OK                  0

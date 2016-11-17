@@ -25,6 +25,7 @@
 
 #define ST7567_M
 //#undef ST7567_M
+extern unsigned long LCDValue;
 
 int  s_LcdInit(void);
 void Lib_LcdCls(void);

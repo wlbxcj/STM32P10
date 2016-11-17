@@ -1321,7 +1321,6 @@ int s_WriteDesKey(uchar app_no,uchar key_type,uchar key_no,uchar key_len,uchar *
           trace_debug_printf("\n");
         }
 #endif        
-        
         DES_TDES(MMK,24,des_key.KeyData,des_key.KeyLen,1);
         
 #if 0        
@@ -3733,6 +3732,42 @@ int  Lib_PciAccessAuth(BYTE *auth_data,BYTE mode)
 }
 
 /*==============================================================
+    新增接口
+  mode=0x41 Sm4加密
+  mode=0x40 Sm4解密
+  ================================================================*/ 
+int Lib_PciWorkKeyDes(BYTE deskey_n, BYTE *indata, BYTE *outdata, BYTE mode)
+{
+    uchar   deskeybuf[24],deskeylen,datain[16];
+    int     iret;
+
+    if(deskey_n>= MAX_MKSK_NUM )
+    {
+        return PCI_KeyNo_Err;
+    }
+    
+    if (mode & MODE_GM)
+    {
+        //trace_debug_printf("\r\ng_byCurAppNum=%d,deskey_n=%d\r\n", g_byCurAppNum, deskey_n);
+        iret=s_ReadDesKey(g_byCurAppNum,PINKEY_TYPE,deskey_n,&deskeylen,deskeybuf);
+        if(iret) return iret;
+        if (deskeylen != 16){
+            memset(deskeybuf,0,24);
+            return PCI_KeyLen_Err;
+        }
+        memcpy(datain,indata,16);
+        iret = Gm_Sm4(datain, 16, outdata, deskeybuf, mode & 1);
+
+        memset(deskeybuf,0,24);
+        if (iret < 0)
+            return PCI_DES_Err;
+        return 0;
+    }
+
+    return PCI_KeyMode_Err;
+} 
+
+/*==============================================================
   函数功能: DES(3DES)计算
   mackey_n  计算DES的密钥(DES密钥区)
   datain    输入数据
@@ -3750,6 +3785,7 @@ int  Lib_PciDes(BYTE deskey_n, BYTE *indata, BYTE *outdata, BYTE mode)
     {
         return PCI_KeyNo_Err;
     }
+
     iret=s_ReadDesKey(g_byCurAppNum,FKEY_TYPE,deskey_n,&deskeylen,deskeybuf);
     if(iret) return iret;
     memset(datain,0,sizeof(datain));

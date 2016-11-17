@@ -100,7 +100,7 @@ void CTR_LP(void)
 
         wEPVal = _GetENDPOINT(ENDP0);
         
-        if ((wEPVal &EP_SETUP) != 0)
+        if ((wEPVal & EP_SETUP) != 0)
         {
             _ClearEP_CTR_RX(ENDP0); /* SETUP bit kept frozen while CTR_RX = 1 */
             Setup0_Process();

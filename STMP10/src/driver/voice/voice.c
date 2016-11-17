@@ -15,12 +15,49 @@
 
 #include  "voice.h"
 
+/* 原来的宏直接改为全局变量 默认为USB 的语音IO配置 */
+unsigned short VOICE_S1 = GPIO_Pin_4;
+unsigned short VOICE_S2 = GPIO_Pin_9;
+unsigned short VOICE_S3 = GPIO_Pin_3;
+unsigned short VOICE_S4 = GPIO_Pin_2;
+    
+GPIO_TypeDef *S1_PORT = GPIOC;
+GPIO_TypeDef *S2_PORT = GPIOB;
+GPIO_TypeDef *S3_PORT = GPIOA;
+GPIO_TypeDef *S4_PORT = GPIOA;
+
 extern void WaitNuS(u32 x);
+extern unsigned long LCDValue;
 
 int s_VoiceInit(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
- 
+
+    if (LCDValue >= 4000 || LCDValue <= 300)    // 带USB的设备，语音IO不一样
+    {
+        VOICE_S1 = GPIO_Pin_4;
+        VOICE_S2 = GPIO_Pin_9;
+        VOICE_S3 = GPIO_Pin_3;
+        VOICE_S4 = GPIO_Pin_2;
+            
+        S1_PORT = GPIOC;
+        S2_PORT = GPIOB;
+        S3_PORT = GPIOA;
+        S4_PORT = GPIOA;
+    }
+    else
+    {
+        VOICE_S1 = GPIO_Pin_4;
+        VOICE_S2 = GPIO_Pin_9;
+        VOICE_S3 = GPIO_Pin_12;
+        VOICE_S4 = GPIO_Pin_11;
+            
+        S1_PORT = GPIOC;
+        S2_PORT = GPIOB;
+        S3_PORT = GPIOA;
+        S4_PORT = GPIOA;
+    }
+
     GPIO_InitStructure.GPIO_Pin     = VOICE_S1; 
     GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_Out_PP;
     GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_50MHz;
@@ -81,6 +118,7 @@ int SetVoice(uchar voiceID)
 	{
 		return VOICE_ID_ERR;
 	}
+    s_VoiceInit();
 
     trace_debug_printf("SetVoice (%d)\r\n", voiceID);
 

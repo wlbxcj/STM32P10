@@ -59,7 +59,8 @@ BYTE gs_byBaseGrayVal = DEFAULT_GRAY_BASE; // 灰度基值
 static BYTE gs_abyDisplayData[6][132];      // 屏幕显示数据缓冲
 static BYTE gs_abyCurrentData[6][132];      // 当前屏幕上显示的数据
 
-unsigned long LCDValue;//<3000 新屏 >=3000 旧屏 新屏值2043左右 老屏值3520左右
+unsigned long LCDValue; // <3000 新屏 >=3000 旧屏 新屏值2043左右 老屏值3520左右
+                        // <= 300 新屏带USB   >= 4000 老屏带USB
 
 
 // 15个图标的设置值
@@ -220,7 +221,7 @@ int s_LcdInit(void)
     s_ADCInit();
     LCDValue = Lib_LCDVerValue();
  //   while(1)
-//    trace_debug_printf("\n\r******value = %d\n\r",LCDValue);
+    trace_debug_printf("\n\r******value = %d\n\r",LCDValue);
     g_byFontType = ASCII;                 // Small Font
     g_byFontAttr = 0;                     // Normal
     gs_byLcdBusyFlag = 0;

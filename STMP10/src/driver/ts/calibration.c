@@ -253,8 +253,10 @@ static int get_sample (calibration *cal,
         }
       }
     }
-    //last_x = cal->xfb [index] = x;	
-    //last_y = cal->yfb [index] = y;
+    //last_x = 
+    cal->xfb [index] = x;   
+    //last_y = 
+    cal->yfb [index] = y;
 
     trace_debug_printf("%s : LCD X = %4d Y = %4d\n\r", name, cal->xfb [index], cal->yfb [index]);	
     trace_debug_printf("%s : X = %4d Y = %4d\n\r", name, cal->x [index], cal->y [index]);
@@ -683,6 +685,8 @@ int Lib_PadOpen(void)
         return PADRECALI;
 
     SPI1_Init();
+    TSC2046_init();
+
     Lib_TscRead(0,&cal_flag,1);
     if(cal_flag == 1)
     {
